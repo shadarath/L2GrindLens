@@ -1,0 +1,250 @@
+# id	tekst	status względem bazy L2J	źródło (próbka OCR okna System Msg)
+0	You have been disconnected from the server.	taki sam	sample-2026-11-10_05-29-14-459.txt
+1	The server will be coming down in $s1 second(s). Please find a safe place to log out.	taki sam	sample-2026-11-10_05-29-14-459.txt
+2	$s1 does not exist.	taki sam	sample-2026-11-10_05-29-14-459.txt
+3	$s1 is not currently logged in.	taki sam	sample-2026-11-10_05-29-14-459.txt
+4	You cannot ask yourself to apply to a clan.	taki sam	sample-2026-11-10_05-29-14-459.txt
+5	$s1 already exists.	taki sam	sample-2026-11-10_05-29-14-459.txt
+6	$s1 does not exist.	taki sam	sample-2026-11-10_05-29-14-459.txt
+7	You are already a member of $s1.	taki sam	sample-2026-11-10_05-29-14-459.txt
+8	You are already a member of another clan.	taki sam	sample-2026-11-10_05-29-14-459.txt
+9	$s1 is not a clan leader.	taki sam	sample-2026-11-10_05-29-14-459.txt
+10	$s1 is already a member of another clan.	taki sam	sample-2026-11-10_05-29-14-459.txt
+11	There are no applicants for this clan.	taki sam	sample-2026-11-10_05-29-14-459.txt
+12	Applicant information is incorrect.	taki sam	sample-2026-11-10_05-29-14-459.txt
+13	Unable to dissolve: your clan has requested to participate in a castle siege.	taki sam	sample-2026-11-10_05-29-14-459.txt
+28	You have obtained $s1 Adena.	inny	sample-2026-11-10_05-32-11-635.txt
+29	You have obtained $s2 $s1.	taki sam	sample-2026-11-10_05-32-11-635.txt
+30	You have obtained $s1.	taki sam	sample-2026-11-10_05-32-11-635.txt
+43	You have missed.	taki sam	sample-2026-11-10_05-34-18-215.txt
+44	Critical hit!	taki sam	sample-2026-11-10_05-33-47-491.txt
+45	You have earned $s1 XP.	inny	sample-2026-11-10_05-31-07-432.txt;sample-2026-11-10_05-32-50-741.txt
+46	You use $s1.	taki sam	sample-2026-11-10_05-34-27-987.txt
+47	You begin to use a(n) $s1.	taki sam	sample-2026-11-10_05-34-27-987.txt
+48	$s1 is not available at this time: being prepared for reuse.	taki sam	sample-2026-11-10_05-34-27-987.txt
+51	You cannot use this on yourself.	taki sam	sample-2026-11-10_05-34-27-987.txt
+52	You have earned $s1 Adena.	inny	sample-2026-11-10_05-32-50-741.txt
+53	You have earned $s2 $s1(s).	taki sam	sample-2026-11-10_05-32-50-741.txt
+54	You have earned $s1.	taki sam	sample-2026-11-10_05-32-50-741.txt
+95	You have earned $s1 XP and $s2 SP.	inny	sample-2026-11-10_05-31-07-432.txt;sample-2026-11-10_05-32-50-741.txt
+111	Your shield defense has succeeded.	taki sam	sample-2026-11-10_05-34-04-808.txt
+113	$s1 cannot be used due to unsuitable terms.	taki sam	sample-2026-11-10_05-34-27-987.txt
+122	You may no longer adjust items in the trade because the trade has been confirmed.	taki sam	sample-2026-11-10_05-34-27-987.txt
+130	Your warehouse is full.	taki sam	sample-2026-11-10_05-34-27-987.txt
+148	You cannot use quest items.	taki sam	sample-2026-11-10_05-34-27-987.txt
+149	You cannot pick up or use items while trading.	taki sam	sample-2026-11-10_05-34-27-987.txt
+162	You have moved too far away from the warehouse to perform that action.	taki sam	sample-2026-11-10_05-34-27-987.txt
+163	You cannot destroy it because the number is incorrect.	taki sam	sample-2026-11-10_05-34-27-987.txt
+170	The user who requested to become friends is not found in the game.	taki sam	sample-2026-11-10_05-34-27-987.txt
+183	There are too many users on the server. Please try again later.	taki sam	sample-2026-11-10_05-34-27-987.txt
+185	You must first select a user to invite to your party.	taki sam	sample-2026-11-10_05-34-27-987.txt
+187	Select user to expel.	taki sam	sample-2026-11-10_05-31-07-432.txt
+191	$s1 has been dismissed.	inny	sample-2026-11-10_05-34-18-215.txt
+192	You have failed to expel $s1 from the clan.	taki sam	sample-2026-11-10_05-31-07-432.txt
+199	You have recently been dismissed from a clan. You are not allowed to join another clan for 24 hours.	inny	sample-2026-11-10_05-34-18-215.txt
+201	$c1 was expelled from the party.	taki sam	sample-2026-11-10_05-31-07-432.txt
+202	You have been expelled from the party.	taki sam	sample-2026-11-10_05-31-07-432.txt
+215	A clan war with $s1 has started. If your clan member is killed by the other clan, XP decreases by 1/4 of the amount that decrease...	inny, ucięty w oknie	sample-2026-11-10_05-31-07-432.txt
+231	After a clan member is dismissed from a clan, the clan must wait at least a day before accepting a new member.	taki sam	sample-2026-11-10_05-34-18-215.txt
+232	After leaving or having been dismissed from a clan, you must wait at least a day before joining another clan.	taki sam	sample-2026-11-10_05-34-18-215.txt
+277	You have earned $s1.	taki sam	sample-2026-11-10_05-32-50-741.txt
+299	$c1 has obtained $s3 $s2.	taki sam	sample-2026-11-10_05-32-11-635.txt
+300	$c1 has obtained $s2.	taki sam	sample-2026-11-10_05-32-11-635.txt
+309	You have succeeded in expelling the clan member.	taki sam	sample-2026-11-10_05-31-07-432.txt
+310	You have failed to expel the clan member.	taki sam	sample-2026-11-10_05-31-07-432.txt
+317	You have failed to expel the party member.	taki sam	sample-2026-11-10_05-31-07-432.txt
+331	You have acquired $s1 SP.	taki sam	sample-2026-11-10_05-33-07-905.txt
+362	You have acquired $s1 bonus XP from a successful over-hit.	inny	sample-2026-11-10_05-31-07-432.txt;sample-2026-11-10_05-33-07-905.txt
+369	You have obtained a +$s1 $s2.	taki sam	sample-2026-11-10_05-32-11-635.txt
+376	$c1 has obtained +$s2 $s3.	inny	sample-2026-11-10_05-32-11-635.txt
+420	Time expired.	taki sam	sample-2026-11-10_05-31-07-432.txt
+458	Your game time has expired. You can not login.	taki sam	sample-2026-11-10_05-31-07-432.txt
+467	You may not accept any clan within a day after expelling another clan.	taki sam	sample-2026-11-10_05-31-07-432.txt
+468	A clan that has withdrawn or been expelled cannot enter into an alliance within one day of withdrawal or expulsion.	taki sam	sample-2026-11-10_05-31-20-195.txt
+472	You cannot expel yourself from the clan.	taki sam	sample-2026-11-10_05-31-20-195.txt
+513	Enter the name of the clan you wish to expel.	taki sam	sample-2026-11-10_05-31-20-195.txt
+521	You have succeeded in expelling the clan.	taki sam	sample-2026-11-10_05-31-20-195.txt
+522	You have failed to expel a clan.	taki sam	sample-2026-11-10_05-31-20-195.txt
+539	Your XP has decreased by $s1.	inny	sample-2026-11-10_05-31-20-195.txt
+608	$c1 has obtained $s3 $s2(s) by using sweeper.	inny	sample-2026-11-10_05-32-11-635.txt
+609	$c1 has obtained $s2 by using sweeper.	taki sam	sample-2026-11-10_05-32-11-635.txt
+768	A Windows system file is damaged. Please reinstall Internet Explorer.	taki sam	sample-2026-11-10_05-31-20-195.txt
+775	From here on, play time will be expended.	taki sam	sample-2026-11-10_05-31-20-195.txt
+799	The observation time has expired.	taki sam	sample-2026-11-10_05-31-20-195.txt
+1014	Your pet gained $s1 XP.	inny	sample-2026-11-10_05-31-20-195.txt
+1017	Pet's critical hit!	taki sam	sample-2026-11-10_05-33-47-491.txt
+1027	Servitor received $s2 damage caused by $c1.	inny	sample-2026-11-10_05-30-18-786.txt
+1028	Summoned monsters critical hit!	inny	sample-2026-11-10_05-33-47-491.txt
+1072	You have obtained a ticket for the Monster Race #%s1 - Single.	inny	sample-2026-11-10_05-32-11-635.txt
+1073	You have obtained a ticket for the Monster Race #%s1 - Single.	inny	sample-2026-11-10_05-32-11-635.txt
+1089	$c1 has obtained a first anniversary commemorative item.	taki sam	sample-2026-11-10_05-32-11-635.txt
+1117	A clan member may not be dismissed during combat.	taki sam	sample-2026-11-10_05-34-18-215.txt
+1130	You have dealt $s1 damage to your target and $s2 damage to the servitor.	taki sam	sample-2026-11-10_05-30-18-786.txt
+1212	Seven Signs: The Lords of Dawn have obtained the Seal of Avarice.	taki sam	sample-2026-11-10_05-32-11-635.txt
+1213	Seven Signs: The Lords of Dawn have obtained the Seal of Gnosis.	taki sam	sample-2026-11-10_05-32-11-635.txt
+1214	Seven Signs: The Lords of Dawn have obtained the Seal of Strife.	taki sam	sample-2026-11-10_05-32-20-474.txt
+1215	Seven Signs: The Revolutionaries of Dusk have obtained the Seal of Avarice.	taki sam	sample-2026-11-10_05-32-20-474.txt
+1216	Seven Signs: The Revolutionaries of Dusk have obtained the Seal of Gnosis.	taki sam	sample-2026-11-10_05-32-20-474.txt
+1217	Seven Signs: The Revolutionaries of Dusk have obtained the Seal of Strife.	taki sam	sample-2026-11-10_05-32-20-474.txt
+1250	Do you really want to surrender? If you surrender during an alliance war, your XP will drop the same as if you were to die once.	inny	sample-2026-11-10_05-31-20-195.txt
+1252	Are you sure you want to surrender? XP penalty will be the same as death.	inny	sample-2026-11-10_05-31-20-195.txt
+1253	Are you sure you want to surrender? XP penalty will be the same as death and you will not be allowed to participate in clan war.	inny	sample-2026-11-10_05-31-20-195.txt
+1281	Your excellent shield defense was a success!	taki sam	sample-2026-11-10_05-34-04-808.txt
+1312	The latest version of Windows Live Messenger may be obtained from the Windows Live web site (http://explore.live.com/messenger).	inny	sample-2026-11-10_05-31-20-195.txt;sample-2026-11-10_05-32-20-474.txt
+1379	$c1 has obtained $s2 Adena.	inny	sample-2026-11-10_05-32-20-474.txt
+1381	The party leader has obtained $s2 $s1(s).	inny	sample-2026-11-10_05-32-20-474.txt
+1465	Your pumping is successful, causing $s1 damage.	taki sam	sample-2026-11-10_05-30-18-786.txt
+1467	You reel that fish in closer and cause $s1 damage.	taki sam	sample-2026-11-10_05-30-18-786.txt
+1583	You were dismissed from the Command Channel.	taki sam	sample-2026-11-10_05-34-18-215.txt
+1584	$c1's party has been dismissed from the Command Channel.	taki sam	sample-2026-11-10_05-34-18-215.txt
+1657	$c1 has earned $s2 points in the Olympiad Games.	inny	sample-2026-11-10_05-32-50-741.txt
+1661	$c1 has obtained $s3 $s2(s).	inny	sample-2026-11-10_05-32-20-474.txt
+1666	You have obtained +$s1 $s2.	inny	sample-2026-11-10_05-32-20-474.txt
+1670	Due to your Reeling and/or Pumping skill being three or more levels higher than your Fishing Expertise, a $s1%% damage penalty ...	inny, ucięty w oknie	sample-2026-11-10_05-30-18-786.txt
+1686	Stones and mortar tumble to the earth - the castle wall has taken damage!	taki sam	sample-2026-11-10_05-30-18-786.txt
+1707	You earned $s1 PC Point(s).	inny	sample-2026-11-10_05-32-50-741.txt
+1708	Double points! You earned $s1 PC Point(s).	inny	sample-2026-11-10_05-32-50-741.txt
+1725	You have earned $s1 raid point(s).	taki sam	sample-2026-11-10_05-32-50-741.txt
+1752	Since the clan has received a graduate of the Clan Academy, it has earned $s1 Reputation.	inny	sample-2026-11-10_05-32-50-741.txt
+1774	Your clan's newly acquired contested clan hall has added $s1 point(s) to your Clan Reputation.	inny	sample-2026-11-10_05-33-07-905.txt
+2003	You obtained an ordinary material.	taki sam	sample-2026-11-10_05-32-20-474.txt
+2004	You obtained a rare material.	taki sam	sample-2026-11-10_05-32-20-474.txt
+2005	You obtained a unique material.	taki sam	sample-2026-11-10_05-32-20-474.txt
+2006	You obtained the only material of this kind.	taki sam	sample-2026-11-10_05-32-20-474.txt
+2151	Your opponent has Magic Resistance, the damage was decreased.	inny	sample-2026-11-10_05-30-18-786.txt
+2168	$c1 has acquired the flag.	taki sam	sample-2026-11-10_05-33-07-905.txt
+2219	This squad skill has already been learned.	inny	sample-2026-11-10_05-32-50-741.txt
+2220	The previous level skill has not been learned.	taki sam	sample-2026-11-10_05-32-50-741.txt;sample-2026-11-10_05-32-55-374.txt
+2261	$c1 has inflicted $s3 damage on $c2.	inny	sample-2026-11-10_05-30-18-786.txt
+2262	$c1 has received $s3 damage from $c2.	taki sam	sample-2026-11-10_05-30-18-786.txt
+2263	$c1 has received $s3 damage through $c2.	inny	sample-2026-11-10_05-30-18-786.txt
+2264	$c1 has evaded $c2's attack.	taki sam	sample-2026-11-10_05-33-34-033.txt
+2266	$c1 landed a critical hit!	taki sam	sample-2026-11-10_05-33-47-491.txt
+2270	$c1 has received $s2 damage from the magic fire.	inny	sample-2026-11-10_05-30-18-786.txt
+2273	This skill cannot be learned while in the subclass state. Please try again after changing to the main class.	inny	sample-2026-11-10_05-32-50-741.txt;sample-2026-11-10_05-32-55-374.txt
+2280	Damage is decreased because $c1 resisted $c2's magic.	taki sam	sample-2026-11-10_05-30-18-786.txt
+2281	$c1 inflicted $s3 damage on $c2 and $s4 damage on the damage transfer target.	inny	sample-2026-11-10_05-30-18-786.txt
+2284	You have obtained all the points you can get today in a place other than Internet Café.	taki sam	sample-2026-11-10_05-32-20-474.txt
+2319	You have acquired $s1 fame.	inny	sample-2026-11-10_05-33-07-905.txt
+2326	You have acquired 50 Clan Reputation.	inny	sample-2026-11-10_05-33-07-905.txt
+2343	Failed. You have obtained $s2 of $s1.	taki sam	sample-2026-11-10_05-32-28-005.txt
+2379	You cannot report a character who has not acquired any XP after connecting.	inny	sample-2026-11-10_05-33-07-905.txt
+2389	You have earned the maximum number of PC Points.	inny	sample-2026-11-10_05-32-55-374.txt
+2393	You earned $s1 PC Point(s).	inny	sample-2026-11-10_05-32-55-374.txt
+2459	The Airship Summon License has already been acquired.	taki sam	sample-2026-11-10_05-33-07-905.txt
+2751	The character that acquired $s1's ward has been killed.	taki sam	sample-2026-11-10_05-33-07-905.txt
+2902	You've acquired the ward. Move quickly to your forces’ outpost.	inny	sample-2026-11-10_05-33-07-905.txt
+2931	The system file may have been damaged. After ending the game, please check the file using the Lineage II auto update.	taki sam	sample-2026-11-10_05-30-18-786.txt
+3018	You cannot use skill enhancing system functions for the skills currently not acquired.	taki sam	sample-2026-11-10_05-33-07-905.txt
+3072	$s1 acquired the attached item to your mail.	taki sam	sample-2026-11-10_05-33-07-905.txt
+3073	You have acquired $s2 $s1.	taki sam	sample-2026-11-10_05-33-07-905.txt
+3207	You obtained $s1 Recommendation(s).	taki sam	sample-2026-11-10_05-32-28-005.txt
+3209	You obtained 2 Maguen Pet Collar.	inny	sample-2026-11-10_05-32-28-005.txt
+3210	You obtained an Elite Maguen Pet Collar.	taki sam	sample-2026-11-10_05-32-28-005.txt
+3259	You have acquired $s1 XP and $s3 SP.	inny	sample-2026-11-10_05-33-12-150.txt
+3291	$s1 pieces of bio-energy residue is acquired.	nowy	sample-2026-11-10_05-33-12-150.txt
+3337	- Strong defense and skillful with shields<br>- Can pull targets using chains<br>- Golden Lion Companion	nowy	sample-2026-11-10_05-34-04-808.txt
+3339	Melee Damage Dealer	nowy	sample-2026-11-10_05-30-26-332.txt
+3342	Dagger Damage Dealer	nowy	sample-2026-11-10_05-30-26-332.txt
+3343	- Superior stealth Skills<br>- Weakens the enemy with critical attacks<br>- Diverse Skills using poisons and throwing Weapons	nowy	sample-2026-11-10_05-33-47-491.txt
+3348	Magic Damage Dealer	nowy	sample-2026-11-10_05-30-26-332.txt
+3355	- Can be accompanied by multiple servitors at the same time<br>- Specializes in enemy debuffs while servitors do damage	nowy	sample-2026-11-10_05-30-26-332.txt
+3495	A Mark of Adventurer is acquired. This item can be re-acquired after 6:30 a.m. everyday.	nowy	sample-2026-11-10_05-33-12-150.txt
+3565	Acquired academy precept skill. #You may give buff that can help academy member.	nowy	sample-2026-11-10_05-33-12-150.txt
+3615	You have acquired $s1 Fame.	nowy	sample-2026-11-10_05-33-12-150.txt
+3764	You acquired $s1 Individual Fame.	nowy	sample-2026-11-10_05-33-12-150.txt
+3791	You have obtained the first Energy of Destruction. You can obtain up to 2 of these a day, and can begin obtaining them again at...	nowy, ucięty w oknie	sample-2026-11-10_05-32-28-005.txt
+3792	You have obtained the second Energy of Destruction. You can obtain up to 2 of these a day, and can begin obtaining them again...	nowy, ucięty w oknie	sample-2026-11-10_05-32-28-005.txt
+3794	You have obtained $s1 Battle Mark(s) during this round of the Ceremony of Chaos.	nowy	sample-2026-11-10_05-32-28-005.txt
+3797	You've obtained the Energy of Destruction. You can obtain up to 2 of these items a day. You can get more after 06:30 AM every day.	nowy	sample-2026-11-10_05-32-28-005.txt
+3823	Clans are booming with the acquisition of <font color="# FFDF4C >individual request points</font> earned through private hunts...	nowy, ucięty w oknie	sample-2026-11-10_05-32-55-374.txt
+3838	What is a <font color="#FFDF4C'>clan request</font>? It's a clan activity designed to help a clan become a more solid, powerful ...	nowy, ucięty w oknie	sample-2026-11-10_05-32-28-005.txt
+3848	$s1 obtained $s2, of Oriana’s Supply Items.	nowy	sample-2026-11-10_05-32-28-005.txt
+3849	You obtained $s1 Oriana’s Coins.	nowy	sample-2026-11-10_05-32-28-005.txt
+3851	You've obtained $s1. You can obtain up to 2 of these items a day. You can get more after 06:30 AM every day.	nowy	sample-2026-11-10_05-32-28-005.txt
+3891	You've obtained individual request points ($s1/100).	nowy	sample-2026-11-10_05-32-28-005.txt
+4028	$c1 has leveled up and obtained $s2 Clan Reputation.	nowy	sample-2026-11-10_05-32-28-005.txt
+4029	Crafting Critical!	nowy	sample-2026-11-10_05-33-47-491.txt;sample-2026-11-10_05-33-54-255.txt
+4187	The selected Ability will be acquired.	nowy	sample-2026-11-10_05-33-12-150.txt
+4188	Please select the Ability to be acquired.	nowy	sample-2026-11-10_05-33-12-150.txt
+4189	The selected Ability will be acquired. Do you wish to continue?	nowy	sample-2026-11-10_05-33-12-150.txt
+4236	You have failed to combined the items. You have obtained $s1.	nowy	sample-2026-11-10_05-32-34-148.txt
+4245	Evaded killing blow. Lady Luck watches over you!	nowy	sample-2026-11-10_05-33-34-033.txt
+4248	You obtained $s1 Air Stones.	nowy	sample-2026-11-10_05-32-34-148.txt
+4256	Obtained $s1-fold! (Probability Rate: $s2)	nowy	sample-2026-11-10_05-32-34-148.txt
+4263	You can use this when you have reached Lv. 40 and learned Alchemy skills.	nowy	sample-2026-11-10_05-32-55-374.txt
+4297	Soulshot/Spiritshot Damage	nowy	sample-2026-11-10_05-30-26-332.txt
+4413	Congratulations. Compounding was successful and you obtained $s2 of $s1.	nowy	sample-2026-11-10_05-32-34-148.txt
+4414	Compounding failed and you obtained $s2 of $s1.	nowy	sample-2026-11-10_05-32-34-148.txt
+4417	You obtained $s2 of $s1 after compounding.	nowy	sample-2026-11-10_05-32-34-148.txt
+4429	No rewards can be obtained while changing class.	nowy	sample-2026-11-10_05-32-34-148.txt
+4451	You obtained $s1 Faction Points for $s2	nowy	sample-2026-11-10_05-32-34-148.txt
+4471	The item was upgraded successfully and you obtained a $s1.	nowy	sample-2026-11-10_05-32-34-148.txt
+4472	$c1 has succeeded in upgrading equipment and obtained a $s2.	nowy	sample-2026-11-10_05-32-34-148.txt;sample-2026-11-10_05-32-39-368.txt
+4516	You were dismissed from the clan. You cannot join another clan for $s1 minutes.	nowy	sample-2026-11-10_05-34-18-215.txt
+4518	If you are dismissed from or leave a clan, you cannot join another clan for $s1 minutes.	nowy	sample-2026-11-10_05-34-18-215.txt
+4601	- Great P. Def. and skillful Shield Defense<br>- Increased P. Def. for the whole party<br>- Protect party members	nowy	sample-2026-11-10_05-34-04-808.txt
+4602	By the will of the Chaos, the power of Abelius, the Golden Commander of the ancient giants, has been combined with the ancient po...	nowy, ucięty w oknie	sample-2026-11-10_05-34-04-808.txt
+4605	- Great P. Def. and skillful Shield Defense<br>-Increased P. Def. for the whole party<br>- HP/MP Recovery Cubic	nowy	sample-2026-11-10_05-34-04-808.txt
+4621	- Balanced Critical Damage and Critical Rate<br>- Highest survival rate among similar classes	nowy	sample-2026-11-10_05-30-26-332.txt;sample-2026-11-10_05-33-47-491.txt;sample-2026-11-10_05-33-54-255.txt
+4623	- High Critical Rate<br>- Quick Evasion and Speed	nowy	sample-2026-11-10_05-33-47-491.txt;sample-2026-11-10_05-33-54-255.txt
+4625	- High Critical Damage<br>- Reflect Atk. Skill damage	nowy	sample-2026-11-10_05-30-26-332.txt;sample-2026-11-10_05-33-47-491.txt;sample-2026-11-10_05-33-54-255.txt
+4626	By the will of the Chaos, the power of Ashagen, the greatest assassin of the giants, has been combined with the ancient power o...	nowy, ucięty w oknie	sample-2026-11-10_05-33-47-491.txt;sample-2026-11-10_05-33-54-255.txt
+4629	- Balanced Critical Damage and Critical Rate<br>- Stable damage-dealing	nowy	sample-2026-11-10_05-30-26-332.txt;sample-2026-11-10_05-33-47-491.txt;sample-2026-11-10_05-33-54-255.txt
+4633	- Highest P. Atk. among similar classes<br>- Great damage dealt in short time	nowy	sample-2026-11-10_05-30-26-332.txt
+4659	- Summoner specializing in Critical Damage <br>- Able to use unicorn-type servitors	nowy	sample-2026-11-10_05-33-47-491.txt;sample-2026-11-10_05-33-54-255.txt
+4669	Melee Damage Dealer	nowy	sample-2026-11-10_05-30-26-332.txt
+4672	Magic Damage Dealer	nowy	sample-2026-11-10_05-30-26-332.txt
+4673	- Specializes in magical two-handed weapons<br> - Close-range Damage Spells<br> - Uses Wind for Defense	nowy	sample-2026-11-10_05-30-26-332.txt
+4694	Earned the Clan Development Points.	nowy	sample-2026-11-10_05-32-55-374.txt
+4695	You earned $s1 Clan Reputation Points for your clan.	nowy	sample-2026-11-10_05-32-55-374.txt
+4756	Show damage during a battle.	nowy	sample-2026-11-10_05-30-26-332.txt
+4758	Show damage.	nowy	sample-2026-11-10_05-30-32-414.txt
+4803	Turn on or off all my damage text.	nowy	sample-2026-11-10_05-30-32-414.txt
+4808	Display my normal damage.	nowy	sample-2026-11-10_05-30-32-414.txt;sample-2026-11-10_05-30-36-944.txt
+4809	Display my constant damage.	nowy	sample-2026-11-10_05-30-32-414.txt;sample-2026-11-10_05-30-36-944.txt
+4810	Display my critical hits.	nowy	sample-2026-11-10_05-33-47-491.txt;sample-2026-11-10_05-33-54-255.txt
+4815	Turn on or off all damage text of attack targets.	nowy	sample-2026-11-10_05-30-32-414.txt;sample-2026-11-10_05-30-36-944.txt
+4816	Display normal damage of attack targets.	nowy	sample-2026-11-10_05-30-32-414.txt;sample-2026-11-10_05-30-36-944.txt
+4817	Display constant damage of attack targets.	nowy	sample-2026-11-10_05-30-32-414.txt;sample-2026-11-10_05-30-36-944.txt
+4818	Display critical hits of attack targets.	nowy	sample-2026-11-10_05-33-54-255.txt
+4824	Turn on or off all damage text of recovery targets.	nowy	sample-2026-11-10_05-30-32-414.txt;sample-2026-11-10_05-30-36-944.txt
+4827	Display critical hits of recovery targets.	nowy	sample-2026-11-10_05-33-54-255.txt
+4829	Turn on or off all damage text of pets and servitors.	nowy	sample-2026-11-10_05-30-32-414.txt;sample-2026-11-10_05-30-36-944.txt
+4833	Display normal damage of pets and servitors.	nowy	sample-2026-11-10_05-30-32-414.txt;sample-2026-11-10_05-30-36-944.txt
+4834	Display constant damage of pets and servitors.	nowy	sample-2026-11-10_05-30-32-414.txt;sample-2026-11-10_05-30-36-944.txt
+4835	Display critical hits of pets and servitors.	nowy	sample-2026-11-10_05-33-54-255.txt
+4856	Learn new skills or use learned skills.	nowy	sample-2026-11-10_05-32-55-374.txt
+4891	Enable or disable the damage texts of every object.	nowy	sample-2026-11-10_05-30-32-414.txt;sample-2026-11-10_05-30-36-944.txt
+5138	$s1 Attribute Critical Rate	nowy	sample-2026-11-10_05-33-54-255.txt
+5139	$s1 Attribute Critical Damage	nowy	sample-2026-11-10_05-30-36-944.txt;sample-2026-11-10_05-33-54-255.txt
+5170	Obtained $s2 Attribute XP of $s1.	nowy	sample-2026-11-10_05-32-34-148.txt;sample-2026-11-10_05-32-39-368.txt
+5174	$s1 Attack Critical is activated.	nowy	sample-2026-11-10_05-33-54-255.txt
+5176	$s1 has delivered $s3 (Attribute Damage: $s4) to $s2.	nowy	sample-2026-11-10_05-30-32-414.txt;sample-2026-11-10_05-30-36-944.txt
+5177	$s1 has received $s3 (Attribute Damage: $s4) from $s2.	nowy	sample-2026-11-10_05-30-36-944.txt
+5178	$s1 has delivered $s3 (Attribute Damage: $s5) to $s2, $s4 damage to the damage transference target.	nowy	sample-2026-11-10_05-30-36-944.txt
+5181	You have obtained an Attribute. Open your Character Information Screen to check.	nowy	sample-2026-11-10_05-32-34-148.txt;sample-2026-11-10_05-32-39-368.txt
+5201	<$s1> has obtained at <$s2>! <$s3>	nowy	sample-2026-11-10_05-32-34-148.txt;sample-2026-11-10_05-32-39-368.txt
+5202	$s1 has obtained at $s2!	nowy	sample-2026-11-10_05-32-34-148.txt;sample-2026-11-10_05-32-39-368.txt
+5208	Artifact upgrade succeeded and you obtained $s1.	nowy	sample-2026-11-10_05-32-39-368.txt
+5554	Dismissed $s1 from the group.	nowy	sample-2026-11-10_05-34-18-215.txt
+6011	You acquired $s1 XP and $s2 SP. (You receive $s3%% more XP as a reward.)	inny	sample-2026-11-10_05-33-12-150.txt
+6045	$c1 acquired the April Fools’ Day Spedial Gift.	inny	sample-2026-11-10_05-33-12-150.txt
+6053	You have earned $s1's XP through the PC Bonus.	inny	sample-2026-11-10_05-32-55-374.txt
+6054	You have earned $s1's Fame through the PC Bonus.	inny	sample-2026-11-10_05-32-55-374.txt
+6130	An Ink Herb was obtained, replenishing the Small Bard's Ink.	nowy	sample-2026-11-10_05-32-39-368.txt
+6131	A Great Ink Herb was obtained, replenishing the Small Bard's Ink.	nowy	sample-2026-11-10_05-32-39-368.txt
+6136	You have acquired a clan hall of higher value than the Provisional Clan Hall. #The Provisional Clan Hall ownership will automaticall...	nowy, ucięty w oknie	sample-2026-11-10_05-33-12-150.txt
+6138	You have completed training in the Royal Training Camp, and obtained $s1 XP and $s2 SP.	nowy	sample-2026-11-10_05-32-39-368.txt
+6141	Congratulations! $c1 has obtained $s2 of $s3 through Fortune Reading.	nowy	sample-2026-11-10_05-32-39-368.txt
+6142	Congratulations! $c1 has obtained $s2 of $s3 in the Luxury Fortune Reading.	nowy	sample-2026-11-10_05-32-39-368.txt
+6161	Calculating XP and SP obtained from training...	nowy, ucięty w oknie	sample-2026-11-10_05-32-39-368.txt
+7236	Awakened skills cannot be learned again.	nowy	sample-2026-11-10_05-32-55-374.txt
+7319	The SP for skills you learned for your 3rd class will be refunded when you learn the 4th class skills.	nowy	sample-2026-11-10_05-32-55-374.txt
+7320	The SP for skills you haven't learned for your 3rd class will not be refunded when you learn the 4th class skills.	nowy	sample-2026-11-10_05-32-55-374.txt
+7418	You've used $s1 Shield Capsules. You'll be protected from PK for a set amount of time.	nowy	sample-2026-11-10_05-34-04-808.txt
+7419	Not enough Shield Capsules to use the function.	nowy	sample-2026-11-10_05-34-04-808.txt
+7420	Cannot use Shield Capsules.	nowy	sample-2026-11-10_05-34-04-808.txt
+7421	The Shield Capsule has been canceled.	nowy	sample-2026-11-10_05-34-04-808.txt
+7422	You've obtained $s1 Dragon Coins as a reward for leveling up.	nowy	sample-2026-11-10_05-32-39-368.txt
+7424	You've obtained $s1 Dragon Coins from the Dragon Coin Pouch.	nowy	sample-2026-11-10_05-32-39-368.txt

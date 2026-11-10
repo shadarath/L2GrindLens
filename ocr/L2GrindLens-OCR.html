@@ -1,0 +1,758 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>L2GrindLens OCR</title>
+<style>
+/* Układ: pasek narzędzi u góry, dwie kolumny (przechwytywanie | dziennik zdarzeń), poniżej 900px jedna kolumna. */
+:root {
+  --bg: #f1efe9; --panel: #ffffff; --fg: #1f1d19; --muted: #6d6a62; --line: #d9d5ca;
+  --accent: #a84b22; --accent-fg: #ffffff; --ok: #2c7a4b; --warn: #a8731c; --bad: #ad3328;
+  --sel: rgba(168, 75, 34, .22); --mono: ui-monospace, "Cascadia Mono", Consolas, monospace;
+  --sans: system-ui, "Segoe UI", Roboto, sans-serif;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #14151a; --panel: #1d1f26; --fg: #e9e6dd; --muted: #9b988f; --line: #32353e;
+    --accent: #e3794c; --accent-fg: #14151a; --ok: #62c48b; --warn: #e3ab3f; --bad: #e46a5e;
+    --sel: rgba(227, 121, 76, .28); color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #14151a; --panel: #1d1f26; --fg: #e9e6dd; --muted: #9b988f; --line: #32353e;
+  --accent: #e3794c; --accent-fg: #14151a; --ok: #62c48b; --warn: #e3ab3f; --bad: #e46a5e;
+  --sel: rgba(227, 121, 76, .28); color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--bg); color: var(--fg); font: 14px/1.45 var(--sans); padding-inline: 16px; padding-block: 0 24px; }
+h1 { font-size: 18px; margin: 0; letter-spacing: .01em; }
+h2 { font-size: 13px; margin: 0 0 8px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+header { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 18px; padding-block: 12px; border-bottom: 1px solid var(--line); margin-bottom: 14px; }
+#status { color: var(--muted); flex: 1 1 240px; min-width: 0; }
+#status.bad { color: var(--bad); } #status.ok { color: var(--ok); }
+main { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 16px; }
+@media (max-width: 900px) { main { grid-template-columns: 1fr; } }
+section { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 12px; min-width: 0; }
+.stack { display: flex; flex-direction: column; gap: 12px; }
+.row { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; }
+button { font: inherit; padding: 6px 12px; border-radius: 4px; border: 1px solid var(--line); background: var(--panel); color: var(--fg); cursor: pointer; }
+button:hover { border-color: var(--accent); }
+button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+button.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+button:disabled { opacity: .5; cursor: default; }
+label { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); }
+input[type=number], select { font: inherit; padding: 4px 6px; border: 1px solid var(--line); border-radius: 4px; background: var(--panel); color: var(--fg); width: 5.5em; }
+input[type=range] { width: 120px; }
+#preview { width: 100%; max-width: 100%; display: block; background: #000; border-radius: 4px; cursor: crosshair; touch-action: none; }
+#ocrView { max-width: 100%; display: block; background: #fff; border: 1px solid var(--line); }
+.hint { color: var(--muted); font-size: 12.5px; }
+#log { font-family: var(--mono); font-size: 12.5px; max-height: 60vh; overflow: auto; border-top: 1px solid var(--line); }
+.ev { display: grid; grid-template-columns: 82px 86px minmax(0, 1fr); gap: 8px; padding: 3px 0; border-bottom: 1px solid var(--line); font-variant-numeric: tabular-nums; }
+.ev .t { color: var(--muted); }
+.ev .k { font-weight: 600; }
+.k.dmg_dealt, .k.crit { color: var(--accent); } .k.dmg_received { color: var(--bad); } .k.exp { color: var(--warn); } .k.item { color: var(--ok); }
+.k.other, .k.msg, .k.dmg_other, .k.cooldown, .k.cast_fail, .k.range, .k.resource { color: var(--muted); font-weight: 400; }
+.k.level_up { color: var(--ok); } .k.death { color: var(--bad); }
+.k .t { font-weight: 400; }
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; }
+.stat b { display: block; font-size: 18px; font-variant-numeric: tabular-nums; }
+.stat span { color: var(--muted); font-size: 12px; }
+textarea { width: 100%; min-height: 150px; font: 12px/1.4 var(--mono); border: 1px solid var(--line); border-radius: 4px; background: var(--panel); color: var(--fg); padding: 6px; resize: vertical; }
+details summary { cursor: pointer; color: var(--muted); }
+#patternsErr { color: var(--bad); font-size: 12.5px; }
+.pill { display: inline-block; padding: 1px 8px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); font-size: 12px; }
+.pill.on { border-color: var(--ok); color: var(--ok); }
+</style>
+</head>
+<body>
+<header>
+  <h1>L2GrindLens OCR</h1>
+  <span id="capState" class="pill">brak źródła</span>
+  <span id="dbState" class="pill">baza: brak</span>
+  <span id="status">Gotowy. Wybierz okno gry albo wczytaj zrzut ekranu.</span>
+</header>
+
+<main>
+  <div class="stack">
+    <section>
+      <h2>1. Źródło obrazu</h2>
+      <div class="row">
+        <button id="btnShare" class="primary">Wybierz okno gry</button>
+        <label>lub zrzut ekranu <input type="file" id="fileShot" accept="image/*"></label>
+        <button id="btnSample">Test na próbce</button>
+      </div>
+      <p class="hint">Gra musi działać w oknie lub w trybie borderless. Po wybraniu okna zaznacz myszą obszar z czatem systemowym.</p>
+      <canvas id="preview" width="640" height="360"></canvas>
+      <div class="row" style="margin-top:8px">
+        <span class="hint">Obszar: <span id="regionInfo">nie zaznaczony</span></span>
+        <button id="btnRegionReset">Zaznacz od nowa</button>
+        <button id="btnRegionAll">Cały obraz</button>
+      </div>
+    </section>
+
+    <section>
+      <h2>2. Obróbka i OCR</h2>
+      <div class="row">
+        <label>klatek/s <select id="fps"><option>2</option><option>3</option><option selected>4</option><option>5</option><option>8</option></select></label>
+        <label>powiększenie <select id="scale"><option>1.5</option><option selected>2</option><option>3</option></select></label>
+        <label>próg <input type="range" id="thr" min="40" max="240" value="140"> <span id="thrVal">140</span></label>
+        <label><input type="checkbox" id="bright" checked> tylko jasny tekst</label>
+        <label><input type="checkbox" id="baseline" checked> pierwsza klatka to punkt odniesienia</label>
+      </div>
+      <div class="row" style="margin-top:8px">
+        <label><input type="checkbox" id="useDb" checked> dopasowuj do bazy komunikatów</label>
+        <label>imię postaci <input type="text" id="playerName" placeholder="np. Shad" style="width:9em;font:inherit;padding:4px 6px;border:1px solid var(--line);border-radius:4px;background:var(--panel);color:var(--fg)"></label>
+        <span class="hint">Imię pozwala odróżnić Twoje obrażenia od obrażeń innych postaci w komunikatach typu "$c1 has inflicted...".</span>
+      </div>
+      <div class="row" style="margin-top:8px">
+        <button id="btnStart" class="primary" disabled>Start</button>
+        <button id="btnStop" disabled>Stop</button>
+        <button id="btnOnce" disabled>Rozpoznaj raz</button>
+        <button id="btnSaveSample" disabled>Zapisz próbkę do analizy</button>
+      </div>
+      <p class="hint">"Zapisz próbkę" przy pierwszym użyciu prosi o folder (np. <code>ocr\samples</code> w projekcie), potem każde kliknięcie zapisuje tam ostatnią klatkę: wycinek kolorowy, obraz po obróbce i plik tekstowy z surowym wynikiem OCR, liniami po czyszczeniu, zdarzeniami i ustawieniami.</p>
+      <p class="hint">Podgląd tego, co widzi OCR (czarny tekst na białym tle). Jeśli litery są poszarpane, zmień próg lub powiększenie.</p>
+      <canvas id="ocrView" width="400" height="60"></canvas>
+      <details style="margin-top:8px">
+        <summary>Surowy wynik OCR ostatniej klatki</summary>
+        <pre id="rawOcr" style="font:12px/1.4 var(--mono); white-space:pre-wrap; margin:6px 0 0"></pre>
+      </details>
+    </section>
+
+    <section>
+      <h2>Wzorce zapasowe</h2>
+      <details>
+        <summary>Edytuj wzorce (JSON, wyrażenia regularne z nazwanymi grupami)</summary>
+        <p class="hint">Używane dopiero, gdy linia nie pasuje do żadnego szablonu z bazy komunikatów. Grupy <code>dmg</code>, <code>exp</code>, <code>sp</code>, <code>qty</code> są zamieniane na liczby z poprawką typowych pomyłek OCR (O→0, l→1). Szablony wyciągniesz ze zdekodowanego systemmsg.</p>
+        <textarea id="patterns" spellcheck="false"></textarea>
+        <div class="row" style="margin-top:6px"><button id="btnPatternsReset">Przywróć domyślne wzorce</button><span id="patternsErr"></span></div>
+      </details>
+    </section>
+  </div>
+
+  <div class="stack">
+    <section>
+      <h2>Statystyki</h2>
+      <div class="stats">
+        <div class="stat"><b id="sEvents">0</b><span>zdarzeń</span></div>
+        <div class="stat"><b id="sFrames">0</b><span>klatek pobranych</span></div>
+        <div class="stat"><b id="sOcr">0</b><span>klatek w OCR</span></div>
+        <div class="stat"><b id="sMs">–</b><span>ms na OCR (śr.)</span></div>
+        <div class="stat"><b id="sDmg">0</b><span>obrażeń zadanych</span></div>
+        <div class="stat"><b id="sDmgIn">0</b><span>obrażeń otrzymanych</span></div>
+        <div class="stat"><b id="sExp">0</b><span>exp</span></div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Dziennik zdarzeń</h2>
+      <div class="row" style="margin-bottom:8px">
+        <button id="btnJsonl">Pobierz JSONL</button>
+        <button id="btnCsv">Pobierz CSV</button>
+        <button id="btnCopy">Kopiuj JSONL</button>
+        <button id="btnClear">Wyczyść</button>
+      </div>
+      <div id="log"></div>
+    </section>
+  </div>
+</main>
+
+<script src="systemmsg.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js"></script>
+<script>
+(() => {
+const $ = id => document.getElementById(id);
+
+const NUM = "[0-9OolI|,.]+";
+const DEFAULT_PATTERNS = [
+  // Gracia i nowsze: komunikaty z imieniem postaci
+  { type: "dmg_dealt",    regex: "^(?<src>[A-Za-z0-9_]+) has inflicted (?<dmg>" + NUM + ") damage on (?<target>.+?)[.,]?$" },
+  { type: "dmg_received", regex: "^(?<target>[A-Za-z0-9_]+) has received (?<dmg>" + NUM + ") damage from (?<src>.+?)[.,]?$" },
+  { type: "exp",          regex: "^You have acquired (?<exp>" + NUM + ") XP(?: and (?<sp>" + NUM + ") SP)?" },
+  // Starsze chroniki
+  { type: "dmg_dealt",    regex: "^You hit (?:for )?(?<dmg>" + NUM + ") damage" },
+  { type: "dmg_received", regex: "^(?<src>.+?) hit you for (?<dmg>" + NUM + ") damage" },
+  { type: "exp",          regex: "^You have earned (?<exp>" + NUM + ") experience(?: and (?<sp>" + NUM + ") SP)?" },
+  // Wspólne
+  { type: "item",         regex: "^You have earned (?<qty>" + NUM + ") (?<item>.+?)[.,]?$" },
+  { type: "item",         regex: "^You have earned (?<item>.+?)[.,]?$" },
+  { type: "crit",         regex: "^Critical hit" },
+  { type: "block",        regex: "shield defense has succeeded" },
+  { type: "item",         regex: "^You have obtained (?<qty>" + NUM + ") (?<item>.+?)[.,]?$" },
+  { type: "item",         regex: "^You have obtained (?<item>.+?)[.,]?$" },
+  { type: "skill",        regex: "^You use (?<skill>.+?)[.,]?$" },
+  { type: "cooldown",     regex: "re-use time" },
+  { type: "miss",         regex: "^You have missed|has evaded|^You avoided|attack has failed" },
+];
+const PATTERNS_KEY = 'patterns.v3';
+// Typowe pomyłki OCR w słowach kluczowych (rn czytane jako m itp.)
+const OCR_FIXES = [
+  [/\beamed\b/g, 'earned'], [/\bdarnage\b/g, 'damage'], [/\bobtamed\b/g, 'obtained'],
+  [/\binfl[1i]cted\b/g, 'inflicted'], [/\brece[1i]ved\b/g, 'received'], [/\bacqu[1i]red\b/g, 'acquired'],
+];
+
+const state = {
+  source: null, kind: null, stream: null, region: null,
+  running: false, timer: null, busy: false,
+  worker: null, workerReady: false,
+  prevLines: null, prevSig: null, firstFrame: true,
+  events: [], patterns: [],
+  last: null, dirHandle: null, sampleNo: 0,
+  stats: { frames: 0, ocr: 0, ocrMsTotal: 0, dmg: 0, dmgIn: 0, exp: 0 },
+};
+
+const preview = $('preview'), pctx = preview.getContext('2d');
+const work = document.createElement('canvas'), wctx = work.getContext('2d', { willReadFrequently: true });
+const ocrView = $('ocrView'), octx = ocrView.getContext('2d');
+const sample = document.createElement('canvas');
+const lastSrc = document.createElement('canvas'), lastOcr = document.createElement('canvas');
+const video = document.createElement('video'); video.muted = true; video.playsInline = true;
+
+// ---------- pomocnicze ----------
+function status(msg, cls) { $('status').textContent = msg; $('status').className = cls || ''; }
+function store(k, v) { try { localStorage.setItem('l2gl.' + k, JSON.stringify(v)); } catch (e) {} }
+function load(k, d) { try { const v = localStorage.getItem('l2gl.' + k); return v === null ? d : JSON.parse(v); } catch (e) { return d; } }
+function srcSize() {
+  const s = state.source;
+  if (!s) return [0, 0];
+  if (s === video) return [video.videoWidth, video.videoHeight];
+  if (s instanceof HTMLImageElement) return [s.naturalWidth, s.naturalHeight];
+  return [s.width, s.height];
+}
+function setCapState(txt, on) { const el = $('capState'); el.textContent = txt; el.className = 'pill' + (on ? ' on' : ''); }
+function updateButtons() {
+  const has = !!state.source && !!state.region;
+  $('btnStart').disabled = !has || state.running || state.kind !== 'video';
+  $('btnStop').disabled = !state.running;
+  $('btnOnce').disabled = !has || state.running;
+}
+
+// ---------- wzorce ----------
+function compilePatterns(text) {
+  try {
+    const arr = JSON.parse(text);
+    state.patterns = arr.map(p => ({ type: p.type, re: new RegExp(p.regex, 'i') }));
+    $('patternsErr').textContent = '';
+    store(PATTERNS_KEY, text);
+  } catch (e) {
+    $('patternsErr').textContent = 'Błąd we wzorcach: ' + e.message;
+  }
+}
+function toNum(v) {
+  const s = v.replace(/[oO]/g, '0').replace(/[lI|]/g, '1').replace(/[^0-9]/g, '');
+  return s ? parseInt(s, 10) : null;
+}
+// ---------- baza komunikatów (systemmsg.js) ----------
+// id komunikatu -> [typ zdarzenia, mapowanie pól: nazwa -> placeholder]
+const MSG_TYPES = {
+  35: ['dmg_dealt', { dmg: 's1' }], 36: ['dmg_received', { src: 'c1', dmg: 's2' }],
+  2261: ['dmg_dealt', { src: 'c1', dmg: 's3', target: 'c2' }], 2281: ['dmg_dealt', { src: 'c1', dmg: 's3', target: 'c2' }],
+  5176: ['dmg_dealt', { src: 's1', dmg: 's3', target: 's2' }],
+  2262: ['dmg_received', { target: 'c1', dmg: 's3', src: 'c2' }], 2263: ['dmg_received', { target: 'c1', dmg: 's3', src: 'c2' }],
+  2270: ['dmg_received', { target: 'c1', dmg: 's2' }], 5177: ['dmg_received', { target: 's1', dmg: 's3', src: 's2' }],
+  1027: ['dmg_pet', { dmg: 's2', src: 'c1' }], 1130: ['dmg_dealt', { dmg: 's1' }],
+  45: ['exp', { exp: 's1' }], 95: ['exp', { exp: 's1', sp: 's2' }], 3259: ['exp', { exp: 's1', sp: 's3' }],
+  6011: ['exp', { exp: 's1', sp: 's2' }], 331: ['exp', { sp: 's1' }], 362: ['exp', { exp: 's1' }], 1014: ['exp_pet', { exp: 's1' }],
+  28: ['item', { qty: 's1', item: '=Adena' }], 29: ['item', { qty: 's2', item: 's1' }], 30: ['item', { item: 's1' }],
+  52: ['item', { qty: 's1', item: '=Adena' }], 53: ['item', { qty: 's2', item: 's1' }], 54: ['item', { item: 's1' }],
+  277: ['item', { item: 's1' }], 369: ['item', { item: 's2' }], 1666: ['item', { item: 's2' }], 3073: ['item', { qty: 's2', item: 's1' }],
+  299: ['item_party', { who: 'c1', qty: 's3', item: 's2' }], 300: ['item_party', { who: 'c1', item: 's2' }],
+  1379: ['item_party', { who: 'c1', qty: 's2', item: '=Adena' }], 1661: ['item_party', { who: 'c1', qty: 's3', item: 's2' }],
+  44: ['crit', {}], 2266: ['crit', { src: 'c1' }], 1017: ['crit_pet', {}], 1028: ['crit_pet', {}], 1280: ['crit', {}],
+  43: ['miss', {}], 2264: ['miss', { who: 'c1', src: 'c2' }], 2265: ['miss', { src: 'c1' }], 2268: ['miss', { src: 'c1' }],
+  2267: ['resist', { who: 'c1', src: 'c2' }], 2269: ['resist', { who: 'c1', src: 'c2' }], 2271: ['resist', { who: 'c1', src: 'c2' }],
+  111: ['block', {}], 1281: ['block', {}],
+  46: ['skill', { skill: 's1' }], 47: ['skill', { skill: 's1' }], 48: ['cooldown', { skill: 's1' }],
+  2303: ['cooldown', { skill: 's1', sec: 's2' }],
+  27: ['cast_fail', {}], 748: ['cast_fail', {}], 1299: ['cast_fail', { who: 'c1' }], 158: ['miss', {}],
+  22: ['range', {}], 2193: ['range', {}], 23: ['resource', { what: '=HP' }], 24: ['resource', { what: '=MP' }],
+  112: ['resource', { what: '=arrows' }], 129: ['inventory', {}], 422: ['inventory', {}],
+  55: ['pickup_fail', { qty: 's1', item: '=Adena' }], 56: ['pickup_fail', { item: 's1' }], 57: ['pickup_fail', { qty: 's2', item: 's1' }],
+  96: ['level_up', {}], 2344: ['death', { src: 'c1' }],
+};
+const templates = [];            // {id, re, literal, phCount}
+const tplIndex = new Map();      // pierwsze słowo -> lista szablonów (posortowana od najbardziej szczegółowego)
+function buildTemplates(db) {
+  const escape = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  for (const [idStr, raw] of Object.entries(db)) {
+    if (/<br>|<font|\$s\d\$|^\$[sc]\d\.?$/.test(raw)) continue;
+    let text = raw.trim().replace(/\s+/g, ' ').replace(/[.!]$/, '');
+    const parts = text.split(/(\$[sc]\d)/);
+    const seen = new Set();
+    let literal = 0, phCount = 0, src = '^';
+    for (const part of parts) {
+      if (/^\$[sc]\d$/.test(part)) {
+        const name = part.slice(1);
+        phCount++;
+        src += seen.has(name) ? '(.+?)' : `(?<${name}>.+?)`;
+        seen.add(name);
+      } else if (part) {
+        literal += part.replace(/\s/g, '').length;
+        src += escape(part).replace(/ /g, '\\s+');
+      }
+    }
+    if (literal < 4) continue;
+    src += '\\s*[.,!]?$';
+    let re;
+    try { re = new RegExp(src, 'i'); } catch (e) { continue; }
+    const first = /^[A-Za-z]/.test(text) ? text.split(/\s+/)[0].toLowerCase().replace(/[^a-z]/g, '') : '*';
+    const t = { id: +idStr, re, literal, phCount, first };
+    templates.push(t);
+    if (!tplIndex.has(first)) tplIndex.set(first, []);
+    tplIndex.get(first).push(t);
+  }
+  const order = (a, b) => b.literal - a.literal || b.phCount - a.phCount;
+  for (const list of tplIndex.values()) list.sort(order);
+}
+const candCache = new Map();
+function matchTemplate(line) {
+  const first = line.split(/\s+/)[0].toLowerCase().replace(/[^a-z]/g, '');
+  let cands = candCache.get(first);
+  if (!cands) {
+    cands = (tplIndex.get(first) || []).concat(tplIndex.get('*') || []);
+    cands.sort((a, b) => b.literal - a.literal || b.phCount - a.phCount);
+    candCache.set(first, cands);
+  }
+  for (const t of cands) {
+    const m = t.re.exec(line);
+    if (m) return { id: t.id, groups: m.groups || {} };
+  }
+  return null;
+}
+function fromTemplate(m) {
+  const def = MSG_TYPES[m.id];
+  const fields = { id: m.id };
+  let type = 'msg';
+  if (def) {
+    type = def[0];
+    for (const [name, ph] of Object.entries(def[1])) {
+      const v = ph.startsWith('=') ? ph.slice(1) : m.groups[ph];
+      if (v === undefined) continue;
+      fields[name] = /^(dmg|exp|sp|qty)$/.test(name) ? toNum(v) : v.trim();
+    }
+    const me = ($('playerName').value || '').trim().toLowerCase();
+    if (me) {
+      if (type === 'dmg_dealt' && fields.src && fields.src.toLowerCase() !== me) type = 'dmg_other';
+      if (type === 'dmg_received' && fields.target && fields.target.toLowerCase() !== me) type = 'dmg_other';
+    }
+  } else {
+    for (const [k, v] of Object.entries(m.groups)) if (v !== undefined) fields[k] = v.trim();
+  }
+  return { type, fields };
+}
+
+function classify(text) {
+  if ($('useDb').checked && templates.length) {
+    const m = matchTemplate(text);
+    if (m) return fromTemplate(m);
+  }
+  for (const p of state.patterns) {
+    const m = p.re.exec(text);
+    if (!m) continue;
+    const fields = {};
+    for (const [k, v] of Object.entries(m.groups || {})) {
+      if (v === undefined) continue;
+      fields[k] = /^(dmg|exp|sp|qty)$/.test(k) ? toNum(v) : v.trim();
+    }
+    return { type: p.type, fields };
+  }
+  return { type: 'other', fields: {} };
+}
+
+// ---------- obraz ----------
+function grabFrame() {
+  const r = state.region, S = +$('scale').value;
+  work.width = Math.max(8, Math.round(r.w * S));
+  work.height = Math.max(8, Math.round(r.h * S));
+  wctx.imageSmoothingEnabled = true;
+  wctx.drawImage(state.source, r.x, r.y, r.w, r.h, 0, 0, work.width, work.height);
+  // kopia kolorowego wycinka w oryginalnej skali, do zapisu próbki
+  lastSrc.width = Math.max(1, Math.round(r.w)); lastSrc.height = Math.max(1, Math.round(r.h));
+  lastSrc.getContext('2d').drawImage(state.source, r.x, r.y, r.w, r.h, 0, 0, lastSrc.width, lastSrc.height);
+  const img = wctx.getImageData(0, 0, work.width, work.height), d = img.data;
+  const thr = +$('thr').value, bright = $('bright').checked;
+  let sum = 0;
+  for (let i = 0; i < d.length; i += 4) sum += (d[i] * 299 + d[i + 1] * 587 + d[i + 2] * 114) / 1000;
+  const darkBg = sum / (d.length / 4) < 128;
+  for (let i = 0; i < d.length; i += 4) {
+    let text;
+    if (bright) text = Math.max(d[i], d[i + 1], d[i + 2]) > thr;
+    else { let l = (d[i] * 299 + d[i + 1] * 587 + d[i + 2] * 114) / 1000; if (darkBg) l = 255 - l; text = l < thr; }
+    const v = text ? 0 : 255;
+    d[i] = d[i + 1] = d[i + 2] = v; d[i + 3] = 255;
+  }
+  wctx.putImageData(img, 0, 0);
+  // podgląd
+  const vw = Math.min(work.width, preview.clientWidth || 600), vh = Math.round(work.height * vw / work.width);
+  ocrView.width = vw; ocrView.height = vh;
+  octx.drawImage(work, 0, 0, vw, vh);
+  return img;
+}
+function signature(img) {
+  const cols = 32, rows = 8, sig = new Float32Array(cols * rows);
+  const cw = img.width / cols, ch = img.height / rows, d = img.data;
+  for (let y = 0; y < img.height; y++) for (let x = 0; x < img.width; x++) {
+    if (d[(y * img.width + x) * 4] === 0) sig[Math.min(rows - 1, (y / ch) | 0) * cols + Math.min(cols - 1, (x / cw) | 0)]++;
+  }
+  const cell = cw * ch;
+  for (let i = 0; i < sig.length; i++) sig[i] /= cell;
+  return sig;
+}
+function changed(sig) {
+  if (!state.prevSig) return true;
+  let diff = 0;
+  for (let i = 0; i < sig.length; i++) diff += Math.abs(sig[i] - state.prevSig[i]);
+  return diff / sig.length > 0.003;
+}
+
+// ---------- czyszczenie linii ----------
+// 1. usuwa śmieci z ikon przy lewej krawędzi, 2. odrzuca linie bez sensownej treści,
+// 3. skleja linie zawinięte w oknie czatu (komunikat kończy się kropką, wykrzyknikiem lub pytajnikiem).
+function cleanLines(text) {
+  const raw = text.split('\n').map(s => s.trim()).filter(Boolean);
+  const out = [];
+  for (let s of raw) {
+    s = s.replace(/^[^A-Za-z0-9]+/, '');               // ikony, myślniki, cudzysłowy
+    s = s.replace(/^\S{1,3}\s+(?=[A-Z])/, '');          // krótki śmieć z ikony przed komunikatem ("77 You have...", "br) You...")
+    s = s.replace(/\s{2,}/g, ' ').trim();
+    for (const [re, rep] of OCR_FIXES) s = s.replace(re, rep);
+    const terminated = t => /[.!?,]$/.test(t);
+    const realWords = s.split(' ').filter(w => w.replace(/[^A-Za-z0-9]/g, '').length >= 3).length;
+    const prev = out[out.length - 1];
+    if (realWords < 2) {
+      // fragment typu "time," albo "Lieutenant." to końcówka zawiniętej linii; samotne śmieci odpadają
+      if (prev !== undefined && !terminated(prev)) out[out.length - 1] = prev + ' ' + s;
+      continue;
+    }
+    if (prev !== undefined && !terminated(prev) && (/^[a-z]/.test(s) || s.split(' ').length <= 3)) {
+      out[out.length - 1] = prev + ' ' + s;
+    } else {
+      out.push(s);
+    }
+  }
+  return out;
+}
+
+// ---------- porównywanie linii ----------
+function norm(s) { return s.toLowerCase().replace(/[^a-z0-9ąćęłńóśźż ]+/g, ' ').replace(/\s+/g, ' ').trim(); }
+function sim(a, b) {
+  a = norm(a); b = norm(b);
+  if (a === b) return 1;
+  const m = a.length, n = b.length;
+  if (!m || !n) return 0;
+  let prev = new Array(n + 1), cur = new Array(n + 1);
+  for (let j = 0; j <= n; j++) prev[j] = j;
+  for (let i = 1; i <= m; i++) {
+    cur[0] = i;
+    for (let j = 1; j <= n; j++) cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+    [prev, cur] = [cur, prev];
+  }
+  return 1 - prev[n] / Math.max(m, n);
+}
+function newLines(prev, cur) {
+  const T = 0.8;
+  for (let k = Math.min(prev.length, cur.length); k >= 1; k--) {
+    let ok = true;
+    for (let i = 0; i < k && ok; i++) if (sim(prev[prev.length - k + i], cur[i]) < T) ok = false;
+    if (ok) return cur.slice(k);
+  }
+  return cur.filter(c => !prev.some(p => sim(p, c) >= T));
+}
+
+// ---------- OCR ----------
+async function ensureWorker() {
+  if (state.workerReady) return;
+  if (typeof Tesseract === 'undefined') throw new Error('Biblioteka OCR nie została wczytana. Sprawdź połączenie z internetem.');
+  status('Wczytuję silnik OCR (za pierwszym razem kilkanaście MB)...');
+  state.worker = await Tesseract.createWorker('eng', 1, {
+    logger: m => { if (m.status && m.progress !== undefined) status(`OCR: ${m.status} ${Math.round(m.progress * 100)}%`); }
+  });
+  await state.worker.setParameters({ tessedit_pageseg_mode: '6', preserve_interword_spaces: '1' });
+  state.workerReady = true;
+  status('Silnik OCR gotowy.', 'ok');
+}
+
+async function processFrame(frameTime) {
+  if (state.busy || !state.source || !state.region) return [];
+  state.busy = true;
+  try {
+    state.stats.frames++;
+    const img = grabFrame();
+    const sig = signature(img);
+    if (!changed(sig)) return [];
+    state.prevSig = sig;
+
+    const t0 = performance.now();
+    const { data } = await state.worker.recognize(work);
+    const ms = performance.now() - t0;
+    state.stats.ocr++; state.stats.ocrMsTotal += ms;
+    $('rawOcr').textContent = data.text;
+    const lines = cleanLines(data.text);
+    lastOcr.width = work.width; lastOcr.height = work.height;
+    lastOcr.getContext('2d').drawImage(work, 0, 0);
+    state.last = { time: (frameTime || new Date()).toISOString(), raw: data.text, lines, ms: Math.round(ms), events: [] };
+    $('btnSaveSample').disabled = false;
+
+    let fresh;
+    if (state.prevLines === null) {
+      fresh = (state.firstFrame && $('baseline').checked) ? [] : lines;
+    } else {
+      fresh = newLines(state.prevLines, lines);
+    }
+    state.firstFrame = false;
+    state.prevLines = lines;
+
+    const out = [];
+    for (const text of fresh) {
+      const c = classify(text);
+      const ev = { time: (frameTime || new Date()).toISOString(), text, type: c.type, fields: c.fields };
+      state.events.push(ev); out.push(ev); state.last.events.push(ev);
+      if (c.type === 'dmg_dealt' && c.fields.dmg) state.stats.dmg += c.fields.dmg;
+      if (c.type === 'dmg_received' && c.fields.dmg) state.stats.dmgIn += c.fields.dmg;
+      if (c.type === 'exp' && c.fields.exp) state.stats.exp += c.fields.exp;
+      renderEvent(ev);
+    }
+    renderStats();
+    return out;
+  } finally {
+    state.busy = false;
+  }
+}
+
+// ---------- pętla ----------
+function startLoop() {
+  if (state.running) return;
+  state.running = true;
+  state.prevLines = null; state.prevSig = null; state.firstFrame = true;
+  const period = 1000 / +$('fps').value;
+  state.timer = setInterval(() => { processFrame(new Date()).catch(e => status('Błąd OCR: ' + e.message, 'bad')); }, period);
+  updateButtons();
+  status('Nasłuch trwa. Zdarzenia pojawiają się po prawej.', 'ok');
+}
+function stopLoop() {
+  state.running = false;
+  clearInterval(state.timer); state.timer = null;
+  updateButtons();
+  status('Zatrzymano.');
+}
+
+// ---------- podgląd i zaznaczanie ----------
+let drag = null, previewTimer = null;
+function drawPreview() {
+  const [sw, sh] = srcSize();
+  if (!sw || !sh) return;
+  const pw = Math.max(200, preview.clientWidth || 640), ph = Math.round(pw * sh / sw);
+  if (preview.width !== pw || preview.height !== ph) { preview.width = pw; preview.height = ph; }
+  pctx.drawImage(state.source, 0, 0, pw, ph);
+  const r = drag ? drag : state.region;
+  if (r) {
+    const k = pw / sw;
+    pctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--sel');
+    pctx.fillRect(r.x * k, r.y * k, r.w * k, r.h * k);
+    pctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--accent');
+    pctx.lineWidth = 2; pctx.strokeRect(r.x * k, r.y * k, r.w * k, r.h * k);
+  }
+}
+function toSrc(e) {
+  const b = preview.getBoundingClientRect(), [sw] = srcSize(), k = sw / b.width;
+  return { x: Math.max(0, (e.clientX - b.left) * k), y: Math.max(0, (e.clientY - b.top) * k) };
+}
+preview.addEventListener('pointerdown', e => {
+  if (!state.source) return;
+  preview.setPointerCapture(e.pointerId);
+  const p = toSrc(e); drag = { x0: p.x, y0: p.y, x: p.x, y: p.y, w: 0, h: 0 };
+});
+preview.addEventListener('pointermove', e => {
+  if (!drag) return;
+  const p = toSrc(e);
+  drag.x = Math.min(drag.x0, p.x); drag.y = Math.min(drag.y0, p.y);
+  drag.w = Math.abs(p.x - drag.x0); drag.h = Math.abs(p.y - drag.y0);
+  drawPreview();
+});
+preview.addEventListener('pointerup', () => {
+  if (!drag) return;
+  if (drag.w > 10 && drag.h > 6) setRegion({ x: Math.round(drag.x), y: Math.round(drag.y), w: Math.round(drag.w), h: Math.round(drag.h) });
+  drag = null; drawPreview();
+});
+function setRegion(r) {
+  state.region = r; state.prevLines = null; state.prevSig = null; state.firstFrame = true;
+  $('regionInfo').textContent = r ? `${r.w}×${r.h} przy (${r.x}, ${r.y})` : 'nie zaznaczony';
+  if (r && state.kind === 'video') store('region', r);
+  updateButtons(); drawPreview();
+}
+function setSource(src, kind, label) {
+  state.source = src; state.kind = kind;
+  state.prevLines = null; state.prevSig = null; state.firstFrame = true;
+  setCapState(label, true);
+  clearInterval(previewTimer);
+  previewTimer = setInterval(drawPreview, kind === 'video' ? 100 : 500);
+  drawPreview(); updateButtons();
+}
+
+// ---------- źródła ----------
+$('btnShare').addEventListener('click', async () => {
+  try {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia) throw new Error('Ta przeglądarka nie udostępnia przechwytywania ekranu. Użyj Chrome lub Edge.');
+    const stream = await navigator.mediaDevices.getDisplayMedia({ video: { frameRate: { ideal: 10 } }, audio: false });
+    if (state.stream) state.stream.getTracks().forEach(t => t.stop());
+    state.stream = stream;
+    video.srcObject = stream;
+    await video.play();
+    stream.getVideoTracks()[0].addEventListener('ended', () => { stopLoop(); setCapState('udostępnianie zakończone', false); state.source = null; updateButtons(); });
+    setSource(video, 'video', `okno ${video.videoWidth}×${video.videoHeight}`);
+    const saved = load('region', null);
+    if (saved && saved.x + saved.w <= video.videoWidth && saved.y + saved.h <= video.videoHeight) setRegion(saved);
+    status('Zaznacz myszą obszar czatu systemowego na podglądzie, potem Start.');
+  } catch (e) {
+    status('Nie udało się przechwycić okna: ' + e.message, 'bad');
+  }
+});
+$('fileShot').addEventListener('change', e => {
+  const f = e.target.files[0]; if (!f) return;
+  const img = new Image();
+  img.onload = () => { setSource(img, 'image', `zrzut ${img.naturalWidth}×${img.naturalHeight}`); status('Zaznacz obszar czatu i kliknij "Rozpoznaj raz".'); };
+  img.src = URL.createObjectURL(f);
+});
+$('btnRegionReset').addEventListener('click', () => setRegion(null));
+$('btnRegionAll').addEventListener('click', () => { const [w, h] = srcSize(); if (w && h) setRegion({ x: 0, y: 0, w, h }); });
+// Debug: ?img=ścieżka wczytuje obraz z tego samego serwera jako źródło.
+{
+  const q = new URLSearchParams(location.search).get('img');
+  if (q) { const img = new Image(); img.onload = () => { setSource(img, 'image', `obraz ${img.naturalWidth}×${img.naturalHeight}`); setRegion({ x: 0, y: 0, w: img.naturalWidth, h: img.naturalHeight }); }; img.src = q; }
+}
+$('btnStart').addEventListener('click', async () => { try { await ensureWorker(); startLoop(); } catch (e) { status(e.message, 'bad'); } });
+$('btnStop').addEventListener('click', stopLoop);
+$('btnOnce').addEventListener('click', async () => {
+  try { await ensureWorker(); state.firstFrame = false; state.prevSig = null; const n = (await processFrame(new Date())).length; status(`Rozpoznano, nowych zdarzeń: ${n}.`, 'ok'); }
+  catch (e) { status('Błąd OCR: ' + e.message, 'bad'); }
+});
+
+// ---------- zapis próbki do analizy ----------
+function canvasBlob(c) { return new Promise(res => c.toBlob(res, 'image/png')); }
+async function writeFile(name, blob) {
+  if (state.dirHandle) {
+    const fh = await state.dirHandle.getFileHandle(name, { create: true });
+    const w = await fh.createWritable(); await w.write(blob); await w.close();
+  } else {
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob); a.download = name; a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  }
+}
+$('btnSaveSample').addEventListener('click', async () => {
+  const L = state.last;
+  if (!L) { status('Najpierw uruchom rozpoznanie.', 'bad'); return; }
+  try {
+    if (!state.dirHandle && window.showDirectoryPicker) {
+      try { state.dirHandle = await window.showDirectoryPicker({ mode: 'readwrite', id: 'l2grindlens-samples' }); }
+      catch (e) { if (e.name === 'AbortError') { status('Nie wybrano folderu, próbka nie została zapisana.'); return; } throw e; }
+    }
+    state.sampleNo++;
+    const d = new Date(L.time), p = n => String(n).padStart(2, '0');
+    const stamp = `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}_${p(d.getHours())}-${p(d.getMinutes())}-${p(d.getSeconds())}-${String(d.getMilliseconds()).padStart(3, '0')}`;
+    const base = `sample-${stamp}`;
+    const report = [
+      `# L2GrindLens OCR, próbka ${base}`, `czas klatki: ${L.time}`, `czas OCR: ${L.ms} ms`,
+      `obszar: ${JSON.stringify(state.region)}  źródło: ${state.kind}`,
+      `ustawienia: powiększenie=${$('scale').value} próg=${$('thr').value} tylkoJasnyTekst=${$('bright').checked} fps=${$('fps').value}`,
+      '', '## Surowy wynik OCR', L.raw.trimEnd(), '', '## Linie po czyszczeniu', ...L.lines.map(l => '- ' + l),
+      '', '## Zdarzenia z tej klatki', ...(L.events.length ? L.events.map(e => JSON.stringify(e)) : ['(brak nowych)']),
+      '', '## Wzorce', $('patterns').value, '',
+    ].join('\n');
+    await writeFile(base + '.txt', new Blob([report], { type: 'text/plain' }));
+    await writeFile(base + '-source.png', await canvasBlob(lastSrc));
+    await writeFile(base + '-ocr.png', await canvasBlob(lastOcr));
+    status(state.dirHandle ? `Zapisano próbkę ${base} (3 pliki) w folderze ${state.dirHandle.name}.` : `Pobrano próbkę ${base} (3 pliki do folderu Pobrane).`, 'ok');
+  } catch (e) { status('Zapis próbki nie powiódł się: ' + e.message, 'bad'); }
+});
+
+// ---------- test na próbce ----------
+// Próbka udaje okno czatu o stałej wysokości 8 linii, wyrównane do dołu jak w grze.
+function drawSample(lines) {
+  const rows = 8;
+  sample.width = 560; sample.height = 14 + rows * 19;
+  const c = sample.getContext('2d');
+  c.fillStyle = '#0d0f1a'; c.fillRect(0, 0, sample.width, sample.height);
+  c.font = '15px Arial, sans-serif'; c.textBaseline = 'top';
+  const shown = lines.slice(-rows);
+  shown.forEach((l, i) => {
+    c.fillStyle = /earned/.test(l) ? '#e8d26a' : /obtained/.test(l) ? '#7fd38a' : /hit you/.test(l) ? '#e58a7a' : '#f0f0f0';
+    c.fillText(l, 8, 8 + (rows - shown.length + i) * 19);
+  });
+}
+$('btnSample').addEventListener('click', async () => {
+  try {
+    await ensureWorker();
+    const base = ['You hit for 128 damage.', 'Critical hit!', 'You hit for 341 damage.', 'Gremlin hit you for 23 damage.', 'You have acquired 1250 XP and 86 SP.', 'You have obtained 540 Adena.'];
+    drawSample(base);
+    setSource(sample, 'sample', 'próbka'); setRegion({ x: 0, y: 0, w: sample.width, h: sample.height });
+    state.firstFrame = true; state.prevLines = null; state.prevSig = null;
+    const a = (await processFrame(new Date())).length;                       // punkt odniesienia
+    drawSample(base.concat(['You hit for 97 damage.', 'You have obtained 5 Wooden Arrow.']));
+    const b = (await processFrame(new Date())).length;                       // +2 linie
+    drawSample(base.slice(3).concat(['You hit for 97 damage.', 'You have obtained 5 Wooden Arrow.', 'Gremlin hit you for 31 damage.', 'You have acquired 980 XP and 71 SP.', 'You hit for 215 damage.']));
+    const c = (await processFrame(new Date())).length;                       // przewinięcie o 3
+    const ok = a === 0 && b === 2 && c === 3;
+    status(`Test próbki: klatka 1: ${a} (oczekiwano 0), klatka 2: ${b} (oczekiwano 2), klatka 3: ${c} (oczekiwano 3). ${ok ? 'OK' : 'Rozbieżność, sprawdź dziennik.'}`, ok ? 'ok' : 'bad');
+  } catch (e) { status('Test nie powiódł się: ' + e.message, 'bad'); }
+});
+
+// ---------- dziennik ----------
+function fmtFields(f) { return Object.entries(f).filter(([k]) => k !== 'id').map(([k, v]) => `${k}=${v}`).join(' '); }
+function renderEvent(ev) {
+  const el = document.createElement('div'); el.className = 'ev';
+  const t = new Date(ev.time);
+  const idTag = ev.fields.id !== undefined ? ` <span class="t">#${ev.fields.id}</span>` : '';
+  el.innerHTML = `<span class="t">${t.toLocaleTimeString('pl-PL')}.${String(t.getMilliseconds()).padStart(3, '0')}</span><span class="k ${ev.type}">${ev.type}${idTag}</span><span></span>`;
+  el.lastChild.textContent = (fmtFields(ev.fields) ? fmtFields(ev.fields) + '  ' : '') + ev.text;
+  const log = $('log'); log.prepend(el);
+  while (log.childElementCount > 500) log.lastChild.remove();
+}
+function renderStats() {
+  const s = state.stats;
+  $('sEvents').textContent = state.events.length; $('sFrames').textContent = s.frames; $('sOcr').textContent = s.ocr;
+  $('sMs').textContent = s.ocr ? Math.round(s.ocrMsTotal / s.ocr) : '–';
+  $('sDmg').textContent = s.dmg; $('sDmgIn').textContent = s.dmgIn; $('sExp').textContent = s.exp;
+}
+function jsonl() { return state.events.map(e => JSON.stringify(e)).join('\n') + '\n'; }
+function csv() {
+  const q = v => '"' + String(v ?? '').replace(/"/g, '""') + '"';
+  return 'time,type,dmg,exp,sp,qty,item,src,text\n' + state.events.map(e => [e.time, e.type, e.fields.dmg, e.fields.exp, e.fields.sp, e.fields.qty, e.fields.item, e.fields.src, e.text].map(q).join(',')).join('\n') + '\n';
+}
+function download(name, text) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([text], { type: 'text/plain' })); a.download = name; a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+$('btnJsonl').addEventListener('click', () => download('events.jsonl', jsonl()));
+$('btnCsv').addEventListener('click', () => download('events.csv', csv()));
+$('btnCopy').addEventListener('click', async () => { try { await navigator.clipboard.writeText(jsonl()); status('Skopiowano.', 'ok'); } catch (e) { status('Schowek niedostępny, użyj pobierania.', 'bad'); } });
+$('btnClear').addEventListener('click', () => { state.events = []; state.stats = { frames: 0, ocr: 0, ocrMsTotal: 0, dmg: 0, dmgIn: 0, exp: 0 }; $('log').innerHTML = ''; renderStats(); });
+
+// ---------- ustawienia ----------
+$('thr').addEventListener('input', () => { $('thrVal').textContent = $('thr').value; store('thr', +$('thr').value); });
+for (const id of ['fps', 'scale']) $(id).addEventListener('change', () => store(id, $(id).value));
+$('bright').addEventListener('change', () => store('bright', $('bright').checked));
+$('patterns').addEventListener('change', () => compilePatterns($('patterns').value));
+$('thr').value = load('thr', 140); $('thrVal').textContent = $('thr').value;
+$('fps').value = load('fps', '4'); $('scale').value = load('scale', '2'); $('bright').checked = load('bright', true);
+$('patterns').value = load(PATTERNS_KEY, JSON.stringify(DEFAULT_PATTERNS, null, 2));
+compilePatterns($('patterns').value);
+$('useDb').checked = load('useDb', true); $('useDb').addEventListener('change', () => store('useDb', $('useDb').checked));
+$('playerName').value = load('playerName', ''); $('playerName').addEventListener('change', () => store('playerName', $('playerName').value.trim()));
+if (window.L2_SYSTEMMSG) {
+  buildTemplates(window.L2_SYSTEMMSG);
+  $('dbState').textContent = `baza: ${templates.length} szablonów`; $('dbState').className = 'pill on';
+} else {
+  $('dbState').textContent = 'baza: brak pliku systemmsg.js';
+}
+window.l2gl = { cleanLines, classify, matchTemplate }; // do testów z konsoli przeglądarki
+$('btnPatternsReset').addEventListener('click', () => { $('patterns').value = JSON.stringify(DEFAULT_PATTERNS, null, 2); compilePatterns($('patterns').value); });
+updateButtons();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,21 @@
+# --- .NET ---
+bin/
+obj/
+*.user
+*.suo
+.vs/
+.idea/
+*.swp
+
+# --- przechwycony ruch i dzienniki zdarzeń (zawierają dane sesji gry, w tym login) ---
+*.etl
+*.pcap
+*.pcapng
+events.jsonl
+events.csv
+
+# --- próbki OCR (zrzuty z gry, generowane w trakcie pracy) ---
+ocr/samples/
+
+# --- Claude Code: ustawienia lokalne ---
+.claude/settings.local.json
