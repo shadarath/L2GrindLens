@@ -52,14 +52,25 @@ function render(panel) {
   const end = running ? Date.now() : (evs.length ? evs[evs.length - 1].ts : start);
   const durMin = Math.max((end - start) / 60000, 1 / 60);
   let dmg = 0, hits = 0, crit = 0, dmgIn = 0, exp = 0, sp = 0, adena = 0, items = 0;
-  const byTarget = new Map(), bySource = new Map(), loot = new Map();
+  const byTarget = new Map(), bySource = new Map(), loot = new Map(), kills = new Map();
   const samples = { dmg: [], dmgIn: [], exp: [], sp: [] }; // punkty {ts, v} do średnich kroczących
+  let lastTarget = null, lastTargetTs = 0, killsTotal = 0;
   for (const ev of evs) {
     const f = ev.fields || {};
-    if (ev.type === 'dmg_dealt' && f.dmg) { dmg += f.dmg; hits++; samples.dmg.push({ ts: ev.ts, v: f.dmg }); if (f.target) byTarget.set(f.target, (byTarget.get(f.target) || 0) + f.dmg); }
+    if (ev.type === 'dmg_dealt' && f.dmg) {
+      dmg += f.dmg; hits++; samples.dmg.push({ ts: ev.ts, v: f.dmg });
+      if (f.target) { byTarget.set(f.target, (byTarget.get(f.target) || 0) + f.dmg); lastTarget = f.target; lastTargetTs = ev.ts; }
+    }
     if (ev.type === 'crit') crit++;
     if (ev.type === 'dmg_received' && f.dmg) { dmgIn += f.dmg; samples.dmgIn.push({ ts: ev.ts, v: f.dmg }); if (f.src) bySource.set(f.src, (bySource.get(f.src) || 0) + f.dmg); }
-    if (ev.type === 'exp') { if (f.exp) { exp += f.exp; samples.exp.push({ ts: ev.ts, v: f.exp }); } if (f.sp) { sp += f.sp; samples.sp.push({ ts: ev.ts, v: f.sp }); } }
+    if (ev.type === 'exp') {
+      if (f.exp) {
+        exp += f.exp; samples.exp.push({ ts: ev.ts, v: f.exp });
+        // Gra nie ogłasza śmierci potwora, ale każdy zabity daje jeden komunikat o XP: zaliczamy go ostatnio bitemu celowi.
+        if (lastTarget && ev.ts - lastTargetTs < 15000) { kills.set(lastTarget, (kills.get(lastTarget) || 0) + 1); killsTotal++; lastTarget = null; }
+      }
+      if (f.sp) { sp += f.sp; samples.sp.push({ ts: ev.ts, v: f.sp }); }
+    }
     if (ev.type === 'item') {
       const qty = f.qty || 1;
       if ((f.item || '').toLowerCase() === 'adena') adena += qty; else items += qty;
@@ -71,6 +82,7 @@ function render(panel) {
   q('tCrit').textContent = hits ? Math.round(100 * crit / hits) + '%' : '0%';
   q('tDmgIn').textContent = fmt.n(dmgIn); q('tExp').textContent = fmt.n(exp); q('tExpH').textContent = fmt.n(exp / durMin * 60);
   q('tSp').textContent = fmt.n(sp); q('tAdena').textContent = fmt.n(adena); q('tItems').textContent = fmt.n(items); q('tEvents').textContent = fmt.n(evs.length);
+  q('tKills').textContent = fmt.n(killsTotal);
 
   const tb = q('loot').querySelector('tbody'); tb.innerHTML = '';
   for (const [item, l] of [...loot.entries()].sort((a, b) => b[1].qty - a[1].qty)) {
@@ -110,7 +122,8 @@ function render(panel) {
   upsert(panel, 'chSp', 'line', labels, [{ label: 'SP', data: series('sp'), ...line(s4) }], single);
   const top = m => [...m.entries()].sort((a, b) => b[1] - a[1]).slice(0, 8);
   const hbar = { ...base, indexAxis: 'y', plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true, ticks: { color: ink }, grid: { color: grid } }, y: { ticks: { color: ink }, grid: { display: false } } } };
-  upsert(panel, 'chTargets', 'bar', top(byTarget).map(e => e[0]), [{ label: 'obrażenia', data: top(byTarget).map(e => e[1]), backgroundColor: s1, borderRadius: 3, borderSkipped: 'left' }], hbar);
+  const targetLabel = name => kills.get(name) ? `${name} x${kills.get(name)}` : name;
+  upsert(panel, 'chTargets', 'bar', top(byTarget).map(e => targetLabel(e[0])), [{ label: 'obrażenia', data: top(byTarget).map(e => e[1]), backgroundColor: s1, borderRadius: 3, borderSkipped: 'left' }], hbar);
   upsert(panel, 'chSources', 'bar', top(bySource).map(e => e[0]), [{ label: 'obrażenia', data: top(bySource).map(e => e[1]), backgroundColor: s2, borderRadius: 3, borderSkipped: 'left' }], hbar);
 }
 

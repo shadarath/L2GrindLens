@@ -16,7 +16,9 @@ plików: czyta tylko obraz okna udostępniony przez standardowe API przeglądark
    - **Obróbka i OCR**: klatki na sekundę, powiększenie, próg; podgląd obróbki odświeża się na żywo, więc próg
      dobiera się patrząc na efekt. Wszystkie ustawienia (także imię postaci i wzorce zapasowe) są pamiętane.
    - **Aktualna sesja**: Start/Stop, kafelki sesji, wykresy obrażeń, XP i SP na minutę (średnia krocząca
-     z ostatnich 60 sekund, punkt co 10 sekund), obrażenia wg celu i źródła, tabela łupów, dziennik z filtrem. "Start" w kroku 2 przenosi od razu tutaj i zawsze otwiera
+     z ostatnich 60 sekund, punkt co 10 sekund), obrażenia wg celu z liczbą zabitych ("Marsh Zombie Lord x17")
+     i wg źródła, tabela łupów, dziennik z filtrem. Gra nie ogłasza śmierci potwora, więc zabicie jest liczone
+     z komunikatu o XP: każdy trafia do ostatnio bitego celu, jeśli przyszedł w ciągu 15 sekund od trafienia. "Start" w kroku 2 przenosi od razu tutaj i zawsze otwiera
      nową sesję.
 
    Osobna zakładka **Historia sesji** (po prawej stronie paska) pokazuje ten sam układ dla zapisanych sesji,
