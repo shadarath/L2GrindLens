@@ -127,11 +127,21 @@ Dla serwerów z własnym szyfrowaniem protokołu, gdzie sniffer nie odszyfruje r
 `ocr/L2GrindLens-OCR.html`. Otwórz ją dwuklikiem w Chrome lub Edge (wymagane połączenie z internetem,
 bo silnik OCR Tesseract.js dociąga się z CDN; za pierwszym razem kilkanaście MB, potem z pamięci podręcznej).
 
-1. Gra w oknie lub borderless, czat systemowy w osobnym oknie, czcionka czatu powiększona.
-2. "Wybierz okno gry", wskaż okno klienta.
-3. Zaznacz myszą obszar czatu systemowego na podglądzie.
-4. "Start". Nowe linie pojawiają się w dzienniku z czasem, typem i liczbami. "Pobierz JSONL" zapisuje je w tym
-   samym formacie zdarzeń, co sniffer.
+Strona prowadzi przez trzy kroki (zakładki):
+
+1. **Źródło obrazu**: "Wybierz okno gry" (gra w oknie lub borderless), zaznaczenie obszaru czatu systemowego
+   myszą. Obszar jest zapamiętywany i wraca sam przy następnym uruchomieniu.
+2. **Obróbka i OCR**: klatki na sekundę, powiększenie, próg; podgląd obróbki odświeża się na żywo, więc
+   próg dobiera się patrząc na efekt. Wszystkie ustawienia (także imię postaci i wzorce zapasowe) są pamiętane
+   w localStorage.
+3. **Dashboard**: kafelki sesji (czas, obrażenia, obrażenia na minutę, trafienia, krytyki, XP, XP na godzinę,
+   Adena, przedmioty), wykresy obrażeń i XP na minutę oraz obrażeń wg celu i źródła, tabela łupów, dziennik
+   z filtrem, wybór sesji. "Start" w kroku 2 przenosi od razu tutaj.
+
+Zdarzenia każdej sesji zapisują się na bieżąco w IndexedDB przeglądarki i są dostępne po ponownym otwarciu
+strony (wybór sesji na dashboardzie). "Zapisz bazę SQLite" buduje plik `l2grindlens.sqlite` (tabele `events`
+i `sessions`) ze wszystkich sesji przez sql.js; po wskazaniu folderu danych plik i próbki zapisują się tam bez
+pytania, a baza odświeża się co minutę w trakcie sesji i przy zatrzymaniu. JSONL i CSV eksportują bieżącą sesję.
 
 Gdy jakaś linia rozpozna się źle, kliknij "Zapisz próbkę do analizy". Za pierwszym razem wskaż folder
 `ocr\samples` w projekcie, potem każde kliknięcie zapisuje tam trzy pliki z ostatniej klatki: `-source.png`
@@ -151,6 +161,13 @@ szablony tekstów bierzesz ze zdekodowanego systemmsg.
 
 Wydajność: OCR w WebAssembly zajmuje od kilkuset do ponad tysiąca ms na klatkę zależnie od wielkości
 obszaru, więc realne tempo to 1 do 3 klatek na sekundę. Klatki bez zmian w obrazie są pomijane bez OCR.
+
+Kod strony jest podzielony na pliki w `ocr/js` (zwykłe skrypty, bez modułów ES, żeby działały z dysku):
+`core.js` (ustawienia, status), `messages.js` (baza komunikatów, typy zdarzeń, wzorce zapasowe), `lines.js`
+(czyszczenie linii OCR, wykrywanie nowych), `image.js` (binaryzacja, sygnatura zmian), `storage.js` (IndexedDB),
+`capture.js` (źródło obrazu, podgląd, obszar), `ocr.js` (Tesseract, pętla, sesje, test na próbce),
+`dashboard.js` (kafelki, wykresy, dziennik), `files.js` (folder danych, próbki, SQLite, eksport), `app.js`
+(zakładki i spięcie całości). Style są w `ocr/css/app.css`.
 
 ## Baza komunikatów: ocr/data
 

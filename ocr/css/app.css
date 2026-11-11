@@ -1,0 +1,79 @@
+/* Układ: pasek nagłówka, nawigacja po trzech krokach, jeden panel kroku na raz. Dashboard: kafelki, siatka wykresów, dziennik. */
+:root {
+  --bg: #f1efe9; --panel: #ffffff; --fg: #1f1d19; --muted: #6d6a62; --line: #d9d5ca;
+  --accent: #a84b22; --accent-fg: #ffffff; --ok: #2c7a4b; --warn: #a8731c; --bad: #ad3328;
+  --sel: rgba(168, 75, 34, .22); --mono: ui-monospace, "Cascadia Mono", Consolas, monospace;
+  --sans: system-ui, "Segoe UI", Roboto, sans-serif;
+  /* wykresy: zwalidowana paleta kategorialna (slot 1 niebieski, 2 pomarańczowy, 3 morski) i chrom */
+  --s1: #2a78d6; --s2: #eb6834; --s3: #1baf7a; --grid: #e1e0d9; --axis: #898781;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #14151a; --panel: #1d1f26; --fg: #e9e6dd; --muted: #9b988f; --line: #32353e;
+    --accent: #e3794c; --accent-fg: #14151a; --ok: #62c48b; --warn: #e3ab3f; --bad: #e46a5e;
+    --sel: rgba(227, 121, 76, .28); --s1: #3987e5; --s2: #d95926; --s3: #199e70; --grid: #2c2c2a; --axis: #898781;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #14151a; --panel: #1d1f26; --fg: #e9e6dd; --muted: #9b988f; --line: #32353e;
+  --accent: #e3794c; --accent-fg: #14151a; --ok: #62c48b; --warn: #e3ab3f; --bad: #e46a5e;
+  --sel: rgba(227, 121, 76, .28); --s1: #3987e5; --s2: #d95926; --s3: #199e70; --grid: #2c2c2a; --axis: #898781;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+[hidden] { display: none !important; }
+body { background: var(--bg); color: var(--fg); font: 14px/1.45 var(--sans); padding-inline: 16px; padding-block: 0 24px; }
+h1 { font-size: 18px; margin: 0; letter-spacing: .01em; }
+h2 { font-size: 13px; margin: 0 0 8px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+header { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 18px; padding-block: 12px; border-bottom: 1px solid var(--line); }
+#status { color: var(--muted); flex: 1 1 240px; min-width: 0; }
+#status.bad { color: var(--bad); } #status.ok { color: var(--ok); }
+nav.steps { display: flex; gap: 6px; padding-block: 12px; flex-wrap: wrap; }
+nav.steps button { display: flex; align-items: center; gap: 8px; padding: 8px 14px; border-radius: 6px; }
+nav.steps button .n { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; border: 1px solid var(--line); font-size: 12px; }
+nav.steps button.current { border-color: var(--accent); background: var(--sel); }
+nav.steps button.done .n { background: var(--ok); color: #fff; border-color: var(--ok); }
+section { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 12px; min-width: 0; }
+.stack { display: flex; flex-direction: column; gap: 12px; }
+.row { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; }
+.cols { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 12px; }
+@media (max-width: 900px) { .cols { grid-template-columns: 1fr; } }
+button { font: inherit; padding: 6px 12px; border-radius: 4px; border: 1px solid var(--line); background: var(--panel); color: var(--fg); cursor: pointer; }
+button:hover { border-color: var(--accent); }
+button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+button.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+button.danger { color: var(--bad); }
+button:disabled { opacity: .5; cursor: default; }
+label { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); }
+input[type=number], input[type=text], select { font: inherit; padding: 4px 6px; border: 1px solid var(--line); border-radius: 4px; background: var(--panel); color: var(--fg); }
+input[type=number], select { width: 5.5em; }
+input[type=range] { width: 120px; }
+#preview { width: 100%; max-width: 100%; display: block; background: #000; border-radius: 4px; cursor: crosshair; touch-action: none; }
+#ocrView { max-width: 100%; display: block; background: #fff; border: 1px solid var(--line); }
+.hint { color: var(--muted); font-size: 12.5px; }
+#log { font-family: var(--mono); font-size: 12.5px; max-height: 40vh; overflow: auto; border-top: 1px solid var(--line); }
+.ev { display: grid; grid-template-columns: 82px 120px minmax(0, 1fr); gap: 8px; padding: 3px 0; border-bottom: 1px solid var(--line); font-variant-numeric: tabular-nums; }
+.ev .t { color: var(--muted); }
+.ev .k { font-weight: 600; }
+.k.dmg_dealt, .k.crit { color: var(--accent); } .k.dmg_received { color: var(--bad); } .k.exp { color: var(--warn); } .k.item { color: var(--ok); }
+.k.other, .k.msg, .k.dmg_other, .k.cooldown, .k.cast_fail, .k.range, .k.resource, .k.skill { color: var(--muted); font-weight: 400; }
+.k.level_up { color: var(--ok); } .k.death { color: var(--bad); }
+.k .t { font-weight: 400; }
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 8px; }
+.tile b { display: block; font-size: 20px; }
+.tile span { color: var(--muted); font-size: 12px; }
+.charts { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 12px; }
+.chart { position: relative; height: 240px; }
+.chart canvas { max-width: 100%; }
+textarea { width: 100%; min-height: 150px; font: 12px/1.4 var(--mono); border: 1px solid var(--line); border-radius: 4px; background: var(--panel); color: var(--fg); padding: 6px; resize: vertical; }
+details summary { cursor: pointer; color: var(--muted); }
+#patternsErr { color: var(--bad); font-size: 12.5px; }
+.pill { display: inline-block; padding: 1px 8px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); font-size: 12px; }
+.pill.on { border-color: var(--ok); color: var(--ok); }
+table.loot { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; }
+table.loot th, table.loot td { text-align: left; padding: 4px 8px; border-bottom: 1px solid var(--line); }
+table.loot td.num, table.loot th.num { text-align: right; }
+.wrap { overflow-x: auto; }
