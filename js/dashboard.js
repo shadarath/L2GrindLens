@@ -95,20 +95,22 @@ function render(panel) {
   q('ocrStats').textContent = view.live && s.ocr ? `OCR: ${s.frames} klatek pobranych, ${s.ocr} rozpoznanych, średnio ${Math.round(s.ocrMsTotal / s.ocr)} ms na klatkę.` : '';
 
   if (typeof Chart === 'undefined') return;
-  // Oś czasu co `step` (10 s, dla długich sesji rzadziej); wartość w punkcie t = suma z ostatnich 60 s przed t.
+  // Oś czasu co 10 s (dla długich sesji rzadziej); wartość w punkcie t = suma z ostatnich 2 minut przed t
+  // podzielona przez 2, czyli średnia na minutę z dwóch ostatnich minut.
+  const WINDOW = 120000;
   const span = Math.max(end - start, 60000);
   const step = Math.max(10000, Math.ceil(span / 600000) * 1000);
   const points = [];
   for (let t = start; t < start + span; t += step) points.push(t);
   points.push(start + span);
   const labels = points.map(t => fmt.dur(t - start));
-  const series = key => {
+  const rolling = key => {
     const arr = samples[key].slice().sort((a, b) => a.ts - b.ts);
     let lo = 0, hi = 0, sum = 0;
     return points.map(t => {
       while (hi < arr.length && arr[hi].ts <= t) { sum += arr[hi].v; hi++; }
-      while (lo < hi && arr[lo].ts <= t - 60000) { sum -= arr[lo].v; lo++; }
-      return sum;
+      while (lo < hi && arr[lo].ts <= t - WINDOW) { sum -= arr[lo].v; lo++; }
+      return Math.round(sum / (WINDOW / 60000));
     });
   };
   const ink = cssVar('--axis'), grid = cssVar('--grid'), s1 = cssVar('--s1'), s2 = cssVar('--s2'), s3 = cssVar('--s3'), s4 = cssVar('--s4');
@@ -117,9 +119,9 @@ function render(panel) {
     plugins: { legend: { labels: { color: ink, boxWidth: 12 } } } };
   const single = { ...base, plugins: { legend: { display: false } } };
   const line = color => ({ borderColor: color, backgroundColor: color, borderWidth: 2, pointRadius: 0, pointHoverRadius: 5, tension: .2 });
-  upsert(panel, 'chDmg', 'line', labels, [{ label: 'zadane', data: series('dmg'), ...line(s1) }, { label: 'otrzymane', data: series('dmgIn'), ...line(s2) }], base);
-  upsert(panel, 'chExp', 'line', labels, [{ label: 'XP', data: series('exp'), ...line(s3) }], single);
-  upsert(panel, 'chSp', 'line', labels, [{ label: 'SP', data: series('sp'), ...line(s4) }], single);
+  upsert(panel, 'chDmg', 'line', labels, [{ label: 'zadane', data: rolling('dmg'), ...line(s1) }, { label: 'otrzymane', data: rolling('dmgIn'), ...line(s2) }], base);
+  upsert(panel, 'chExp', 'line', labels, [{ label: 'XP', data: rolling('exp'), ...line(s3) }], single);
+  upsert(panel, 'chSp', 'line', labels, [{ label: 'SP', data: rolling('sp'), ...line(s4) }], single);
   const top = m => [...m.entries()].sort((a, b) => b[1] - a[1]).slice(0, 8);
   const hbar = { ...base, indexAxis: 'y', plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true, ticks: { color: ink }, grid: { color: grid } }, y: { ticks: { color: ink }, grid: { display: false } } } };
   const targetLabel = name => kills.get(name) ? `${name} x${kills.get(name)}` : name;

@@ -7,7 +7,7 @@ const state = {
   worker: null, workerReady: false,
   running: false, busy: false, timer: null, autosaveTimer: null, liveTimer: null,
   session: null, sessionCount: 0,
-  prevLines: null, prevSig: null, baselineNext: false, startedBefore: false,
+  prevLines: null, prevSig: null, baselineNext: false,
   pending: [],   // linie nowe w ostatniej klatce, czekające na potwierdzenie w następnej
   last: null,
   stats: { frames: 0, ocr: 0, ocrMsTotal: 0 },
@@ -73,11 +73,9 @@ async function processFrame(frameTime) {
     const lines = L2GL.lines.clean(data.text);
     state.last = { time: frameTime.toISOString(), raw: data.text, lines, ms: Math.round(ms), events: [] };
 
-    // Pierwsza klatka w ogóle: logujemy wszystko, co widać. Klatka tuż po ponownym Starcie: tylko punkt
-    // odniesienia, żeby wpisy sprzed zatrzymania nie trafiły do nowej sesji. Dalej: tylko nowe linie.
+    // Klatka tuż po Starcie: tylko punkt odniesienia. Dalej: tylko linie nowe względem poprzedniej klatki.
     let fresh;
-    if (state.baselineNext) { fresh = []; state.baselineNext = false; state.pending = []; }
-    else if (state.prevLines === null) fresh = lines;
+    if (state.baselineNext || state.prevLines === null) { fresh = []; state.baselineNext = false; state.pending = []; }
     else fresh = L2GL.lines.newLines(state.prevLines, lines);
     state.prevLines = lines;
 
@@ -108,9 +106,9 @@ async function start() {
   await ensureWorker();
   state.running = true;
   state.session = new Date().toISOString(); state.sessionCount = 0;
-  state.prevSig = null; state.pending = [];
-  if (state.startedBefore) state.baselineNext = true; else state.prevLines = null;
-  state.startedBefore = true;
+  // Pierwsza klatka po Starcie jest tylko punktem odniesienia: zastane wpisy w czacie są nieaktualne,
+  // do sesji trafiają wyłącznie linie, które pojawią się później.
+  state.prevSig = null; state.pending = []; state.baselineNext = true;
   await L2GL.db.putSession({ id: state.session, start: Date.now(), end: Date.now(), count: 0 }).catch(() => {});
   await hooks.onSessionStart(state.session);
   state.timer = setInterval(() => { processFrame(new Date()).catch(e => status('Błąd OCR: ' + e.message, 'bad')); }, 1000 / +$('fps').value);
