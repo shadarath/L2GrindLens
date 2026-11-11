@@ -27,6 +27,7 @@ const MSG_TYPES = {
   112: ['resource', { what: '=arrows' }], 129: ['inventory', {}], 422: ['inventory', {}],
   55: ['pickup_fail', { qty: 's1', item: '=Adena' }], 56: ['pickup_fail', { item: 's1' }], 57: ['pickup_fail', { qty: 's2', item: 's1' }],
   96: ['level_up', {}], 2344: ['death', { src: 'c1' }],
+  936: ['shot', { item: 's1' }],   // "Use $s1." - zużycie soulshotów/spiritshotów, w łupach jako ujemna ilość
 };
 
 const DEFAULT_PATTERNS = [
@@ -43,6 +44,7 @@ const DEFAULT_PATTERNS = [
   { type: "item",         regex: "^You have obtained (?<qty>" + NUM + ") (?<item>.+?)[.,]?$" },
   { type: "item",         regex: "^You have obtained (?<item>.+?)[.,]?$" },
   { type: "skill",        regex: "^You use (?<skill>.+?)[.,]?$" },
+  { type: "shot",         regex: "^Use (?<item>.+?shot.*?)[.,]?$" },
   { type: "cooldown",     regex: "re-use time" },
   { type: "miss",         regex: "^You have missed|has evaded|^You avoided|attack has failed" },
 ];
@@ -80,7 +82,7 @@ function build(dbm) {
         src += escape(part).replace(/ /g, '\\s+');
       }
     }
-    if (literal < 4) continue;
+    if (literal < 3) continue;   // "Use $s1." ma tylko 3 litery stałe, a jest potrzebne (zużycie shotów)
     src += '\\s*[.,!]?$';
     let re;
     try { re = new RegExp(src, 'i'); } catch (e) { continue; }
@@ -120,7 +122,7 @@ function validName(v) {
   if (!NAME_CHARS.test(v)) return false;
   if (/\b(XP|SP)\b/.test(v)) return false;
   if ((v.match(/[A-Za-z]/g) || []).length < 3) return false;
-  return v.split(/\s+/).every(t => t.replace(/[^A-Za-z0-9]/g, '').length >= 2 || /^\+?\d+$/.test(t));
+  return v.split(/\s+/).every(t => t.replace(/[^A-Za-z0-9]/g, '').length >= 2 || /^\+?\d+$/.test(t) || /^[-:]$/.test(t));
 }
 
 /**

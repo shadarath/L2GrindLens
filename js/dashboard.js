@@ -8,6 +8,21 @@ function create(root) {
   const panel = { root, charts: {}, view: { session: null, events: [], live: false }, renderTimer: null };
   panel.q = id => root.querySelector(`[data-id="${id}"]`);
   panel.q('logFilter').addEventListener('change', () => redrawLog(panel));
+  // przycisk rozszerzania w prawym górnym rogu każdego wykresu; rozszerzony może być tylko jeden
+  const charts = root.querySelector('.charts');
+  for (const sec of charts.querySelectorAll(':scope > section')) {
+    const b = document.createElement('button');
+    b.className = 'chart-expand'; b.type = 'button'; b.title = 'Rozszerz wykres'; b.textContent = '⤢';
+    b.addEventListener('click', () => {
+      const was = sec.classList.contains('expanded');
+      for (const s of charts.querySelectorAll(':scope > section')) s.classList.remove('expanded');
+      if (!was) sec.classList.add('expanded');
+      charts.classList.toggle('has-expanded', !was);
+      b.title = was ? 'Rozszerz wykres' : 'Zwiń wykres';
+      for (const c of Object.values(panel.charts)) c.resize();
+    });
+    sec.prepend(b);
+  }
   return panel;
 }
 
@@ -55,6 +70,7 @@ function render(panel) {
   const byTarget = new Map(), bySource = new Map(), loot = new Map(), kills = new Map();
   const samples = { dmg: [], dmgIn: [], exp: [], sp: [] }; // punkty {ts, v} do średnich kroczących
   let lastTarget = null, lastTargetTs = 0, killsTotal = 0;
+  const shotsPerUse = Math.max(1, parseInt($('shotsPerUse').value, 10) || 1);
   for (const ev of evs) {
     const f = ev.fields || {};
     if (ev.type === 'dmg_dealt' && f.dmg) {
@@ -75,6 +91,10 @@ function render(panel) {
       const qty = f.qty || 1;
       if ((f.item || '').toLowerCase() === 'adena') adena += qty; else items += qty;
       const l = loot.get(f.item || '?') || { qty: 0, n: 0 }; l.qty += qty; l.n++; loot.set(f.item || '?', l);
+    }
+    if (ev.type === 'shot' && f.item) {
+      // zużyte shoty: ujemna ilość w łupach, tyle na użycie, ile ustawiono dla broni
+      const l = loot.get(f.item) || { qty: 0, n: 0 }; l.qty -= shotsPerUse; l.n++; loot.set(f.item, l);
     }
   }
   q('tDur').textContent = view.session ? fmt.dur(end - start) : '–';
@@ -148,8 +168,9 @@ function renderEvent(panel, ev) {
   const el = document.createElement('div'); el.className = 'ev';
   const t = new Date(ev.ts);
   const idTag = ev.fields && ev.fields.id !== undefined ? ` <span class="t">#${ev.fields.id}</span>` : '';
-  el.innerHTML = `<span class="t">${t.toLocaleTimeString('pl-PL')}.${String(t.getMilliseconds()).padStart(3, '0')}</span><span class="k ${ev.type}">${ev.type}${idTag}</span><span></span>`;
-  el.lastChild.textContent = (fmtFields(ev.fields || {}) ? fmtFields(ev.fields) + '  ' : '') + ev.text;
+  el.innerHTML = `<span class="t">${t.toLocaleTimeString('pl-PL')}.${String(t.getMilliseconds()).padStart(3, '0')}</span><span class="k ${ev.type}">${ev.type}${idTag}</span><span><span class="f"></span> <span class="txt"></span></span>`;
+  el.querySelector('.f').textContent = fmtFields(ev.fields || {});
+  el.querySelector('.txt').textContent = ev.text;
   const log = panel.q('log'); log.prepend(el);
   while (log.childElementCount > 500) log.lastChild.remove();
 }

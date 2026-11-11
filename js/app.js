@@ -149,6 +149,7 @@ for (const id of ['fps', 'scale']) $(id).addEventListener('change', () => settin
 $('bright').addEventListener('change', () => settings.set('bright', $('bright').checked));
 $('useDb').addEventListener('change', () => { msgs.opts.useDb = $('useDb').checked; settings.set('useDb', msgs.opts.useDb); });
 $('playerName').addEventListener('change', () => { msgs.opts.playerName = $('playerName').value.trim(); settings.set('playerName', msgs.opts.playerName); });
+$('shotsPerUse').addEventListener('change', () => { settings.set('shotsPerUse', +$('shotsPerUse').value || 1); dash.scheduleRender(current, true); dash.scheduleRender(history, true); });
 
 function loadSettings() {
   $('thr').value = settings.get('thr', 140); $('thrVal').textContent = $('thr').value;
@@ -156,6 +157,7 @@ function loadSettings() {
   $('bright').checked = settings.get('bright', true);
   $('useDb').checked = settings.get('useDb', true); msgs.opts.useDb = $('useDb').checked;
   $('playerName').value = settings.get('playerName', ''); msgs.opts.playerName = $('playerName').value;
+  $('shotsPerUse').value = settings.get('shotsPerUse', 1);
   // wzorce zapasowe: bez interfejsu, ale wciąż edytowalne w localStorage pod kluczem l2gl.patterns.v3
   $('patterns').value = settings.get(PATTERNS_KEY, JSON.stringify(msgs.DEFAULT_PATTERNS, null, 2));
   if (msgs.compilePatterns($('patterns').value)) msgs.compilePatterns(JSON.stringify(msgs.DEFAULT_PATTERNS));
