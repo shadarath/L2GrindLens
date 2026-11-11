@@ -154,8 +154,8 @@ function loadSettings() {
 // ---------- start ----------
 (async () => {
   loadSettings();
-  if (window.L2_SYSTEMMSG) { const n = msgs.build(window.L2_SYSTEMMSG); $('dbState').textContent = `baza: ${n} szablonów`; $('dbState').className = 'pill on'; }
-  else $('dbState').textContent = 'baza: brak pliku systemmsg.js';
+  if (window.L2_SYSTEMMSG) msgs.build(window.L2_SYSTEMMSG);
+  else status('Brak pliku systemmsg.js obok strony: działają tylko wzorce zapasowe.', 'bad');
   try { await L2GL.db.open(); $('storeState').textContent = 'magazyn: IndexedDB'; $('storeState').className = 'pill on'; }
   catch (e) { $('storeState').textContent = 'magazyn: niedostępny, dane tylko w pamięci'; }
   await files.restoreFolder();
