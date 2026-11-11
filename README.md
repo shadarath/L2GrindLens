@@ -7,8 +7,11 @@ plików: czyta tylko obraz okna udostępniony przez standardowe API przeglądark
 ## Szybki start
 
 1. Uruchom grę w oknie lub w trybie borderless, z czatem systemowym w osobnym oknie.
-2. Otwórz `index.html` w Chrome lub Edge
-3. Krok 1: "Wybierz okno gry" i zaznacz myszą obszar czatu (pełny panel, bez suwaka)
-4. Krok 2: dobierz próg i powiększenie, aż podgląd pokaże czysty tekst, i kliknij Start.
+2. Wybierz okno gry i zaznacz myszą obszar czatu (zaznacz pełny panel, bez suwaka)
+3. Dobierz próg i powiększenie, aż podgląd pokaże czysty tekst
+4. Wpisz swój nick do rozpoznawania któe wpisy są twoje
+5. Przejdź do aktualnej sesji i zacznić marnować życie w swój ulubiony sposób, ale tym razem ze statystykami.
+
+Następnym razem wszystkie ustawienia będą zapisane i wystarczy zrobić krok 2.
 
 Zdarzenia zapisują się w przeglądarce i można je wyeksportować do SQLite, JSONL lub CSV.
