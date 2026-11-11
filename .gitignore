@@ -1,20 +1,15 @@
-# --- .NET ---
-bin/
-obj/
-*.user
-*.suo
+# --- IDE / system ---
 .vs/
 .idea/
 *.swp
+Thumbs.db
 
-# --- przechwycony ruch i dzienniki zdarzeń (zawierają dane sesji gry, w tym login) ---
-*.etl
-*.pcap
-*.pcapng
-events.jsonl
-events.csv
+# --- dane sesji generowane w trakcie pracy ---
+events*.jsonl
+events*.csv
+*.sqlite
 
-# --- próbki OCR (zrzuty z gry, generowane w trakcie pracy) ---
+# --- próbki OCR (zrzuty z gry) ---
 ocr/samples/
 
 # --- Claude Code: ustawienia lokalne ---
