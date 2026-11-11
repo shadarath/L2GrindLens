@@ -18,7 +18,8 @@
 <nav class="steps" aria-label="Kroki">
   <button id="nav1" data-tab="1"><span class="n">1</span>Źródło obrazu</button>
   <button id="nav2" data-tab="2"><span class="n">2</span>Obróbka i OCR</button>
-  <button id="nav3" data-tab="3"><span class="n">3</span>Dashboard</button>
+  <button id="nav3" data-tab="3"><span class="n">3</span>Aktualna sesja</button>
+  <button id="nav4" data-tab="4" class="aside">Historia sesji</button>
 </nav>
 
 <!-- ===================== KROK 1 ===================== -->
@@ -75,76 +76,93 @@
     <div class="row" style="margin-top:10px">
       <button id="btnBack2">← Wstecz</button>
       <span style="flex:1"></span>
-      <button id="btnStart" class="primary" disabled>Start i przejdź do dashboardu →</button>
+      <button id="btnStart" class="primary" disabled>Start i przejdź do aktualnej sesji →</button>
     </div>
   </section>
 </div>
 
-<!-- ===================== KROK 3 ===================== -->
+<!-- ===================== KROK 3: AKTUALNA SESJA ===================== -->
 <div id="tab3" class="stack" hidden>
   <section>
     <div class="row">
-      <label>sesja <select id="sessionSel" style="width:auto;min-width:14em"></select></label>
       <button id="btnStart3" class="primary" disabled>Start</button>
       <button id="btnStop" disabled>Stop</button>
       <button id="btnSaveSample" disabled>Zapisz próbkę do analizy</button>
+      <span id="currentInfo" class="hint"></span>
       <span style="flex:1"></span>
       <span id="liveState" class="pill">zatrzymany</span>
     </div>
   </section>
+  <div id="dashCurrent" class="stack"></div>
+</div>
+
+<!-- ===================== HISTORIA SESJI ===================== -->
+<div id="tab4" class="stack" hidden>
+  <section>
+    <div class="row">
+      <label>sesja <select id="sessionSel" style="width:auto;min-width:16em"></select></label>
+      <span class="hint">Zapisane sesje, tylko do odczytu. Trwająca sesja pojawi się tu po zatrzymaniu.</span>
+      <span style="flex:1"></span>
+      <button id="btnClearSession" class="danger">Usuń tę sesję</button>
+      <button id="btnClearAll" class="danger">Usuń wszystkie dane</button>
+    </div>
+    <p class="hint" id="confirmBox" hidden></p>
+  </section>
+  <div id="dashHistory" class="stack"></div>
+</div>
+
+<!-- Szablon dashboardu, klonowany do "Aktualna sesja" i "Historia sesji". Identyfikatory w data-id, bo kopie są dwie. -->
+<template id="dashTpl">
   <section>
     <h2>Sesja</h2>
     <div class="tiles">
-      <div class="tile"><b id="tDur">0:00</b><span>czas sesji</span></div>
-      <div class="tile"><b id="tDmg">0</b><span>obrażeń zadanych</span></div>
-      <div class="tile"><b id="tDpm">0</b><span>obrażeń na minutę</span></div>
-      <div class="tile"><b id="tHits">0</b><span>trafień</span></div>
-      <div class="tile"><b id="tCrit">0%</b><span>krytyków</span></div>
-      <div class="tile"><b id="tDmgIn">0</b><span>obrażeń otrzymanych</span></div>
-      <div class="tile"><b id="tExp">0</b><span>XP</span></div>
-      <div class="tile"><b id="tExpH">0</b><span>XP na godzinę</span></div>
-      <div class="tile"><b id="tSp">0</b><span>SP</span></div>
-      <div class="tile"><b id="tAdena">0</b><span>Adena</span></div>
-      <div class="tile"><b id="tItems">0</b><span>przedmiotów</span></div>
-      <div class="tile"><b id="tEvents">0</b><span>zdarzeń</span></div>
+      <div class="tile"><b data-id="tDur">–</b><span>czas sesji</span></div>
+      <div class="tile"><b data-id="tDmg">0</b><span>obrażeń zadanych</span></div>
+      <div class="tile"><b data-id="tDpm">0</b><span>obrażeń na minutę</span></div>
+      <div class="tile"><b data-id="tHits">0</b><span>trafień</span></div>
+      <div class="tile"><b data-id="tCrit">0%</b><span>krytyków</span></div>
+      <div class="tile"><b data-id="tDmgIn">0</b><span>obrażeń otrzymanych</span></div>
+      <div class="tile"><b data-id="tExp">0</b><span>XP</span></div>
+      <div class="tile"><b data-id="tExpH">0</b><span>XP na godzinę</span></div>
+      <div class="tile"><b data-id="tSp">0</b><span>SP</span></div>
+      <div class="tile"><b data-id="tAdena">0</b><span>Adena</span></div>
+      <div class="tile"><b data-id="tItems">0</b><span>przedmiotów</span></div>
+      <div class="tile"><b data-id="tEvents">0</b><span>zdarzeń</span></div>
     </div>
-    <p class="hint" id="ocrStats" style="margin:8px 0 0"></p>
+    <p class="hint" data-id="ocrStats" style="margin:8px 0 0"></p>
   </section>
   <div class="charts">
-    <section><h2>Obrażenia na minutę</h2><div class="chart"><canvas id="chDmg"></canvas></div></section>
-    <section><h2>XP na minutę</h2><div class="chart"><canvas id="chExp"></canvas></div></section>
-    <section><h2>Obrażenia zadane wg celu</h2><div class="chart"><canvas id="chTargets"></canvas></div></section>
-    <section><h2>Obrażenia otrzymane wg źródła</h2><div class="chart"><canvas id="chSources"></canvas></div></section>
+    <section><h2>Obrażenia na minutę</h2><div class="chart"><canvas data-id="chDmg"></canvas></div></section>
+    <section><h2>XP na minutę</h2><div class="chart"><canvas data-id="chExp"></canvas></div></section>
+    <section><h2>SP na minutę</h2><div class="chart"><canvas data-id="chSp"></canvas></div></section>
+    <section><h2>Obrażenia zadane wg celu</h2><div class="chart"><canvas data-id="chTargets"></canvas></div></section>
+    <section><h2>Obrażenia otrzymane wg źródła</h2><div class="chart"><canvas data-id="chSources"></canvas></div></section>
   </div>
   <div class="cols">
     <section>
       <h2>Dziennik zdarzeń</h2>
       <div class="row" style="margin-bottom:8px">
-        <label>pokaż <select id="logFilter" style="width:auto"><option value="">wszystko</option><option value="dmg_dealt">obrażenia zadane</option><option value="dmg_received">obrażenia otrzymane</option><option value="exp">XP</option><option value="item">przedmioty</option><option value="other">nierozpoznane</option></select></label>
+        <label>pokaż <select data-id="logFilter" style="width:auto"><option value="">wszystko</option><option value="dmg_dealt">obrażenia zadane</option><option value="dmg_received">obrażenia otrzymane</option><option value="exp">XP</option><option value="item">przedmioty</option><option value="other">nierozpoznane</option></select></label>
       </div>
-      <div id="log"></div>
+      <div data-id="log" class="log"></div>
     </section>
     <section>
       <h2>Łupy</h2>
-      <div class="wrap"><table class="loot" id="loot"><thead><tr><th>przedmiot</th><th class="num">ilość</th><th class="num">razy</th></tr></thead><tbody></tbody></table></div>
+      <div class="wrap"><table class="loot" data-id="loot"><thead><tr><th>przedmiot</th><th class="num">ilość</th><th class="num">razy</th></tr></thead><tbody></tbody></table></div>
     </section>
   </div>
   <section>
     <h2>Dane</h2>
     <div class="row">
-      <button id="btnJsonl">Pobierz JSONL</button>
-      <button id="btnCsv">Pobierz CSV</button>
-      <button id="btnSqlite">Zapisz bazę SQLite</button>
-      <button id="btnFolder">Folder danych…</button>
-      <span id="folderInfo" class="hint"></span>
-      <span style="flex:1"></span>
-      <button id="btnClearSession" class="danger">Usuń tę sesję</button>
-      <button id="btnClearAll" class="danger">Usuń wszystkie dane</button>
+      <button data-id="btnJsonl">Pobierz JSONL tej sesji</button>
+      <button data-id="btnCsv">Pobierz CSV tej sesji</button>
+      <button data-id="btnSqlite">Zapisz bazę SQLite</button>
+      <button data-id="btnFolder">Folder danych…</button>
+      <span data-id="folderInfo" class="hint"></span>
     </div>
-    <p class="hint" style="margin:8px 0 0">Zdarzenia z każdej sesji zapisują się na bieżąco w magazynie przeglądarki (IndexedDB) i są dostępne po ponownym otwarciu strony. "Zapisz bazę SQLite" tworzy plik <code>l2grindlens.sqlite</code> ze wszystkimi sesjami (tabele <code>events</code> i <code>sessions</code>) do analizy w innych programach. Po wskazaniu folderu danych plik SQLite i próbki zapisują się tam bez pytania, a baza odświeża się co minutę w trakcie sesji i przy zatrzymaniu.</p>
-    <p class="hint" id="confirmBox" hidden></p>
+    <p class="hint" style="margin:8px 0 0">Zdarzenia każdej sesji zapisują się na bieżąco w magazynie przeglądarki (IndexedDB) i są dostępne w historii po ponownym otwarciu strony. "Zapisz bazę SQLite" tworzy plik <code>l2grindlens.sqlite</code> ze wszystkimi sesjami (tabele <code>events</code> i <code>sessions</code>). Po wskazaniu folderu danych plik SQLite i próbki zapisują się tam bez pytania, a baza odświeża się co minutę w trakcie sesji i przy zatrzymaniu.</p>
   </section>
-</div>
+</template>
 
 <script src="systemmsg.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>

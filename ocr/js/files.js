@@ -3,11 +3,8 @@
 const { $, status, fmt } = L2GL;
 let dirHandle = null, SQL = null;
 
-function showFolder() { $('folderInfo').textContent = dirHandle ? `folder: ${dirHandle.name}` : 'folder nie wybrany, pliki trafiają do Pobranych'; }
-
 async function restoreFolder() {
   try { dirHandle = (await L2GL.db.kvGet('dirHandle')) || null; } catch (e) { dirHandle = null; }
-  showFolder();
 }
 
 /** Zwraca true, gdy mamy zapisywalny folder. `interactive` pozwala poprosić o uprawnienie lub otworzyć wybór folderu. */
@@ -21,7 +18,6 @@ async function ensureFolder(interactive) {
   try { dirHandle = await window.showDirectoryPicker({ mode: 'readwrite', id: 'l2grindlens-data' }); }
   catch (e) { if (e.name === 'AbortError') return false; throw e; }
   await L2GL.db.kvSet('dirHandle', dirHandle).catch(() => {});
-  showFolder();
   return true;
 }
 
@@ -92,14 +88,15 @@ async function saveSqlite(quiet) {
 /** Cichy zapis bazy do folderu danych, jeśli jest wybrany (co minutę w trakcie sesji i przy zatrzymaniu). */
 function autosave() { if (dirHandle) saveSqlite(true).catch(() => {}); }
 
-function sessionTag() { const v = L2GL.dashboard.view; return v.session ? v.session.replace(/[:.]/g, '-').slice(0, 19) : 'sesja'; }
-function jsonl() { return L2GL.dashboard.view.events.map(e => JSON.stringify(e)).join('\n') + '\n'; }
-function csv() {
+function sessionTag(view) { return view.session ? view.session.replace(/[:.]/g, '-').slice(0, 19) : 'sesja'; }
+function jsonl(view) { return view.events.map(e => JSON.stringify(e)).join('\n') + '\n'; }
+function csv(view) {
   const q = v => '"' + String(v ?? '').replace(/"/g, '""') + '"';
-  return 'time,type,msg_id,dmg,exp,sp,qty,item,src,target,text\n' + L2GL.dashboard.view.events.map(e => { const f = e.fields || {}; return [e.time, e.type, f.id, f.dmg, f.exp, f.sp, f.qty, f.item, f.src, f.target, e.text].map(q).join(','); }).join('\n') + '\n';
+  return 'time,type,msg_id,dmg,exp,sp,qty,item,src,target,text\n' + view.events.map(e => { const f = e.fields || {}; return [e.time, e.type, f.id, f.dmg, f.exp, f.sp, f.qty, f.item, f.src, f.target, e.text].map(q).join(','); }).join('\n') + '\n';
 }
-async function exportJsonl() { const w = await writeFile(`events-${sessionTag()}.jsonl`, new Blob([jsonl()], { type: 'text/plain' }), true); return w === 'folder' ? 'Zapisano JSONL w folderze danych.' : 'Pobrano JSONL.'; }
-async function exportCsv() { const w = await writeFile(`events-${sessionTag()}.csv`, new Blob([csv()], { type: 'text/csv' }), true); return w === 'folder' ? 'Zapisano CSV w folderze danych.' : 'Pobrano CSV.'; }
+/** Eksport zdarzeń widoku (sesji) dashboardu. */
+async function exportJsonl(view) { const w = await writeFile(`events-${sessionTag(view)}.jsonl`, new Blob([jsonl(view)], { type: 'text/plain' }), true); return w === 'folder' ? 'Zapisano JSONL w folderze danych.' : 'Pobrano JSONL.'; }
+async function exportCsv(view) { const w = await writeFile(`events-${sessionTag(view)}.csv`, new Blob([csv(view)], { type: 'text/csv' }), true); return w === 'folder' ? 'Zapisano CSV w folderze danych.' : 'Pobrano CSV.'; }
 
 async function pickFolder() { if (await ensureFolder(true)) return `Folder danych: ${dirHandle.name}.`; return 'Nie wybrano folderu.'; }
 

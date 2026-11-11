@@ -4,15 +4,35 @@ const { $, status, settings } = L2GL;
 const cap = L2GL.capture, ocr = L2GL.ocr, dash = L2GL.dashboard, files = L2GL.files, msgs = L2GL.messages;
 const PATTERNS_KEY = 'patterns.v3';
 
+// ---------- dwie instancje dashboardu ----------
+function mountDashboard(containerId) {
+  const root = $(containerId);
+  root.append($('dashTpl').content.cloneNode(true));
+  const panel = dash.create(root);
+  const run = (fn, errPrefix) => async () => { try { status(await fn(), 'ok'); } catch (e) { status(errPrefix + e.message, 'bad'); } };
+  panel.q('btnJsonl').addEventListener('click', run(() => files.exportJsonl(panel.view), 'Eksport nie powiódł się: '));
+  panel.q('btnCsv').addEventListener('click', run(() => files.exportCsv(panel.view), 'Eksport nie powiódł się: '));
+  panel.q('btnSqlite').addEventListener('click', run(() => files.saveSqlite(false), 'Zapis SQLite nie powiódł się: '));
+  panel.q('btnFolder').addEventListener('click', run(async () => { const m = await files.pickFolder(); showFolder(); return m; }, 'Nie udało się wybrać folderu: '));
+  return panel;
+}
+const current = mountDashboard('dashCurrent');
+const history = mountDashboard('dashHistory');
+function showFolder() {
+  const t = files.folderName() ? `folder: ${files.folderName()}` : 'folder nie wybrany, pliki trafiają do Pobranych';
+  current.q('folderInfo').textContent = t; history.q('folderInfo').textContent = t;
+}
+
 // ---------- zakładki ----------
 function showTab(n) {
-  for (const i of [1, 2, 3]) { $('tab' + i).hidden = i !== n; $('nav' + i).classList.toggle('current', i === n); }
+  for (const i of [1, 2, 3, 4]) { $('tab' + i).hidden = i !== n; $('nav' + i).classList.toggle('current', i === n); }
   settings.set('tab', n);
   if (n === 2) ocr.startLive($('ocrView')); else ocr.stopLive();
-  if (n === 3) dash.scheduleRender(true);
+  if (n === 3) dash.scheduleRender(current, true);
+  if (n === 4) refreshHistory();
   cap.drawPreview();
 }
-for (const i of [1, 2, 3]) $('nav' + i).addEventListener('click', () => showTab(i));
+for (const i of [1, 2, 3, 4]) $('nav' + i).addEventListener('click', () => showTab(i));
 $('btnNext1').addEventListener('click', () => showTab(2));
 $('btnBack2').addEventListener('click', () => showTab(1));
 
@@ -27,6 +47,9 @@ function updateButtons() {
   $('btnSaveSample').disabled = !ocr.state.last;
   $('liveState').textContent = running ? 'nasłuch trwa' : 'zatrzymany';
   $('liveState').className = 'pill' + (running ? ' on' : '');
+  $('currentInfo').textContent = ocr.state.session
+    ? (running ? `sesja od ${new Date(ocr.state.session).toLocaleTimeString('pl-PL')}` : `ostatnia sesja od ${new Date(ocr.state.session).toLocaleTimeString('pl-PL')}, zakończona`)
+    : 'brak sesji, kliknij Start';
   $('nav1').classList.toggle('done', ready);
   $('nav2').classList.toggle('done', running || ocr.state.sessionCount > 0);
 }
@@ -51,33 +74,37 @@ $('btnSample').addEventListener('click', async () => {
   try {
     const [a, b, c] = await ocr.sampleTest();
     const ok = a === 0 && b === 2 && c === 3;
-    status(`Test próbki: klatka 1: ${a} (oczekiwano 0), klatka 2: ${b} (oczekiwano 2), klatka 3: ${c} (oczekiwano 3). ${ok ? 'OK' : 'Rozbieżność, sprawdź dziennik.'}`, ok ? 'ok' : 'bad');
+    status(`Test próbki: klatka 1: ${a} (oczekiwano 0), klatka 2: ${b} (oczekiwano 2), klatka 3: ${c} (oczekiwano 3). ${ok ? 'OK' : 'Rozbieżność, sprawdź dziennik aktualnej sesji.'}`, ok ? 'ok' : 'bad');
   } catch (e) { status('Test nie powiódł się: ' + e.message, 'bad'); }
 });
 { const q = new URLSearchParams(location.search).get('img');
   if (q) cap.loadImage(q).then(() => { const [w, h] = cap.srcSize(); cap.setRegion({ x: 0, y: 0, w, h }, false); }).catch(() => {}); }
 
 // ---------- OCR: zdarzenia i sesje ----------
-ocr.hooks.onEvents = (events, persist) => { dash.addEvents(events, persist); updateButtons(); };
+// Zdarzenia bez zapisu (test na próbce) pokazujemy w widoku aktualnej sesji jako podgląd; historia nigdy ich nie dostaje.
+ocr.hooks.onEvents = (events, persist) => {
+  if (persist) dash.addEvents(current, events);
+  else { current.view.live = true; dash.addEvents(current, events); current.view.live = ocr.state.running; }
+  updateButtons();
+};
 ocr.hooks.onFrame = s => { $('rawOcr').textContent = s.last ? s.last.raw : ''; };
-ocr.hooks.onSessionStart = async id => { await dash.setView(id, id); await dash.refreshSessionList(id); updateButtons(); showTab(3); status('Nasłuch trwa. Zdarzenia pojawiają się w dzienniku i zapisują w magazynie.', 'ok'); };
-ocr.hooks.onSessionStop = () => { updateButtons(); dash.scheduleRender(true); status('Zatrzymano. Sesja zapisana.'); };
+ocr.hooks.onSessionStart = async id => { await dash.setView(current, id, true); updateButtons(); showTab(3); status('Nasłuch trwa. Zdarzenia pojawiają się w dzienniku i zapisują w magazynie.', 'ok'); };
+ocr.hooks.onSessionStop = () => { current.view.live = false; updateButtons(); dash.scheduleRender(current, true); status('Zatrzymano. Sesja zapisana, znajdziesz ją w historii.'); };
 const start = () => ocr.start().catch(e => status(e.message, 'bad'));
 $('btnStart').addEventListener('click', start);
 $('btnStart3').addEventListener('click', start);
 $('btnStop').addEventListener('click', () => ocr.stop());
-$('sessionSel').addEventListener('change', () => { if ($('sessionSel').value) dash.setView($('sessionSel').value, ocr.state.session); });
-$('logFilter').addEventListener('change', () => dash.redrawLog());
+$('btnSaveSample').addEventListener('click', async () => { try { status(await files.saveSample(), 'ok'); showFolder(); } catch (e) { status('Zapis próbki nie powiódł się: ' + e.message, 'bad'); } });
 
-// ---------- pliki ----------
-const run = (fn, errPrefix) => async () => { try { status(await fn(), 'ok'); } catch (e) { status(errPrefix + e.message, 'bad'); } };
-$('btnSaveSample').addEventListener('click', run(files.saveSample, 'Zapis próbki nie powiódł się: '));
-$('btnSqlite').addEventListener('click', run(() => files.saveSqlite(false), 'Zapis SQLite nie powiódł się: '));
-$('btnFolder').addEventListener('click', run(files.pickFolder, 'Nie udało się wybrać folderu: '));
-$('btnJsonl').addEventListener('click', run(files.exportJsonl, 'Eksport nie powiódł się: '));
-$('btnCsv').addEventListener('click', run(files.exportCsv, 'Eksport nie powiódł się: '));
+// ---------- historia ----------
+async function refreshHistory() {
+  const running = ocr.state.running ? ocr.state.session : null;
+  const sel = await dash.fillSessionList($('sessionSel'), running);
+  if (sel !== history.view.session) await dash.setView(history, sel || null, false);
+  else dash.scheduleRender(history, true);
+}
+$('sessionSel').addEventListener('change', () => dash.setView(history, $('sessionSel').value || null, false));
 
-// ---------- czyszczenie ----------
 function confirmBox(text, onYes) {
   const box = $('confirmBox'); box.hidden = false; box.innerHTML = '';
   box.append(text + ' ');
@@ -87,20 +114,19 @@ function confirmBox(text, onYes) {
   box.append(yes, no);
 }
 $('btnClearSession').addEventListener('click', () => {
-  const v = dash.view;
-  if (!v.session) return;
-  if (v.session === ocr.state.session && ocr.state.running) { status('Najpierw zatrzymaj nasłuch.', 'bad'); return; }
+  const id = history.view.session;
+  if (!id) return;
   confirmBox('Usunąć wszystkie zdarzenia tej sesji z magazynu? Tego nie da się cofnąć.', async () => {
-    await L2GL.db.clearSession(v.session);
-    if (v.session === ocr.state.session) { ocr.state.session = null; ocr.state.sessionCount = 0; }
-    await dash.refreshSessionList(ocr.state.session); await dash.setView($('sessionSel').value || null, ocr.state.session); status('Sesja usunięta.');
+    await L2GL.db.clearSession(id);
+    if (id === ocr.state.session) { ocr.state.session = null; ocr.state.sessionCount = 0; await dash.setView(current, null, false); updateButtons(); }
+    history.view.session = null; await refreshHistory(); status('Sesja usunięta.');
   });
 });
 $('btnClearAll').addEventListener('click', () => {
   if (ocr.state.running) { status('Najpierw zatrzymaj nasłuch.', 'bad'); return; }
   confirmBox('Usunąć wszystkie sesje i zdarzenia z magazynu przeglądarki? Tego nie da się cofnąć.', async () => {
     await L2GL.db.clearAll(); ocr.state.session = null; ocr.state.sessionCount = 0;
-    await dash.refreshSessionList(null); await dash.setView(null, null); status('Magazyn wyczyszczony.');
+    await dash.setView(current, null, false); history.view.session = null; await refreshHistory(); updateButtons(); status('Magazyn wyczyszczony.');
   });
 });
 
@@ -133,11 +159,10 @@ function loadSettings() {
   try { await L2GL.db.open(); $('storeState').textContent = 'magazyn: IndexedDB'; $('storeState').className = 'pill on'; }
   catch (e) { $('storeState').textContent = 'magazyn: niedostępny, dane tylko w pamięci'; }
   await files.restoreFolder();
-  await dash.refreshSessionList(null);
-  if ($('sessionSel').value) await dash.setView($('sessionSel').value, null);
+  showFolder();
   updateButtons();
   showTab(1);
-  window.addEventListener('resize', () => { if (!$('tab3').hidden) dash.scheduleRender(); });
-  window.l2gl = { cleanLines: L2GL.lines.clean, classify: msgs.classify, matchTemplate: msgs.match, db: L2GL.db, view: dash.view, state: ocr.state }; // do testów z konsoli
+  window.addEventListener('resize', () => { dash.scheduleRender(current); dash.scheduleRender(history); });
+  window.l2gl = { cleanLines: L2GL.lines.clean, classify: msgs.classify, matchTemplate: msgs.match, db: L2GL.db, current, history, state: ocr.state }; // do testów z konsoli
 })();
 })();

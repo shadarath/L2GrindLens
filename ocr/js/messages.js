@@ -51,6 +51,7 @@ const DEFAULT_PATTERNS = [
 const OCR_FIXES = [
   [/\beamed\b/g, 'earned'], [/\bdarnage\b/g, 'damage'], [/\bobtamed\b/g, 'obtained'],
   [/\binfl[1i]cted\b/g, 'inflicted'], [/\brece[1i]ved\b/g, 'received'], [/\bacqu[1i]red\b/g, 'acquired'],
+  [/\b5P\b/g, 'SP'], [/\bX[Pp]\b/g, 'XP'], [/\b(\d+)\s*5P\b/g, '$1 SP'],
 ];
 
 const templates = [], tplIndex = new Map(), candCache = new Map();
@@ -93,7 +94,7 @@ function build(dbm) {
   return templates.length;
 }
 
-function match(line) {
+function candidates(line) {
   const first = line.split(/\s+/)[0].toLowerCase().replace(/[^a-z]/g, '');
   let cands = candCache.get(first);
   if (!cands) {
@@ -101,10 +102,19 @@ function match(line) {
     cands.sort((a, b) => b.literal - a.literal || b.phCount - a.phCount);
     candCache.set(first, cands);
   }
-  for (const t of cands) { const m = t.re.exec(line); if (m) return { id: t.id, groups: m.groups || {} }; }
+  return cands;
+}
+
+/** Pierwszy szablon pasujący do linii (bez walidacji pól), do testów. */
+function match(line) {
+  for (const t of candidates(line)) { const m = t.re.exec(line); if (m) return { id: t.id, groups: m.groups || {} }; }
   return null;
 }
 
+/**
+ * Zdarzenie z dopasowania do szablonu albo null, gdy pole liczbowe nie jest liczbą
+ * (np. "You have obtained $s2 $s1." dopasowane do "Necklace of Anguish Chain"): wtedy próbujemy następny szablon.
+ */
 function fromTemplate(m) {
   const def = MSG_TYPES[m.id], fields = { id: m.id };
   let type = 'msg';
@@ -113,7 +123,13 @@ function fromTemplate(m) {
     for (const [name, ph] of Object.entries(def[1])) {
       const v = ph.startsWith('=') ? ph.slice(1) : m.groups[ph];
       if (v === undefined) continue;
-      fields[name] = /^(dmg|exp|sp|qty)$/.test(name) ? toNum(v) : v.trim();
+      if (/^(dmg|exp|sp|qty)$/.test(name)) {
+        if (!/^[0-9OolI|,.]+$/.test(v.trim())) return null;
+        fields[name] = toNum(v);
+        if (fields[name] === null) return null;
+      } else {
+        fields[name] = v.trim();
+      }
     }
     const me = (opts.playerName || '').trim().toLowerCase();
     if (me) {
@@ -135,7 +151,14 @@ function compilePatterns(text) {
 }
 
 function classify(text) {
-  if (opts.useDb && templates.length) { const m = match(text); if (m) return fromTemplate(m); }
+  if (opts.useDb && templates.length) {
+    for (const t of candidates(text)) {
+      const m = t.re.exec(text);
+      if (!m) continue;
+      const r = fromTemplate({ id: t.id, groups: m.groups || {} });
+      if (r) return r;
+    }
+  }
   for (const p of patterns) {
     const m = p.re.exec(text);
     if (!m) continue;
