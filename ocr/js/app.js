@@ -72,9 +72,9 @@ $('btnRegionReset').addEventListener('click', () => cap.setRegion(null, false));
 $('btnRegionAll').addEventListener('click', () => { const [w, h] = cap.srcSize(); if (w && h) cap.setRegion({ x: 0, y: 0, w, h }, true); });
 $('btnSample').addEventListener('click', async () => {
   try {
-    const [a, b, c] = await ocr.sampleTest();
-    const ok = a === 0 && b === 2 && c === 3;
-    status(`Test próbki: klatka 1: ${a} (oczekiwano 0), klatka 2: ${b} (oczekiwano 2), klatka 3: ${c} (oczekiwano 3). ${ok ? 'OK' : 'Rozbieżność, sprawdź dziennik aktualnej sesji.'}`, ok ? 'ok' : 'bad');
+    const [a, b, c, d] = await ocr.sampleTest();
+    const ok = a === 0 && b === 6 && c === 2 && d === 3;
+    status(`Test próbki (zdarzenia potwierdzane w następnej klatce): klatka 1: ${a} (oczekiwano 0), klatka 2: ${b} (oczekiwano 6), klatka 3: ${c} (oczekiwano 2), koniec: ${d} (oczekiwano 3). ${ok ? 'OK' : 'Rozbieżność, sprawdź dziennik aktualnej sesji.'}`, ok ? 'ok' : 'bad');
   } catch (e) { status('Test nie powiódł się: ' + e.message, 'bad'); }
 });
 { const q = new URLSearchParams(location.search).get('img');
@@ -134,7 +134,7 @@ $('btnClearAll').addEventListener('click', () => {
 function applyPatterns() { const err = msgs.compilePatterns($('patterns').value); $('patternsErr').textContent = err ? 'Błąd we wzorcach: ' + err : ''; if (!err) settings.set(PATTERNS_KEY, $('patterns').value); }
 $('thr').addEventListener('input', () => { $('thrVal').textContent = $('thr').value; settings.set('thr', +$('thr').value); });
 for (const id of ['fps', 'scale']) $(id).addEventListener('change', () => settings.set(id, $(id).value));
-for (const id of ['bright', 'baseline']) $(id).addEventListener('change', () => settings.set(id, $(id).checked));
+$('bright').addEventListener('change', () => settings.set('bright', $('bright').checked));
 $('useDb').addEventListener('change', () => { msgs.opts.useDb = $('useDb').checked; settings.set('useDb', msgs.opts.useDb); });
 $('playerName').addEventListener('change', () => { msgs.opts.playerName = $('playerName').value.trim(); settings.set('playerName', msgs.opts.playerName); });
 $('patterns').addEventListener('change', applyPatterns);
@@ -143,7 +143,7 @@ $('btnPatternsReset').addEventListener('click', () => { $('patterns').value = JS
 function loadSettings() {
   $('thr').value = settings.get('thr', 140); $('thrVal').textContent = $('thr').value;
   $('fps').value = settings.get('fps', '4'); $('scale').value = settings.get('scale', '2');
-  $('bright').checked = settings.get('bright', true); $('baseline').checked = settings.get('baseline', true);
+  $('bright').checked = settings.get('bright', true);
   $('useDb').checked = settings.get('useDb', true); msgs.opts.useDb = $('useDb').checked;
   $('playerName').value = settings.get('playerName', ''); msgs.opts.playerName = $('playerName').value;
   $('patterns').value = settings.get(PATTERNS_KEY, JSON.stringify(msgs.DEFAULT_PATTERNS, null, 2)); applyPatterns();

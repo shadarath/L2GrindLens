@@ -7,7 +7,8 @@ const state = {
   worker: null, workerReady: false,
   running: false, busy: false, timer: null, autosaveTimer: null, liveTimer: null,
   session: null, sessionCount: 0,
-  prevLines: null, prevSig: null, firstFrame: true,
+  prevLines: null, prevSig: null, baselineNext: false, startedBefore: false,
+  pending: [],   // linie nowe w ostatniej klatce, czekające na potwierdzenie w następnej
   last: null,
   stats: { frames: 0, ocr: 0, ocrMsTotal: 0 },
 };
@@ -19,7 +20,28 @@ const lastSrc = document.createElement('canvas'), lastOcr = document.createEleme
 const sample = document.createElement('canvas');
 
 function imageOpts() { return { scale: +$('scale').value, thr: +$('thr').value, bright: $('bright').checked }; }
-function resetFrameState() { state.prevLines = null; state.prevSig = null; state.firstFrame = true; }
+function resetFrameState() { state.prevLines = null; state.prevSig = null; state.baselineNext = false; state.pending = []; }
+
+/** Zamienia linie na zdarzenia, zapisuje (gdy persist) i zgłasza do dashboardu. */
+function emit(items, persist) {
+  const out = [];
+  for (const { text, time } of items) {
+    const c = L2GL.messages.classify(text);
+    const ev = { session: persist ? state.session : null, ts: time.getTime(), time: time.toISOString(), text, type: c.type, fields: c.fields };
+    if (state.last) state.last.events.push(ev);
+    out.push(ev);
+    if (persist) { state.sessionCount++; L2GL.db.add(ev).catch(e => status('Błąd zapisu zdarzenia: ' + e.message, 'bad')); }
+  }
+  if (persist && out.length) L2GL.db.putSession({ id: state.session, start: Date.parse(state.session), end: Date.now(), count: state.sessionCount }).catch(() => {});
+  if (out.length) hooks.onEvents(out, persist);
+  return out;
+}
+
+/** Zgłasza linie czekające na potwierdzenie bez czekania (koniec sesji, koniec testu). */
+function flushPending(persist) {
+  const items = state.pending; state.pending = [];
+  return emit(items, persist);
+}
 
 async function ensureWorker() {
   if (state.workerReady) return;
@@ -40,7 +62,8 @@ async function processFrame(frameTime, persist) {
     const img = L2GL.image.preprocess(cap.source, cap.region, imageOpts(), work);
     L2GL.image.cropColor(cap.source, cap.region, lastSrc);
     const sig = L2GL.image.signature(img);
-    if (!L2GL.image.changed(sig, state.prevSig)) return [];
+    // Klatka bez zmian jest pomijana, chyba że czekają linie do potwierdzenia: wtedy OCR musi je zobaczyć drugi raz.
+    if (!state.pending.length && !L2GL.image.changed(sig, state.prevSig)) return [];
     state.prevSig = sig;
 
     const t0 = performance.now();
@@ -52,21 +75,21 @@ async function processFrame(frameTime, persist) {
     lastOcr.width = work.width; lastOcr.height = work.height; lastOcr.getContext('2d').drawImage(work, 0, 0);
     state.last = { time: (frameTime || new Date()).toISOString(), raw: data.text, lines, ms: Math.round(ms), events: [] };
 
+    // Pierwsza klatka w ogóle: logujemy wszystko, co widać. Klatka tuż po ponownym Starcie: tylko punkt
+    // odniesienia, żeby wpisy sprzed zatrzymania nie trafiły do nowej sesji. Dalej: tylko nowe linie.
     let fresh;
-    if (state.prevLines === null) fresh = (state.firstFrame && $('baseline').checked) ? [] : lines;
+    if (state.baselineNext) { fresh = []; state.baselineNext = false; state.pending = []; }
+    else if (state.prevLines === null) fresh = lines;
     else fresh = L2GL.lines.newLines(state.prevLines, lines);
-    state.firstFrame = false; state.prevLines = lines;
+    state.prevLines = lines;
 
-    const out = [];
-    for (const text of fresh) {
-      const c = L2GL.messages.classify(text), t = frameTime || new Date();
-      const ev = { session: persist ? state.session : null, ts: t.getTime(), time: t.toISOString(), text, type: c.type, fields: c.fields };
-      state.last.events.push(ev); out.push(ev);
-      if (persist) { state.sessionCount++; L2GL.db.add(ev).catch(e => status('Błąd zapisu zdarzenia: ' + e.message, 'bad')); }
-    }
-    if (persist && out.length) L2GL.db.putSession({ id: state.session, start: Date.parse(state.session), end: Date.now(), count: state.sessionCount }).catch(() => {});
+    // Nowa linia liczy się dopiero, gdy w następnej klatce nadal jest widoczna: pojedyncze przekłamanie OCR
+    // (np. przy zmianie tła pod czatem) znika w kolejnej klatce i nie zostaje zdarzeniem.
+    const confirmed = state.pending.filter(p => lines.some(l => L2GL.lines.same(l, p.text)));
+    const now = frameTime || new Date();
+    state.pending = fresh.map(text => ({ text, time: now }));
+    const out = emit(confirmed, persist);
     hooks.onFrame(state);
-    if (out.length) hooks.onEvents(out, persist);
     return out;
   } finally { state.busy = false; }
 }
@@ -88,7 +111,9 @@ async function start() {
   await ensureWorker();
   state.running = true;
   state.session = new Date().toISOString(); state.sessionCount = 0;
-  resetFrameState();
+  state.prevSig = null;
+  if (state.startedBefore) state.baselineNext = true; else state.prevLines = null;
+  state.startedBefore = true;
   await L2GL.db.putSession({ id: state.session, start: Date.now(), end: Date.now(), count: 0 }).catch(() => {});
   await hooks.onSessionStart(state.session);
   state.timer = setInterval(() => { processFrame(new Date(), true).catch(e => status('Błąd OCR: ' + e.message, 'bad')); }, 1000 / +$('fps').value);
@@ -96,8 +121,9 @@ async function start() {
 }
 function stop() {
   if (!state.running) return;
-  state.running = false;
   clearInterval(state.timer); clearInterval(state.autosaveTimer); state.timer = state.autosaveTimer = null;
+  flushPending(true);
+  state.running = false;
   L2GL.db.putSession({ id: state.session, start: Date.parse(state.session), end: Date.now(), count: state.sessionCount }).catch(() => {});
   L2GL.files.autosave();
   hooks.onSessionStop(state.session);
@@ -112,7 +138,11 @@ function drawSample(lines) {
   const shown = lines.slice(-rows);
   shown.forEach((l, i) => { c.fillStyle = /XP/.test(l) ? '#e8d26a' : /obtained/.test(l) ? '#7fd38a' : /hit you/.test(l) ? '#e58a7a' : '#f0f0f0'; c.fillText(l, 8, 8 + (rows - shown.length + i) * 19); });
 }
-/** Sztuczny czat o stałej wysokości: klatka bazowa, dwie nowe linie, przewinięcie o trzy. Zwraca [a, b, c]. */
+/**
+ * Sztuczny czat o stałej wysokości: pierwsza klatka (6 linii), dwie nowe linie, przewinięcie o trzy.
+ * Zwraca liczbę zdarzeń z każdej klatki plus z końcowego opróżnienia: oczekiwane [0, 6, 2, 3],
+ * bo nowe linie są zgłaszane dopiero po potwierdzeniu w następnej klatce.
+ */
 async function sampleTest() {
   await ensureWorker();
   const base = ['You hit for 128 damage.', 'Critical hit!', 'You hit for 341 damage.', 'Gremlin hit you for 23 damage.', 'You have acquired 1250 XP and 86 SP.', 'You have obtained 540 Adena.'];
@@ -125,8 +155,9 @@ async function sampleTest() {
   const b = (await processFrame(new Date(), false)).length;
   drawSample(base.slice(3).concat(['You hit for 97 damage.', 'You have obtained 5 Wooden Arrow.', 'Gremlin hit you for 31 damage.', 'You have acquired 980 XP and 71 SP.', 'You hit for 215 damage.']));
   const c = (await processFrame(new Date(), false)).length;
-  return [a, b, c];
+  const d = flushPending(false).length;
+  return [a, b, c, d];
 }
 
-L2GL.ocr = { state, hooks, ensureWorker, processFrame, start, stop, startLive, stopLive, resetFrameState, sampleTest, lastSrc, lastOcr };
+L2GL.ocr = { state, hooks, ensureWorker, processFrame, flushPending, start, stop, startLive, stopLive, resetFrameState, sampleTest, lastSrc, lastOcr };
 })();

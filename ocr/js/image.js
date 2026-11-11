@@ -32,9 +32,9 @@ function cropColor(source, region, canvas) {
   canvas.getContext('2d').drawImage(source, region.x, region.y, region.w, region.h, 0, 0, canvas.width, canvas.height);
 }
 
-/** Sygnatura rozkładu czarnych pikseli w siatce 32x8, do taniego porównania klatek. */
+/** Sygnatura rozkładu czarnych pikseli w siatce 64x24, do taniego porównania klatek. */
 function signature(img) {
-  const cols = 32, rows = 8, sig = new Float32Array(cols * rows), cw = img.width / cols, ch = img.height / rows, d = img.data;
+  const cols = 64, rows = 24, sig = new Float32Array(cols * rows), cw = img.width / cols, ch = img.height / rows, d = img.data;
   for (let y = 0; y < img.height; y++) for (let x = 0; x < img.width; x++)
     if (d[(y * img.width + x) * 4] === 0) sig[Math.min(rows - 1, (y / ch) | 0) * cols + Math.min(cols - 1, (x / cw) | 0)]++;
   const cell = cw * ch;
@@ -42,11 +42,12 @@ function signature(img) {
   return sig;
 }
 
+/** Zmiana globalna (przewinięcie) albo lokalna (choćby jedna cyfra w komórce siatki) liczy się jako nowa klatka. */
 function changed(sig, prevSig) {
   if (!prevSig) return true;
-  let diff = 0;
-  for (let i = 0; i < sig.length; i++) diff += Math.abs(sig[i] - prevSig[i]);
-  return diff / sig.length > 0.003;
+  let sum = 0, max = 0;
+  for (let i = 0; i < sig.length; i++) { const d = Math.abs(sig[i] - prevSig[i]); sum += d; if (d > max) max = d; }
+  return max > 0.05 || sum / sig.length > 0.003;
 }
 
 /** Rysuje canvas źródłowy do canvasu podglądu, dopasowując szerokość do kontenera. */

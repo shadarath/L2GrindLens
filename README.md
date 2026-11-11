@@ -29,7 +29,13 @@ plików: czyta tylko obraz okna udostępniony przez standardowe API przeglądark
 
 Co klatkę wycinek czatu jest powiększany i zamieniany na czarny tekst na białym tle. Klatki bez zmian w obrazie
 są pomijane. Tekst z OCR jest czyszczony (śmieci z ikon, sklejanie zawiniętych linii, typowe pomyłki OCR), a nowe
-linie względem poprzedniej klatki są rozpoznawane z tolerancją na drobne błędy. Każda nowa linia jest dopasowywana
+linie względem poprzedniej klatki są rozpoznawane z tolerancją na drobne błędy w literach; liczby muszą się
+zgadzać co do cyfry. Pojedyncze przekłamania w starych liniach (np. gdy przy ruchu kamery zmienia się tło pod
+półprzezroczystym czatem) nie psują dopasowania, a nowa linia jest zgłaszana dopiero, gdy potwierdzi się
+w następnej klatce. Jeśli czat w grze ma regulację przezroczystości, nieprzezroczyste tło dodatkowo
+stabilizuje OCR. Przy pierwszym Starcie logowane jest wszystko, co widać w czacie. Po Stop i ponownym
+Starcie pierwsza klatka jest tylko punktem odniesienia: do nowej sesji trafiają wyłącznie linie, które pojawią
+się później. Każda nowa linia jest dopasowywana
 do szablonów z bazy komunikatów (`ocr/systemmsg.js`): dostaje numer komunikatu `id` i pola z placeholderów
 (obrażenia, cel, źródło, ilość, przedmiot...). Typ zdarzenia (dmg_dealt, dmg_received, exp, item, crit, miss,
 block, skill, cooldown, cast_fail, level_up, death...) nadaje tabela `MSG_TYPES` w `ocr/js/messages.js`; komunikaty

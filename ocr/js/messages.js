@@ -111,9 +111,22 @@ function match(line) {
   return null;
 }
 
+const NAME_CHARS = /^[A-Za-z][A-Za-z0-9 .,'’:+\-()]*$/;
+/**
+ * Czy tekst wygląda jak nazwa przedmiotu, umiejętności lub postaci: same zwykłe znaki, co najmniej trzy litery,
+ * żadnych jednoznakowych tokenów (śmieci z OCR typu "55 t", "-1 -", "TD 5] (4") ani słów XP/SP.
+ */
+function validName(v) {
+  if (!NAME_CHARS.test(v)) return false;
+  if (/\b(XP|SP)\b/.test(v)) return false;
+  if ((v.match(/[A-Za-z]/g) || []).length < 3) return false;
+  return v.split(/\s+/).every(t => t.replace(/[^A-Za-z0-9]/g, '').length >= 2 || /^\+?\d+$/.test(t));
+}
+
 /**
  * Zdarzenie z dopasowania do szablonu albo null, gdy pole liczbowe nie jest liczbą
- * (np. "You have obtained $s2 $s1." dopasowane do "Necklace of Anguish Chain"): wtedy próbujemy następny szablon.
+ * (np. "You have obtained $s2 $s1." dopasowane do "Necklace of Anguish Chain") lub nazwa wygląda na śmieci:
+ * wtedy próbujemy następny szablon, a na końcu wzorce zapasowe.
  */
 function fromTemplate(m) {
   const def = MSG_TYPES[m.id], fields = { id: m.id };
@@ -129,6 +142,7 @@ function fromTemplate(m) {
         if (fields[name] === null) return null;
       } else {
         fields[name] = v.trim();
+        if (/^(item|skill|src|target|who)$/.test(name) && !validName(fields[name])) return null;
       }
     }
     const me = (opts.playerName || '').trim().toLowerCase();
@@ -163,11 +177,16 @@ function classify(text) {
     const m = p.re.exec(text);
     if (!m) continue;
     const fields = {};
-    for (const [k, v] of Object.entries(m.groups || {})) { if (v === undefined) continue; fields[k] = /^(dmg|exp|sp|qty)$/.test(k) ? toNum(v) : v.trim(); }
-    return { type: p.type, fields };
+    let ok = true;
+    for (const [k, v] of Object.entries(m.groups || {})) {
+      if (v === undefined) continue;
+      fields[k] = /^(dmg|exp|sp|qty)$/.test(k) ? toNum(v) : v.trim();
+      if (/^(item|skill|src|target|who)$/.test(k) && !validName(fields[k])) ok = false;
+    }
+    if (ok) return { type: p.type, fields };
   }
   return { type: 'other', fields: {} };
 }
 
-L2GL.messages = { MSG_TYPES, DEFAULT_PATTERNS, OCR_FIXES, opts, build, match, classify, compilePatterns, toNum, count: () => templates.length };
+L2GL.messages = { MSG_TYPES, DEFAULT_PATTERNS, OCR_FIXES, opts, build, match, classify, compilePatterns, toNum, validName, count: () => templates.length };
 })();
