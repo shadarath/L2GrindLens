@@ -6,7 +6,7 @@ plików: czyta tylko obraz okna udostępniony przez standardowe API przeglądark
 
 ## Szybki start
 
-1. Otwórz `ocr/L2GrindLens-OCR.html` w Chrome lub Edge (potrzebne połączenie z internetem, bo silnik OCR
+1. Otwórz `index.html` w Chrome lub Edge (potrzebne połączenie z internetem, bo silnik OCR
    Tesseract.js i biblioteka wykresów dociągają się z CDN; za pierwszym razem kilkanaście MB, potem z pamięci
    podręcznej przeglądarki).
 2. Gra w oknie lub borderless, czat systemowy w osobnym oknie, czcionka czatu powiększona.
@@ -38,9 +38,9 @@ w następnej klatce. Jeśli czat w grze ma regulację przezroczystości, nieprze
 stabilizuje OCR. Przy pierwszym Starcie logowane jest wszystko, co widać w czacie. Po Stop i ponownym
 Starcie pierwsza klatka jest tylko punktem odniesienia: do nowej sesji trafiają wyłącznie linie, które pojawią
 się później. Każda nowa linia jest dopasowywana
-do szablonów z bazy komunikatów (`ocr/systemmsg.js`): dostaje numer komunikatu `id` i pola z placeholderów
+do szablonów z bazy komunikatów (`systemmsg.js`): dostaje numer komunikatu `id` i pola z placeholderów
 (obrażenia, cel, źródło, ilość, przedmiot...). Typ zdarzenia (dmg_dealt, dmg_received, exp, item, crit, miss,
-block, skill, cooldown, cast_fail, level_up, death...) nadaje tabela `MSG_TYPES` w `ocr/js/messages.js`; komunikaty
+block, skill, cooldown, cast_fail, level_up, death...) nadaje tabela `MSG_TYPES` w `js/messages.js`; komunikaty
 spoza niej dostają typ `msg`. Pole "imię postaci" odróżnia Twoje obrażenia od cudzych w komunikatach z imieniem;
 cudze dostają typ `dmg_other`. Wzorce zapasowe działają tylko dla linii, które nie pasują do żadnego szablonu.
 
@@ -60,23 +60,23 @@ sesji i przy zatrzymaniu. JSONL i CSV eksportują oglądaną sesję. Format zdar
  "fields":{"id":2261,"src":"Shad","dmg":187,"target":"Balor Orc Lieutenant"},"text":"Shad has inflicted 187 damage on Balor Orc Lieutenant."}
 ```
 
-## Baza komunikatów: ocr/data
+## Baza komunikatów: data
 
 `systemmsg.tsv` to 3236 komunikatów systemowych (id, szablon z `$s1`/`$c1`) wyciągniętych skryptem
 `extract_systemmsg.py` z pliku `SystemMessageId.java` emulatora L2J Mobius (High Five). Brzmienie części
 komunikatów na konkretnym serwerze różni się od stocku, a pliki klienta bywają zaszyfrowane własnym kluczem
 serwera, więc dokładne teksty zbiera się z okna "System Msg" w grze: wpisz słowo w Find, zrób zrzut listy
 i przepuść go przez OCR (np. stroną z wczytanym zrzutem, czytając surowy wynik), zapisz jako próbkę `.txt`
-w `ocr/samples` w formacie z sekcją "## Surowy wynik OCR", a potem uruchom `extract_samples.py`. Skrypt wyciąga pary id + tekst ze wszystkich próbek,
+w `samples` w formacie z sekcją "## Surowy wynik OCR", a potem uruchom `extract_samples.py`. Skrypt wyciąga pary id + tekst ze wszystkich próbek,
 poprawia pomyłki OCR w placeholderach, zapisuje `systemmsg_reborn.tsv` (ze statusem: taki sam / inny / nowy
-względem L2J, poprzednie wpisy zostają) i przebudowuje `ocr/systemmsg.js` jako bazę L2J nadpisaną wpisami
+względem L2J, poprzednie wpisy zostają) i przebudowuje `systemmsg.js` jako bazę L2J nadpisaną wpisami
 z serwera.
 
 ## Struktura kodu
 
-Zwykłe skrypty bez modułów ES, żeby strona działała z dysku. `ocr/js`: `core.js` (ustawienia, status),
+Zwykłe skrypty bez modułów ES, żeby strona działała z dysku. `js`: `core.js` (ustawienia, status),
 `messages.js` (baza komunikatów, typy zdarzeń, wzorce zapasowe), `lines.js` (czyszczenie linii OCR, wykrywanie
 nowych), `image.js` (binaryzacja, sygnatura zmian), `storage.js` (IndexedDB), `capture.js` (źródło obrazu,
 podgląd, obszar), `ocr.js` (Tesseract, pętla, sesje), `dashboard.js` (kafelki, wykresy,
 dziennik), `files.js` (folder danych, SQLite, eksport), `app.js` (zakładki i spięcie całości). Style
-w `ocr/css/app.css`.
+w `css/app.css`.
