@@ -28,14 +28,12 @@
     <div class="row">
       <button id="btnShare" class="primary">Wybierz okno gry</button>
       <label>lub zrzut ekranu <input type="file" id="fileShot" accept="image/*"></label>
-      <button id="btnSample">Test na próbce</button>
     </div>
-    <p class="hint">Gra musi działać w oknie lub w trybie borderless. Po wybraniu okna zaznacz myszą obszar z czatem systemowym, zaczynając kilkanaście pikseli na prawo od ikon przewijania. Zapamiętany obszar wraca sam przy kolejnym uruchomieniu.</p>
+    <p class="hint">Gra musi działać w oknie lub w trybie borderless. Po wybraniu okna zaznacz myszą obszar z czatem systemowym: zacznij kilkanaście pikseli na prawo od ikon przewijania i skończ na końcu tekstu, bez krawędzi okna. Zapamiętany obszar wraca sam przy kolejnym uruchomieniu.</p>
     <canvas id="preview" width="640" height="360"></canvas>
     <div class="row" style="margin-top:8px">
       <span class="hint">Obszar: <span id="regionInfo">nie zaznaczony</span></span>
       <button id="btnRegionReset">Zaznacz od nowa</button>
-      <button id="btnRegionAll">Cały obraz</button>
       <span style="flex:1"></span>
       <button id="btnNext1" class="primary" disabled>Dalej: obróbka i OCR →</button>
     </div>
@@ -44,54 +42,68 @@
 
 <!-- ===================== KROK 2 ===================== -->
 <div id="tab2" class="stack" hidden>
-  <section>
-    <h2>Ustawienia obróbki</h2>
-    <div class="row">
-      <label>klatek/s <select id="fps"><option>2</option><option>3</option><option selected>4</option><option>5</option><option>8</option></select></label>
-      <label>powiększenie <select id="scale"><option>1.5</option><option selected>2</option><option>3</option></select></label>
-      <label>próg <input type="range" id="thr" min="40" max="240" value="140"> <span id="thrVal">140</span></label>
-      <label><input type="checkbox" id="bright" checked> tylko jasny tekst</label>
-    </div>
-    <div class="row" style="margin-top:8px">
-      <label><input type="checkbox" id="useDb" checked> dopasowuj do bazy komunikatów</label>
-      <label>imię postaci <input type="text" id="playerName" placeholder="np. Shad" style="width:9em"></label>
-      <span class="hint">Imię odróżnia Twoje obrażenia od obrażeń innych postaci w komunikatach "$c1 has inflicted...".</span>
-    </div>
+  <section id="gate2" class="gate" hidden>
+    <h2>Najpierw źródło obrazu</h2>
+    <p>Żeby ustawić obróbkę, potrzebny jest obraz z gry i zaznaczony obszar czatu. Wróć do kroku 1, wybierz okno gry i zaznacz obszar.</p>
+    <button class="primary" data-goto="1">Przejdź do kroku 1: Źródło obrazu</button>
   </section>
-  <section>
-    <h2>Podgląd obróbki na żywo</h2>
-    <p class="hint" style="margin-top:0">Tak widzi obraz silnik OCR: czarny tekst na białym tle. Zmieniaj próg i powiększenie, aż litery będą czyste i bez poszarpanych krawędzi. Podgląd odświeża się sam.</p>
-    <canvas id="ocrView" width="400" height="60"></canvas>
-    <details style="margin-top:8px">
-      <summary>Surowy wynik OCR ostatniej klatki (w trakcie nasłuchu)</summary>
-      <pre id="rawOcr" style="font:12px/1.4 var(--mono); white-space:pre-wrap; margin:6px 0 0"></pre>
-    </details>
-    <details style="margin-top:8px">
-      <summary>Wzorce zapasowe (JSON, używane gdy linia nie pasuje do bazy)</summary>
-      <textarea id="patterns" spellcheck="false"></textarea>
-      <div class="row" style="margin-top:6px"><button id="btnPatternsReset">Przywróć domyślne wzorce</button><span id="patternsErr"></span></div>
-    </details>
-    <div class="row" style="margin-top:10px">
+  <div id="body2" class="stack">
+    <section>
+      <h2>Podgląd obróbki na żywo</h2>
+      <p class="hint" style="margin-top:0">Tak widzi obraz silnik OCR: czarny tekst na białym tle. Zmieniaj próg i powiększenie, aż litery będą czyste i bez poszarpanych krawędzi. Podgląd odświeża się sam.</p>
+      <div class="row" style="margin-bottom:8px">
+        <label>próg <input type="range" id="thr" min="40" max="240" value="140"> <span id="thrVal">140</span></label>
+        <label>powiększenie <select id="scale"><option>1.5</option><option selected>2</option><option>3</option></select></label>
+        <label>imię postaci <input type="text" id="playerName" placeholder="np. Shad" style="width:9em"></label>
+        <span class="hint">Imię odróżnia Twoje obrażenia od obrażeń innych postaci.</span>
+      </div>
+      <canvas id="ocrView" width="400" height="60"></canvas>
+      <details style="margin-top:8px">
+        <summary>Surowy wynik OCR ostatniej klatki (w trakcie nasłuchu)</summary>
+        <pre id="rawOcr" style="font:12px/1.4 var(--mono); white-space:pre-wrap; margin:6px 0 0"></pre>
+      </details>
+    </section>
+    <section>
+      <details>
+        <summary>Ustawienia zaawansowane</summary>
+        <div class="row" style="margin-top:8px">
+          <label>klatek/s <select id="fps"><option>2</option><option>3</option><option selected>4</option><option>5</option><option>8</option></select></label>
+          <label><input type="checkbox" id="bright" checked> tylko jasny tekst</label>
+          <label><input type="checkbox" id="useDb" checked> dopasowuj do bazy komunikatów</label>
+        </div>
+        <textarea id="patterns" hidden></textarea>
+      </details>
+    </section>
+    <div class="row">
       <button id="btnBack2">← Wstecz</button>
       <span style="flex:1"></span>
       <button id="btnStart" class="primary" disabled>Start i przejdź do aktualnej sesji →</button>
     </div>
-  </section>
+  </div>
 </div>
 
 <!-- ===================== KROK 3: AKTUALNA SESJA ===================== -->
 <div id="tab3" class="stack" hidden>
-  <section>
-    <div class="row">
-      <button id="btnStart3" class="primary" disabled>Start</button>
-      <button id="btnStop" disabled>Stop</button>
-      <button id="btnSaveSample" disabled>Zapisz próbkę do analizy</button>
-      <span id="currentInfo" class="hint"></span>
-      <span style="flex:1"></span>
-      <span id="liveState" class="pill">zatrzymany</span>
+  <section id="gate3" class="gate" hidden>
+    <h2 id="gate3Title">Najpierw źródło obrazu</h2>
+    <p id="gate3Text"></p>
+    <div class="row" style="justify-content:center">
+      <button id="gate3Btn" class="primary"></button>
+      <button id="gate3Start" hidden>Start od razu</button>
     </div>
   </section>
-  <div id="dashCurrent" class="stack"></div>
+  <div id="body3" class="stack">
+    <section>
+      <div class="row">
+        <button id="btnStart3" class="primary" disabled>Start</button>
+        <button id="btnStop" disabled>Stop</button>
+        <span id="currentInfo" class="hint"></span>
+        <span style="flex:1"></span>
+        <span id="liveState" class="pill">zatrzymany</span>
+      </div>
+    </section>
+    <div id="dashCurrent" class="stack"></div>
+  </div>
 </div>
 
 <!-- ===================== HISTORIA SESJI ===================== -->
@@ -159,7 +171,7 @@
       <button data-id="btnFolder">Folder danych…</button>
       <span data-id="folderInfo" class="hint"></span>
     </div>
-    <p class="hint" style="margin:8px 0 0">Zdarzenia każdej sesji zapisują się na bieżąco w magazynie przeglądarki (IndexedDB) i są dostępne w historii po ponownym otwarciu strony. "Zapisz bazę SQLite" tworzy plik <code>l2grindlens.sqlite</code> ze wszystkimi sesjami (tabele <code>events</code> i <code>sessions</code>). Po wskazaniu folderu danych plik SQLite i próbki zapisują się tam bez pytania, a baza odświeża się co minutę w trakcie sesji i przy zatrzymaniu.</p>
+    <p class="hint" style="margin:8px 0 0">Zdarzenia każdej sesji zapisują się na bieżąco w magazynie przeglądarki (IndexedDB) i są dostępne w historii po ponownym otwarciu strony. "Zapisz bazę SQLite" tworzy plik <code>l2grindlens.sqlite</code> ze wszystkimi sesjami (tabele <code>events</code> i <code>sessions</code>). Po wskazaniu folderu danych plik SQLite zapisuje się tam bez pytania i odświeża co minutę w trakcie sesji oraz przy zatrzymaniu.</p>
   </section>
 </template>
 

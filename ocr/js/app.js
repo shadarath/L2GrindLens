@@ -1,4 +1,4 @@
-// Spięcie całości: zakładki, przyciski, ustawienia, inicjalizacja.
+// Spięcie całości: zakładki, bramki między krokami, przyciski, ustawienia, inicjalizacja.
 (() => {
 const { $, status, settings } = L2GL;
 const cap = L2GL.capture, ocr = L2GL.ocr, dash = L2GL.dashboard, files = L2GL.files, msgs = L2GL.messages;
@@ -23,37 +23,63 @@ function showFolder() {
   current.q('folderInfo').textContent = t; history.q('folderInfo').textContent = t;
 }
 
-// ---------- zakładki ----------
+// ---------- stan kroków ----------
+const sourceReady = () => !!cap.state.source && !!cap.state.region;
+const canRun = () => sourceReady() && cap.state.kind === 'video';
+const hasSession = () => !!ocr.state.session;
+
+// ---------- zakładki i bramki ----------
 function showTab(n) {
   for (const i of [1, 2, 3, 4]) { $('tab' + i).hidden = i !== n; $('nav' + i).classList.toggle('current', i === n); }
   settings.set('tab', n);
-  if (n === 2) ocr.startLive($('ocrView')); else ocr.stopLive();
+  updateGates();
+  if (n === 2 && sourceReady()) ocr.startLive($('ocrView')); else ocr.stopLive();
   if (n === 3) dash.scheduleRender(current, true);
   if (n === 4) refreshHistory();
   cap.drawPreview();
 }
+/** Krok 2 wymaga źródła i obszaru; krok 3 wymaga okna gry albo już istniejącej sesji. */
+function updateGates() {
+  const g2 = !sourceReady();
+  $('gate2').hidden = !g2; $('body2').hidden = g2;
+
+  let g3 = null;
+  if (!hasSession()) {
+    if (!sourceReady()) g3 = { title: 'Najpierw źródło obrazu', text: 'Sesję można zacząć dopiero, gdy jest obraz z gry i zaznaczony obszar czatu. Wróć do kroku 1.', btn: 'Przejdź do kroku 1: Źródło obrazu', tab: 1 };
+    else if (!canRun()) g3 = { title: 'Potrzebne okno gry', text: 'Nasłuch działa tylko na obrazie z okna gry. Zrzut ekranu służy wyłącznie do ustawienia obróbki. Wróć do kroku 1 i wybierz okno gry.', btn: 'Przejdź do kroku 1: Źródło obrazu', tab: 1 };
+    else g3 = { title: 'Sesja jeszcze nie trwa', text: 'Sprawdź w kroku 2, czy podgląd obróbki pokazuje czysty tekst, i kliknij tam Start. Możesz też zacząć od razu tutaj.', btn: 'Przejdź do kroku 2: Obróbka i OCR', tab: 2, allowStart: true };
+  }
+  $('gate3').hidden = !g3; $('body3').hidden = !!g3;
+  if (g3) {
+    $('gate3Title').textContent = g3.title; $('gate3Text').textContent = g3.text;
+    $('gate3Btn').textContent = g3.btn; $('gate3Btn').dataset.goto = g3.tab;
+    $('gate3Start').hidden = !g3.allowStart;
+  }
+}
 for (const i of [1, 2, 3, 4]) $('nav' + i).addEventListener('click', () => showTab(i));
 $('btnNext1').addEventListener('click', () => showTab(2));
 $('btnBack2').addEventListener('click', () => showTab(1));
+for (const b of document.querySelectorAll('button[data-goto]')) b.addEventListener('click', () => showTab(+b.dataset.goto));
+$('gate3Btn').addEventListener('click', () => showTab(+$('gate3Btn').dataset.goto));
 
 // ---------- stan przycisków ----------
 function updateButtons() {
-  const ready = !!cap.state.source && !!cap.state.region;
-  const canRun = ready && cap.state.kind === 'video', running = ocr.state.running;
-  $('btnNext1').disabled = !ready;
-  $('btnStart').disabled = !canRun || running;
-  $('btnStart3').disabled = !canRun || running;
+  const running = ocr.state.running;
+  $('btnNext1').disabled = !sourceReady();
+  $('btnStart').disabled = !canRun() || running;
+  $('btnStart3').disabled = !canRun() || running;
+  $('gate3Start').disabled = !canRun() || running;
   $('btnStop').disabled = !running;
-  $('btnSaveSample').disabled = !ocr.state.last;
   $('liveState').textContent = running ? 'nasłuch trwa' : 'zatrzymany';
   $('liveState').className = 'pill' + (running ? ' on' : '');
   $('currentInfo').textContent = ocr.state.session
     ? (running ? `sesja od ${new Date(ocr.state.session).toLocaleTimeString('pl-PL')}` : `ostatnia sesja od ${new Date(ocr.state.session).toLocaleTimeString('pl-PL')}, zakończona`)
     : 'brak sesji, kliknij Start';
-  $('nav1').classList.toggle('done', ready);
+  $('nav1').classList.toggle('done', sourceReady());
   $('nav2').classList.toggle('done', running || ocr.state.sessionCount > 0);
+  updateGates();
 }
-cap.onChange(() => { if (!cap.state.source && ocr.state.running) ocr.stop(); updateButtons(); });
+cap.onChange(() => { if (!cap.state.source && ocr.state.running) ocr.stop(); updateButtons(); if (!$('tab2').hidden && sourceReady()) ocr.startLive($('ocrView')); });
 
 // ---------- źródło ----------
 cap.bind($('preview'));
@@ -65,36 +91,23 @@ $('btnShare').addEventListener('click', async () => {
 });
 $('fileShot').addEventListener('change', async e => {
   const f = e.target.files[0]; if (!f) return;
-  try { await cap.loadImage(f); status('Zaznacz obszar czatu i przejdź dalej, podgląd obróbki jest na żywo.'); }
+  try { await cap.loadImage(f); status('Zaznacz obszar czatu i przejdź dalej, podgląd obróbki jest na żywo. Zrzut służy tylko do kalibracji, nasłuch wymaga okna gry.'); }
   catch (err) { status(err.message, 'bad'); }
 });
 $('btnRegionReset').addEventListener('click', () => cap.setRegion(null, false));
-$('btnRegionAll').addEventListener('click', () => { const [w, h] = cap.srcSize(); if (w && h) cap.setRegion({ x: 0, y: 0, w, h }, true); });
-$('btnSample').addEventListener('click', async () => {
-  try {
-    const [a, b, c, d] = await ocr.sampleTest();
-    const ok = a === 0 && b === 6 && c === 2 && d === 3;
-    status(`Test próbki (zdarzenia potwierdzane w następnej klatce): klatka 1: ${a} (oczekiwano 0), klatka 2: ${b} (oczekiwano 6), klatka 3: ${c} (oczekiwano 2), koniec: ${d} (oczekiwano 3). ${ok ? 'OK' : 'Rozbieżność, sprawdź dziennik aktualnej sesji.'}`, ok ? 'ok' : 'bad');
-  } catch (e) { status('Test nie powiódł się: ' + e.message, 'bad'); }
-});
 { const q = new URLSearchParams(location.search).get('img');
   if (q) cap.loadImage(q).then(() => { const [w, h] = cap.srcSize(); cap.setRegion({ x: 0, y: 0, w, h }, false); }).catch(() => {}); }
 
 // ---------- OCR: zdarzenia i sesje ----------
-// Zdarzenia bez zapisu (test na próbce) pokazujemy w widoku aktualnej sesji jako podgląd; historia nigdy ich nie dostaje.
-ocr.hooks.onEvents = (events, persist) => {
-  if (persist) dash.addEvents(current, events);
-  else { current.view.live = true; dash.addEvents(current, events); current.view.live = ocr.state.running; }
-  updateButtons();
-};
+ocr.hooks.onEvents = events => { dash.addEvents(current, events); updateButtons(); };
 ocr.hooks.onFrame = s => { $('rawOcr').textContent = s.last ? s.last.raw : ''; };
 ocr.hooks.onSessionStart = async id => { await dash.setView(current, id, true); updateButtons(); showTab(3); status('Nasłuch trwa. Zdarzenia pojawiają się w dzienniku i zapisują w magazynie.', 'ok'); };
 ocr.hooks.onSessionStop = () => { current.view.live = false; updateButtons(); dash.scheduleRender(current, true); status('Zatrzymano. Sesja zapisana, znajdziesz ją w historii.'); };
 const start = () => ocr.start().catch(e => status(e.message, 'bad'));
 $('btnStart').addEventListener('click', start);
 $('btnStart3').addEventListener('click', start);
+$('gate3Start').addEventListener('click', start);
 $('btnStop').addEventListener('click', () => ocr.stop());
-$('btnSaveSample').addEventListener('click', async () => { try { status(await files.saveSample(), 'ok'); showFolder(); } catch (e) { status('Zapis próbki nie powiódł się: ' + e.message, 'bad'); } });
 
 // ---------- historia ----------
 async function refreshHistory() {
@@ -131,14 +144,11 @@ $('btnClearAll').addEventListener('click', () => {
 });
 
 // ---------- ustawienia ----------
-function applyPatterns() { const err = msgs.compilePatterns($('patterns').value); $('patternsErr').textContent = err ? 'Błąd we wzorcach: ' + err : ''; if (!err) settings.set(PATTERNS_KEY, $('patterns').value); }
 $('thr').addEventListener('input', () => { $('thrVal').textContent = $('thr').value; settings.set('thr', +$('thr').value); });
 for (const id of ['fps', 'scale']) $(id).addEventListener('change', () => settings.set(id, $(id).value));
 $('bright').addEventListener('change', () => settings.set('bright', $('bright').checked));
 $('useDb').addEventListener('change', () => { msgs.opts.useDb = $('useDb').checked; settings.set('useDb', msgs.opts.useDb); });
 $('playerName').addEventListener('change', () => { msgs.opts.playerName = $('playerName').value.trim(); settings.set('playerName', msgs.opts.playerName); });
-$('patterns').addEventListener('change', applyPatterns);
-$('btnPatternsReset').addEventListener('click', () => { $('patterns').value = JSON.stringify(msgs.DEFAULT_PATTERNS, null, 2); applyPatterns(); });
 
 function loadSettings() {
   $('thr').value = settings.get('thr', 140); $('thrVal').textContent = $('thr').value;
@@ -146,7 +156,9 @@ function loadSettings() {
   $('bright').checked = settings.get('bright', true);
   $('useDb').checked = settings.get('useDb', true); msgs.opts.useDb = $('useDb').checked;
   $('playerName').value = settings.get('playerName', ''); msgs.opts.playerName = $('playerName').value;
-  $('patterns').value = settings.get(PATTERNS_KEY, JSON.stringify(msgs.DEFAULT_PATTERNS, null, 2)); applyPatterns();
+  // wzorce zapasowe: bez interfejsu, ale wciąż edytowalne w localStorage pod kluczem l2gl.patterns.v3
+  $('patterns').value = settings.get(PATTERNS_KEY, JSON.stringify(msgs.DEFAULT_PATTERNS, null, 2));
+  if (msgs.compilePatterns($('patterns').value)) msgs.compilePatterns(JSON.stringify(msgs.DEFAULT_PATTERNS));
   const r = settings.get('region', null);
   if (r) $('regionInfo').textContent = `${r.w}×${r.h} przy (${r.x}, ${r.y}), zapamiętany, zostanie przywrócony po wyborze okna`;
 }

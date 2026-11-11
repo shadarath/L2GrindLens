@@ -34,26 +34,6 @@ async function writeFile(name, blob, interactive) {
   return 'download';
 }
 
-function canvasBlob(c) { return new Promise(res => c.toBlob(res, 'image/png')); }
-
-async function saveSample() {
-  const L = L2GL.ocr.state.last, cap = L2GL.capture.state;
-  if (!L) throw new Error('Najpierw uruchom nasłuch, próbka to ostatnia rozpoznana klatka.');
-  const base = `sample-${fmt.stamp(new Date(L.time))}`;
-  const report = [
-    `# L2GrindLens OCR, próbka ${base}`, `czas klatki: ${L.time}`, `czas OCR: ${L.ms} ms`,
-    `obszar: ${JSON.stringify(cap.region)}  źródło: ${cap.kind}`,
-    `ustawienia: powiększenie=${$('scale').value} próg=${$('thr').value} tylkoJasnyTekst=${$('bright').checked} fps=${$('fps').value}`,
-    '', '## Surowy wynik OCR', L.raw.trimEnd(), '', '## Linie po czyszczeniu', ...L.lines.map(l => '- ' + l),
-    '', '## Zdarzenia z tej klatki', ...(L.events.length ? L.events.map(e => JSON.stringify(e)) : ['(brak nowych)']),
-    '', '## Wzorce', $('patterns').value, '',
-  ].join('\n');
-  const where = await writeFile(base + '.txt', new Blob([report], { type: 'text/plain' }), true);
-  await writeFile(base + '-source.png', await canvasBlob(L2GL.ocr.lastSrc), true);
-  await writeFile(base + '-ocr.png', await canvasBlob(L2GL.ocr.lastOcr), true);
-  return where === 'folder' ? `Zapisano próbkę ${base} (3 pliki) w folderze ${dirHandle.name}.` : `Pobrano próbkę ${base} (3 pliki do folderu Pobrane).`;
-}
-
 async function ensureSql() {
   if (SQL) return SQL;
   const base = 'https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/';
@@ -100,5 +80,5 @@ async function exportCsv(view) { const w = await writeFile(`events-${sessionTag(
 
 async function pickFolder() { if (await ensureFolder(true)) return `Folder danych: ${dirHandle.name}.`; return 'Nie wybrano folderu.'; }
 
-L2GL.files = { restoreFolder, pickFolder, saveSample, saveSqlite, autosave, exportJsonl, exportCsv, folderName: () => dirHandle && dirHandle.name };
+L2GL.files = { restoreFolder, pickFolder, saveSqlite, autosave, exportJsonl, exportCsv, folderName: () => dirHandle && dirHandle.name };
 })();

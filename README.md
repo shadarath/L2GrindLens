@@ -52,28 +52,22 @@ pomaga wyższe okno czatu i mniejszy obszar.
 
 Zdarzenia każdej sesji zapisują się na bieżąco w IndexedDB przeglądarki i są dostępne po ponownym otwarciu
 strony. "Zapisz bazę SQLite" buduje plik `l2grindlens.sqlite` (tabele `events` i `sessions`) ze wszystkich sesji.
-Po wskazaniu folderu danych plik SQLite i próbki zapisują się tam bez pytania, a baza odświeża się co minutę
-w trakcie sesji i przy zatrzymaniu. JSONL i CSV eksportują bieżącą sesję. Format zdarzenia:
+Po wskazaniu folderu danych plik SQLite zapisuje się tam bez pytania, a baza odświeża się co minutę w trakcie
+sesji i przy zatrzymaniu. JSONL i CSV eksportują oglądaną sesję. Format zdarzenia:
 
 ```json
 {"session":"2026-11-10T04:00:00.000Z","ts":1794283200000,"time":"...","type":"dmg_dealt",
  "fields":{"id":2261,"src":"Shad","dmg":187,"target":"Balor Orc Lieutenant"},"text":"Shad has inflicted 187 damage on Balor Orc Lieutenant."}
 ```
 
-## Próbki do analizy błędów
-
-Gdy jakaś linia rozpozna się źle, kliknij "Zapisz próbkę do analizy" na dashboardzie. Za pierwszym razem wskaż
-folder `ocr\samples`, potem każde kliknięcie zapisuje tam trzy pliki z ostatniej klatki: `-source.png` (wycinek
-kolorowy), `-ocr.png` (obraz po obróbce, czyli to, co widział silnik) i `.txt` (surowy wynik OCR, linie po
-czyszczeniu, zdarzenia i ustawienia). Te pliki wystarczą do znalezienia przyczyny bez dostępu do gry.
-
 ## Baza komunikatów: ocr/data
 
 `systemmsg.tsv` to 3236 komunikatów systemowych (id, szablon z `$s1`/`$c1`) wyciągniętych skryptem
 `extract_systemmsg.py` z pliku `SystemMessageId.java` emulatora L2J Mobius (High Five). Brzmienie części
 komunikatów na konkretnym serwerze różni się od stocku, a pliki klienta bywają zaszyfrowane własnym kluczem
-serwera, więc dokładne teksty zbiera się z okna "System Msg" w grze: wpisz słowo w Find, przechwyć listę stroną
-OCR i zapisz próbkę, a potem uruchom `extract_samples.py`. Skrypt wyciąga pary id + tekst ze wszystkich próbek,
+serwera, więc dokładne teksty zbiera się z okna "System Msg" w grze: wpisz słowo w Find, zrób zrzut listy
+i przepuść go przez OCR (np. stroną z wczytanym zrzutem, czytając surowy wynik), zapisz jako próbkę `.txt`
+w `ocr/samples` w formacie z sekcją "## Surowy wynik OCR", a potem uruchom `extract_samples.py`. Skrypt wyciąga pary id + tekst ze wszystkich próbek,
 poprawia pomyłki OCR w placeholderach, zapisuje `systemmsg_reborn.tsv` (ze statusem: taki sam / inny / nowy
 względem L2J, poprzednie wpisy zostają) i przebudowuje `ocr/systemmsg.js` jako bazę L2J nadpisaną wpisami
 z serwera.
@@ -83,6 +77,6 @@ z serwera.
 Zwykłe skrypty bez modułów ES, żeby strona działała z dysku. `ocr/js`: `core.js` (ustawienia, status),
 `messages.js` (baza komunikatów, typy zdarzeń, wzorce zapasowe), `lines.js` (czyszczenie linii OCR, wykrywanie
 nowych), `image.js` (binaryzacja, sygnatura zmian), `storage.js` (IndexedDB), `capture.js` (źródło obrazu,
-podgląd, obszar), `ocr.js` (Tesseract, pętla, sesje, test na próbce), `dashboard.js` (kafelki, wykresy,
-dziennik), `files.js` (folder danych, próbki, SQLite, eksport), `app.js` (zakładki i spięcie całości). Style
+podgląd, obszar), `ocr.js` (Tesseract, pętla, sesje), `dashboard.js` (kafelki, wykresy,
+dziennik), `files.js` (folder danych, SQLite, eksport), `app.js` (zakładki i spięcie całości). Style
 w `ocr/css/app.css`.

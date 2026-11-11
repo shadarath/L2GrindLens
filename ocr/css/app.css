@@ -79,3 +79,6 @@ table.loot { border-collapse: collapse; width: 100%; font-variant-numeric: tabul
 table.loot th, table.loot td { text-align: left; padding: 4px 8px; border-bottom: 1px solid var(--line); }
 table.loot td.num, table.loot th.num { text-align: right; }
 .wrap { overflow-x: auto; }
+.gate { text-align: center; padding-block: 28px; }
+.gate h2 { color: var(--fg); text-transform: none; letter-spacing: 0; font-size: 16px; }
+.gate p { color: var(--muted); max-width: 48em; margin: 8px auto 14px; }

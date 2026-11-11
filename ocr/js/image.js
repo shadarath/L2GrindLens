@@ -25,13 +25,6 @@ function preprocess(source, region, { scale, thr, bright }, canvas) {
   return img;
 }
 
-/** Kopia wycinka w kolorze i oryginalnej skali (do zapisu próbki). */
-function cropColor(source, region, canvas) {
-  canvas.width = Math.max(1, Math.round(region.w));
-  canvas.height = Math.max(1, Math.round(region.h));
-  canvas.getContext('2d').drawImage(source, region.x, region.y, region.w, region.h, 0, 0, canvas.width, canvas.height);
-}
-
 /** Sygnatura rozkładu czarnych pikseli w siatce 64x24, do taniego porównania klatek. */
 function signature(img) {
   const cols = 64, rows = 24, sig = new Float32Array(cols * rows), cw = img.width / cols, ch = img.height / rows, d = img.data;
@@ -59,5 +52,5 @@ function showIn(src, view) {
   view.getContext('2d').drawImage(src, 0, 0, vw, vh);
 }
 
-L2GL.image = { preprocess, cropColor, signature, changed, showIn };
+L2GL.image = { preprocess, signature, changed, showIn };
 })();
