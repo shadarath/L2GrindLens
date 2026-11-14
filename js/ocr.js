@@ -133,14 +133,21 @@ async function processFrame(frameTime) {
     const lines = L2GL.image.segmentLines(tm);
     state.lastMask = tm; state.lastLines = lines;
 
-    // 1. linie nowe w poprzednich klatkach, nadal widoczne -> OCR (z bieżącej klatki) -> gotowe albo kolejna próba
+    // 1. linie nowe w poprzednich klatkach, nadal widoczne -> OCR (z bieżącej klatki) -> gotowe albo kolejna próba.
+    // Kolejność z czatu jest zachowana: linia nie zostaje sfinalizowana, dopóki czeka jakaś wcześniejsza, bo
+    // inaczej kontynuacja zawiniętego komunikatu ("time.") mogłaby trafić do sklejania po następnym wpisie
+    // i zostać sierotą ("fragment lub śmieć"), a sam ogon wyszedłby bez końcówki.
     const records = [], keep = [];
+    let blocked = false;
     for (const p of state.pending) {
       const cur = L2GL.image.findIn(p.line, lines, THRESHOLD);
       if (!cur) continue;                                   // zniknęła: szum albo klatka w trakcie przewijania
-      if (p.reads.length) state.stats.retries++;
-      p.reads.push(await readLine(cur)); p.line = cur;
-      if (settled(p)) records.push(finalize(p)); else keep.push(p);
+      if (!p.reads.length || !settled(p)) {
+        if (p.reads.length) state.stats.retries++;
+        p.reads.push(await readLine(cur)); p.line = cur;
+      }
+      if (!blocked && settled(p)) records.push(finalize(p));
+      else { blocked = true; keep.push(p); }
     }
     const items = assemble(records);
     if (records.length) state.last = { time: frameTime.toISOString(), raw: records.map(r => `${r.text}  [${Math.round(r.conf)}]`).join('\n'), lines: items.map(i => i.text) };

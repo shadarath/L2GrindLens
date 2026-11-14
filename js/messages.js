@@ -271,9 +271,13 @@ function noteMonster(id) {
 }
 
 // ---------- pola ----------
-/** Liczba z fragmentu OCR po poprawieniu typowych pomyłek (O->0, l->1, S->5); null, gdy to nie liczba. */
+/**
+ * Liczba z fragmentu OCR po poprawieniu typowych pomyłek (O->0, l->1, S->5, B->8); null, gdy to nie liczba.
+ * Samotna dziewiątka w czcionce czatu czyta się jako "©" (albo "@" przy zakazie "©"): sprawdzone przez wstawienie
+ * glifów 0-8 w to samo miejsce, wszystkie czytają się poprawnie, więc "©" i "@" oznaczają 9.
+ */
 function toNum(v) {
-  const s = v.trim().replace(/[oOQ@]/g, '0').replace(/[lI|!]/g, '1').replace(/[sS$]/g, '5').replace(/B/g, '8').replace(/[zZ]/g, '2').replace(/[,.\s]/g, '');
+  const s = v.trim().replace(/[©@]/g, '9').replace(/[oOQ]/g, '0').replace(/[lI|!]/g, '1').replace(/[sS$]/g, '5').replace(/B/g, '8').replace(/[zZ]/g, '2').replace(/[,.\s]/g, '');
   return /^\d+$/.test(s) ? parseInt(s, 10) : null;
 }
 
