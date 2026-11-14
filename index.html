@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Grind Lens</title>
-<link rel="stylesheet" href="css/app.css?v=20261114r">
+<link rel="stylesheet" href="css/app.css?v=20261114s">
 </head>
 <body>
 <header>
@@ -32,7 +32,7 @@
       <button id="btnShare" class="primary">Wybierz okno gry</button>
       <label>lub zrzut ekranu <input type="file" id="fileShot" accept="image/*"></label>
     </div>
-    <p class="hint">Gra musi działać w oknie lub w trybie borderless. Po wybraniu okna zaznacz myszą obszar z czatem systemowym: zacznij kilkanaście pikseli na prawo od ikon przewijania i skończ na końcu tekstu, bez krawędzi okna. Zapamiętany obszar wraca sam przy kolejnym uruchomieniu.</p>
+    <p class="hint">Gra w oknie lub w trybie borderless. Po wybraniu okna zaznacz myszą sam tekst czatu systemowego, bez ikon i krawędzi okna. Obszar jest zapamiętywany, przy następnym uruchomieniu wystarczy wybrać okno.</p>
     <canvas id="preview" width="640" height="360"></canvas>
     <div class="row" style="margin-top:8px">
       <span class="hint">Obszar: <span id="regionInfo">nie zaznaczony</span></span>
@@ -47,16 +47,16 @@
 <div id="tab2" class="stack" hidden>
   <section id="gate2" class="gate" hidden>
     <h2>Najpierw źródło obrazu</h2>
-    <p>Podgląd wymaga obrazu z gry i zaznaczonego obszaru czatu. Wróć do kroku 1, wybierz okno gry i zaznacz obszar.</p>
+    <p>Najpierw wybierz okno gry i zaznacz obszar czatu.</p>
     <button class="primary" data-goto="1">Przejdź do kroku 1: Źródło obrazu</button>
   </section>
   <div id="body2" class="stack">
     <section>
       <h2>Podgląd OCR na żywo</h2>
-      <p class="hint" style="margin-top:0">Obraz, jaki dostaje silnik OCR: każda linia czatu wycięta po barwie tekstu i narysowana ciemnym tekstem na białym tle. Litery powinny być czytelne, a tło czyste. Podgląd odświeża się sam. <label style="display:inline"><input type="checkbox" id="maskView"> pokaż ścisłą maskę (biały tekst na czarnym; z niej powstają odciski linii, może wyglądać rzadko)</label></p>
+      <p class="hint" style="margin-top:0">Tak widzi czat silnik odczytu. Jeśli litery są czytelne, a tło czyste, odczyt będzie działał. Podgląd odświeża się sam. <label style="display:inline"><input type="checkbox" id="maskView"> pokaż maskę do porównywania linii (do diagnostyki, może wyglądać poszarpanie)</label></p>
       <div class="preview-box"><canvas id="ocrView" width="400" height="60"></canvas></div>
       <details style="margin-top:8px">
-        <summary>Surowy wynik OCR: całe widoczne okno czatu (nowe linie dochodzą na bieżąco), a w trakcie nasłuchu ostatnio przeczytane nowe linie; w nawiasie pewność 0-100</summary>
+        <summary>Surowy odczyt tekstu (w nawiasie pewność 0-100). Bez nasłuchu: całe widoczne okno czatu, w trakcie nasłuchu: ostatnie nowe linie.</summary>
         <pre id="rawOcr" style="font:12px/1.4 var(--mono); white-space:pre-wrap; margin:6px 0 0"></pre>
       </details>
     </section>
@@ -74,16 +74,16 @@
     <h2>Ustawienia</h2>
     <div class="row">
       <label>imię postaci <input type="text" id="playerName" placeholder="np. Shad" style="width:9em"></label>
-      <span class="hint">Imię odróżnia Twoje obrażenia od obrażeń innych postaci w komunikatach "X has inflicted ... on Y". Bez imienia wszystkie obrażenia liczą się jako Twoje.</span>
+      <span class="hint">Obrażenia innych postaci nie będą liczone jako Twoje. Bez imienia wszystkie obrażenia liczą się jako Twoje.</span>
     </div>
     <div class="row" style="margin-top:8px">
       <label>shotów na użycie <input type="number" id="shotsPerUse" min="1" max="20" value="1"></label>
-      <span class="hint">Zależy od broni: tyle sztuk odejmuje w łupach każdy komunikat "Use ...shot".</span>
+      <span class="hint">Tyle shotów zużywa jedno uderzenie Twoją bronią. Tyle sztuk odejmuje się w łupach i w zysku przy każdym użyciu.</span>
     </div>
-    <p class="hint">Ustawienia zapisują się same w przeglądarce. Przy następnym uruchomieniu, po wyborze okna gry, strona przechodzi od razu do aktualnej sesji.</p>
+    <p class="hint">Ustawienia zapisują się same. Gdy imię jest ustawione, po wyborze okna gry strona przechodzi od razu do aktualnej sesji.</p>
   </section>
   <section>
-    <h2>Ceny shotów <span class="help" tabindex="0" data-tip="Do wykresu zysku: każdy komunikat 'Use ...shot' odejmuje tyle Adeny, ile kosztuje zużyta liczba sztuk. Domyślnie cena sklepowa z bazy gry; wpisz własną, jeśli kupujesz taniej. Pozostałe przedmioty w zysku liczą się po cenie z bazy.">?</span></h2>
+    <h2>Ceny shotów <span class="help" tabindex="0" data-tip="Po tych cenach zużyte shoty obniżają zysk. Domyślnie ceny sklepowe; wpisz własne, jeśli kupujesz taniej.">?</span></h2>
     <div id="shotPrices" class="row"></div>
     <div class="row" style="margin-top:12px">
       <button id="btnBack3">← Wstecz</button>
@@ -109,7 +109,7 @@
         <button id="btnStop" disabled>Stop</button>
         <span id="currentInfo" class="hint"></span>
         <span style="flex:1"></span>
-        <button id="btnDebug" disabled title="Co 15 s zapisuje do folderu danych wycinek czatu, obraz po obróbce, co czwartą pełną klatkę okna i dziennik z wynikiem OCR i zdarzeniami">Debug: zbieraj próbki</button>
+        <button id="btnDebug" disabled title="Co 15 s zapisuje do folderu danych zrzuty czatu i dziennik odczytu. Przydaje się, gdy coś czyta się źle: z próbek można poprawić rozpoznawanie.">Debug: zbieraj próbki</button>
         <span id="debugState" class="pill">debug wyłączony</span>
         <span id="liveState" class="pill">zatrzymany</span>
       </div>
@@ -123,7 +123,7 @@
   <section>
     <div class="row">
       <label>sesja <select id="sessionSel" style="width:auto;min-width:16em"></select></label>
-      <span class="hint">Zapisane sesje, tylko do odczytu. Trwająca sesja pojawi się tu po zatrzymaniu.</span>
+      <span class="hint">Trwająca sesja pojawi się tu po zatrzymaniu.</span>
       <span style="flex:1"></span>
       <button id="btnClearSession" class="danger">Usuń tę sesję</button>
       <button id="btnClearAll" class="danger">Usuń wszystkie dane</button>
@@ -156,10 +156,10 @@
     <p class="hint" data-id="ocrStats" style="margin:8px 0 0"></p>
   </section>
   <div class="charts">
-    <section data-rolling><h2>XP i SP na minutę <span class="help" tabindex="0" data-tip="Średnia krocząca: w każdym punkcie suma z wybranego okna (2 min, 15 min albo 1 h) podzielona przez długość okna w minutach. Skala XP po lewej, SP po prawej. Punkt co 10 sekund.">?</span></h2><div class="chart"><canvas data-id="chExpSp"></canvas></div></section>
-    <section data-rolling><h2>Obrażenia na minutę <span class="help" tabindex="0" data-tip="Średnia krocząca: w każdym punkcie suma z wybranego okna podzielona przez długość okna w minutach. Punkt co 10 sekund.">?</span></h2><div class="chart"><canvas data-id="chDmg"></canvas></div></section>
-    <section data-rolling><h2>Zysk na minutę (Adena) <span class="help" tabindex="0" data-tip="Zebrane przedmioty po cenie z bazy gry (Adena 1:1) minus zużyte shoty po cenie z ustawień. Średnia krocząca z wybranego okna; może być ujemna, gdy shoty kosztują więcej, niż wypada.">?</span></h2><div class="chart"><canvas data-id="chProfit"></canvas></div></section>
-    <section><h2>Obrażenia zadane wg celu <span class="help" tabindex="0" data-tip="Liczba po x to zabite potwory danego typu. Gra nie ogłasza śmierci potwora, więc każdy komunikat o XP jest zaliczany ostatnio bitemu celowi.">?</span></h2><div class="chart"><canvas data-id="chTargets"></canvas></div></section>
+    <section data-rolling><h2>XP i SP na minutę <span class="help" tabindex="0" data-tip="Średnia z ostatnich 2 minut, 15 minut albo godziny (wybór obok). Dłuższe okno wygładza wykres, ale później pokazuje zmiany. XP po lewej, SP po prawej.">?</span></h2><div class="chart"><canvas data-id="chExpSp"></canvas></div></section>
+    <section data-rolling><h2>Obrażenia na minutę <span class="help" tabindex="0" data-tip="Średnia z ostatnich 2 minut, 15 minut albo godziny (wybór obok). Dłuższe okno wygładza wykres, ale później pokazuje zmiany.">?</span></h2><div class="chart"><canvas data-id="chDmg"></canvas></div></section>
+    <section data-rolling><h2>Zysk na minutę (Adena) <span class="help" tabindex="0" data-tip="Zebrane przedmioty po cenach sklepowych minus zużyte shoty po cenach z ustawień. Schodzi poniżej zera, gdy shoty kosztują więcej, niż wypada.">?</span></h2><div class="chart"><canvas data-id="chProfit"></canvas></div></section>
+    <section><h2>Obrażenia zadane wg celu <span class="help" tabindex="0" data-tip="Liczba po x to zabite potwory danego typu, liczone po komunikatach o XP. Zabicie w drużynie bez Twojego uderzenia nie zostanie policzone.">?</span></h2><div class="chart"><canvas data-id="chTargets"></canvas></div></section>
     <section><h2>Obrażenia otrzymane wg źródła</h2><div class="chart"><canvas data-id="chSources"></canvas></div></section>
   </div>
   <div class="cols">
@@ -171,12 +171,12 @@
       <div data-id="log" class="log"></div>
     </section>
     <section>
-      <h2>Łupy <span class="help" tabindex="0" data-tip="Najpierw Twoje łupy, potem po kolei łupy członków drużyny (komunikaty 'X has obtained ...'). Drobne różnice w odczycie nicku są sprowadzane do najczęstszej pisowni. Wartość = ilość razy cena z bazy gry (shoty po cenie z ustawień). Nazwa prowadzi do lineage2wiki.org (C1).">?</span></h2>
+      <h2>Łupy <span class="help" tabindex="0" data-tip="Najpierw Twoje łupy, potem łupy członków drużyny. Wartość według cen sklepowych, shoty według ustawień. Nazwa otwiera opis przedmiotu na lineage2wiki.org.">?</span></h2>
       <div class="wrap"><table class="loot" data-id="loot"><thead><tr><th>przedmiot</th><th class="num">ilość</th><th class="num">razy</th><th class="num">wartość</th></tr></thead><tbody></tbody></table></div>
     </section>
   </div>
   <section>
-    <h2>Nierozpoznane <span data-id="unknownCount" class="pill">0</span> <span class="help" tabindex="0" data-tip="Linie, z których nie powstało zdarzenie albo powstało z zastrzeżeniem: brak szablonu, pola nie pasują, nazwa spoza bazy gry, niska pewność OCR, fragment. Miniatura to obraz linii, jaki dostał silnik OCR. Stąd widać, czego brakuje w bazie albo co psuje odczyt.">?</span></h2>
+    <h2>Nierozpoznane <span data-id="unknownCount" class="pill">0</span> <span class="help" tabindex="0" data-tip="Linie czatu, których nie udało się pewnie rozpoznać, z powodem. Nie wchodzą do statystyk (poza przedmiotami spoza bazy, które liczą się pod odczytaną nazwą).">?</span></h2>
     <div class="wrap"><table class="loot unknown" data-id="unknown"><thead><tr><th>czas</th><th>linia</th><th>powód</th><th>odczyt</th></tr></thead><tbody></tbody></table></div>
   </section>
   <section>
@@ -188,24 +188,24 @@
       <button data-id="btnFolder">Folder danych…</button>
       <span data-id="folderInfo" class="hint"></span>
     </div>
-    <p class="hint" style="margin:8px 0 0">Zdarzenia każdej sesji zapisują się na bieżąco w magazynie przeglądarki (IndexedDB) i są dostępne w historii po ponownym otwarciu strony. "Zapisz bazę SQLite" tworzy plik <code>l2grindlens.sqlite</code> ze wszystkimi sesjami (tabele <code>events</code> i <code>sessions</code>). Po wskazaniu folderu danych plik SQLite zapisuje się tam bez pytania i odświeża co minutę w trakcie sesji oraz przy zatrzymaniu.</p>
+    <p class="hint" style="margin:8px 0 0">Sesje zapisują się same w przeglądarce i są dostępne w historii po ponownym otwarciu strony. Po wskazaniu folderu danych plik SQLite ze wszystkimi sesjami odświeża się tam sam co minutę.</p>
   </section>
 </template>
 
-<script src="systemmsg.js?v=20261114r"></script>
-<script src="gamedata.js?v=20261114r"></script>
+<script src="systemmsg.js?v=20261114s"></script>
+<script src="gamedata.js?v=20261114s"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js"></script>
-<script src="js/core.js?v=20261114r"></script>
-<script src="js/messages.js?v=20261114r"></script>
-<script src="js/lines.js?v=20261114r"></script>
-<script src="js/image.js?v=20261114r"></script>
-<script src="js/storage.js?v=20261114r"></script>
-<script src="js/capture.js?v=20261114r"></script>
-<script src="js/ocr.js?v=20261114r"></script>
-<script src="js/dashboard.js?v=20261114r"></script>
-<script src="js/files.js?v=20261114r"></script>
-<script src="js/debug.js?v=20261114r"></script>
-<script src="js/app.js?v=20261114r"></script>
+<script src="js/core.js?v=20261114s"></script>
+<script src="js/messages.js?v=20261114s"></script>
+<script src="js/lines.js?v=20261114s"></script>
+<script src="js/image.js?v=20261114s"></script>
+<script src="js/storage.js?v=20261114s"></script>
+<script src="js/capture.js?v=20261114s"></script>
+<script src="js/ocr.js?v=20261114s"></script>
+<script src="js/dashboard.js?v=20261114s"></script>
+<script src="js/files.js?v=20261114s"></script>
+<script src="js/debug.js?v=20261114s"></script>
+<script src="js/app.js?v=20261114s"></script>
 </body>
 </html>

@@ -85,13 +85,13 @@ cap.bind($('preview'));
 $('btnShare').addEventListener('click', async () => {
   try {
     const restored = await cap.shareWindow();
-    if (restored) { status('Przywrócono zapamiętany obszar czatu.', 'ok'); showTab(nextAfterSource()); }
-    else status('Zaznacz myszą obszar czatu systemowego na podglądzie, potem "Dalej".');
+    if (restored) { status('Obszar czatu przywrócony.', 'ok'); showTab(nextAfterSource()); }
+    else status('Zaznacz myszą tekst czatu systemowego na podglądzie, potem "Dalej".');
   } catch (e) { status('Nie udało się przechwycić okna: ' + e.message, 'bad'); }
 });
 $('fileShot').addEventListener('change', async e => {
   const f = e.target.files[0]; if (!f) return;
-  try { await cap.loadImage(f); status('Zaznacz obszar czatu i przejdź dalej. Zrzut służy tylko do sprawdzenia podglądu, nasłuch wymaga okna gry.'); }
+  try { await cap.loadImage(f); status('Zaznacz obszar czatu. Ze zrzutu można tylko sprawdzić podgląd, nasłuch wymaga okna gry.'); }
   catch (err) { status(err.message, 'bad'); }
 });
 $('btnRegionReset').addEventListener('click', () => cap.setRegion(null, false));
@@ -101,8 +101,8 @@ $('btnRegionReset').addEventListener('click', () => cap.setRegion(null, false));
 // ---------- OCR: zdarzenia i sesje ----------
 ocr.hooks.onEvents = events => { dash.addEvents(current, events); updateButtons(); };
 ocr.hooks.onFrame = s => { $('rawOcr').textContent = s.last ? s.last.raw : ''; };
-ocr.hooks.onSessionStart = async id => { await dash.setView(current, id, true); updateButtons(); showTab(4); status('Nasłuch trwa. Zdarzenia pojawiają się w dzienniku i zapisują w magazynie.', 'ok'); };
-ocr.hooks.onSessionStop = () => { current.view.live = false; updateButtons(); dash.scheduleRender(current, true); status('Zatrzymano. Sesja zapisana, znajdziesz ją w historii.'); };
+ocr.hooks.onSessionStart = async id => { await dash.setView(current, id, true); updateButtons(); showTab(4); status('Nasłuch trwa.', 'ok'); };
+ocr.hooks.onSessionStop = () => { current.view.live = false; updateButtons(); dash.scheduleRender(current, true); status('Zatrzymano. Sesja jest w historii.'); };
 const start = () => ocr.start().catch(e => status(e.message, 'bad'));
 $('btnStart4').addEventListener('click', start);
 $('btnStop').addEventListener('click', () => ocr.stop());
