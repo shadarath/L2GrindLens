@@ -32,11 +32,12 @@ header { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 18px; pa
 #status { color: var(--muted); flex: 1 1 240px; min-width: 0; }
 #status.bad { color: var(--bad); } #status.ok { color: var(--ok); }
 nav.steps { display: flex; gap: 6px; padding-block: 12px; flex-wrap: wrap; }
-nav.steps button { display: flex; align-items: center; gap: 8px; padding: 8px 14px; border-radius: 6px; }
-nav.steps button .n { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; border: 1px solid var(--line); font-size: 12px; }
-nav.steps button.current { border-color: var(--accent); background: var(--sel); }
-nav.steps button.done .n { background: var(--ok); color: #fff; border-color: var(--ok); }
+nav.steps button { padding: 8px 14px; border-radius: 6px; }
+nav.steps button.current, header .cfg button.current { border-color: var(--accent); background: var(--sel); }
 nav.steps button.aside { margin-left: auto; }
+/* konfiguracja jednorazowa (źródło obrazu, podgląd OCR) po prawej stronie nagłówka */
+header .cfg { margin-left: auto; display: flex; gap: 6px; }
+header .cfg button { font-size: 13px; padding: 5px 10px; }
 .empty { color: var(--muted); padding: 24px 0; text-align: center; }
 section { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 12px; min-width: 0; }
 .stack { display: flex; flex-direction: column; gap: 12px; }
@@ -89,15 +90,19 @@ table.loot td.num, table.loot th.num { text-align: right; }
 /* dziennik: pola jasno, dokładny cytat z loga przygaszony */
 .ev .txt { color: var(--muted); }
 .k.shot { color: var(--muted); font-weight: 400; }
-/* rozszerzanie wykresu: jeden zajmuje lewą połowę, reszta tłoczy się w prawej */
+/* rozszerzanie wykresu: rozszerzony w lewej połowie (wysokość równa połowie jego szerokości), reszta w prawej
+   połowie w dwóch rzędach po dwa; siatka ma 4 kolumny, rozszerzony zajmuje 2 kolumny i 2 rzędy */
 .charts > section { position: relative; }
+.charts > section h2 { padding-right: 110px; }
 .chart-expand { position: absolute; top: 8px; right: 8px; width: 24px; height: 24px; padding: 0; line-height: 1; font-size: 14px; color: var(--muted); }
-.charts.has-expanded { grid-template-columns: 1fr 1fr; }
-.charts.has-expanded > section.expanded { grid-column: 1; grid-row: 1 / span 4; }
-.charts.has-expanded > section:not(.expanded) { grid-column: 2; }
-.charts.has-expanded > section:not(.expanded) .chart { height: 160px; }
-.charts.has-expanded > section.expanded .chart { height: calc(100% - 28px); min-height: 520px; }
-@media (max-width: 900px) { .charts.has-expanded { grid-template-columns: 1fr; } .charts.has-expanded > section.expanded, .charts.has-expanded > section:not(.expanded) { grid-column: 1; grid-row: auto; } }
+.chart-window { position: absolute; top: 8px; right: 38px; width: auto; padding: 2px 4px; font-size: 12px; color: var(--muted); }
+.charts.has-expanded { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.charts.has-expanded > section.expanded { grid-column: 1 / 3; grid-row: 1 / 3; }
+.charts.has-expanded > section.expanded .chart { height: auto; aspect-ratio: 2 / 1; }
+/* pozostałe rozciągają się na wysokość rzędów wyznaczoną przez rozszerzony wykres: bez pustych pól */
+.charts.has-expanded > section:not(.expanded) { display: flex; flex-direction: column; }
+.charts.has-expanded > section:not(.expanded) .chart { flex: 1; height: auto; min-height: 140px; }
+@media (max-width: 900px) { .charts.has-expanded { grid-template-columns: 1fr; } .charts.has-expanded > section.expanded { grid-column: 1; grid-row: auto; } }
 .unknown img { height: 21px; max-width: 340px; image-rendering: pixelated; vertical-align: middle; }
 .unknown td.t { color: var(--muted); white-space: nowrap; }
 .unknown td.txt { color: var(--muted); font-family: var(--mono); font-size: 12px; }

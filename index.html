@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Grind Lens</title>
-<link rel="stylesheet" href="css/app.css?v=20261114n">
+<link rel="stylesheet" href="css/app.css?v=20261114q">
 </head>
 <body>
 <header>
@@ -12,13 +12,15 @@
   <span id="capState" class="pill">brak źródła</span>
   <span id="storeState" class="pill">magazyn: …</span>
   <span id="status">Gotowy. Zacznij od wyboru okna gry.</span>
+  <span class="cfg">
+    <button id="nav1" data-tab="1">Źródło obrazu</button>
+    <button id="nav2" data-tab="2">Podgląd OCR</button>
+  </span>
 </header>
 
-<nav class="steps" aria-label="Kroki">
-  <button id="nav1" data-tab="1"><span class="n">1</span>Źródło obrazu</button>
-  <button id="nav2" data-tab="2"><span class="n">2</span>Podgląd OCR</button>
-  <button id="nav3" data-tab="3"><span class="n">3</span>Ustawienia</button>
-  <button id="nav4" data-tab="4"><span class="n">4</span>Aktualna sesja</button>
+<nav class="steps" aria-label="Zakładki">
+  <button id="nav3" data-tab="3">Ustawienia</button>
+  <button id="nav4" data-tab="4">Aktualna sesja</button>
   <button id="nav5" data-tab="5" class="aside">Historia sesji</button>
 </nav>
 
@@ -79,7 +81,11 @@
       <span class="hint">Zależy od broni: tyle sztuk odejmuje w łupach każdy komunikat "Use ...shot".</span>
     </div>
     <p class="hint">Ustawienia zapisują się same w przeglądarce. Przy następnym uruchomieniu, po wyborze okna gry, strona przechodzi od razu do aktualnej sesji.</p>
-    <div class="row">
+  </section>
+  <section>
+    <h2>Ceny shotów <span class="help" tabindex="0" data-tip="Do wykresu zysku: każdy komunikat 'Use ...shot' odejmuje tyle Adeny, ile kosztuje zużyta liczba sztuk. Domyślnie cena sklepowa z bazy gry; wpisz własną, jeśli kupujesz taniej. Pozostałe przedmioty w zysku liczą się po cenie z bazy.">?</span></h2>
+    <div id="shotPrices" class="row"></div>
+    <div class="row" style="margin-top:12px">
       <button id="btnBack3">← Wstecz</button>
       <span style="flex:1"></span>
       <button id="btnNext3" class="primary">Dalej: aktualna sesja →</button>
@@ -143,15 +149,16 @@
       <div class="tile"><b data-id="tExpH">0</b><span>XP na godzinę</span></div>
       <div class="tile"><b data-id="tSp">0</b><span>SP</span></div>
       <div class="tile"><b data-id="tAdena">0</b><span>Adena</span></div>
+      <div class="tile"><b data-id="tProfit">0</b><span>zysk (Adena)</span></div>
       <div class="tile"><b data-id="tItems">0</b><span>przedmiotów</span></div>
       <div class="tile"><b data-id="tEvents">0</b><span>zdarzeń</span></div>
     </div>
     <p class="hint" data-id="ocrStats" style="margin:8px 0 0"></p>
   </section>
   <div class="charts">
-    <section><h2>Obrażenia na minutę <span class="help" tabindex="0" data-tip="Średnia krocząca: w każdym punkcie suma z ostatnich 2 minut podzielona przez 2. Punkt co 10 sekund.">?</span></h2><div class="chart"><canvas data-id="chDmg"></canvas></div></section>
-    <section><h2>XP na minutę <span class="help" tabindex="0" data-tip="Średnia krocząca: w każdym punkcie suma XP z ostatnich 2 minut podzielona przez 2. Punkt co 10 sekund.">?</span></h2><div class="chart"><canvas data-id="chExp"></canvas></div></section>
-    <section><h2>SP na minutę <span class="help" tabindex="0" data-tip="Średnia krocząca: w każdym punkcie suma SP z ostatnich 2 minut podzielona przez 2. Punkt co 10 sekund.">?</span></h2><div class="chart"><canvas data-id="chSp"></canvas></div></section>
+    <section data-rolling><h2>XP i SP na minutę <span class="help" tabindex="0" data-tip="Średnia krocząca: w każdym punkcie suma z wybranego okna (2 min, 15 min albo 1 h) podzielona przez długość okna w minutach. Skala XP po lewej, SP po prawej. Punkt co 10 sekund.">?</span></h2><div class="chart"><canvas data-id="chExpSp"></canvas></div></section>
+    <section data-rolling><h2>Obrażenia na minutę <span class="help" tabindex="0" data-tip="Średnia krocząca: w każdym punkcie suma z wybranego okna podzielona przez długość okna w minutach. Punkt co 10 sekund.">?</span></h2><div class="chart"><canvas data-id="chDmg"></canvas></div></section>
+    <section data-rolling><h2>Zysk na minutę (Adena) <span class="help" tabindex="0" data-tip="Zebrane przedmioty po cenie z bazy gry (Adena 1:1) minus zużyte shoty po cenie z ustawień. Średnia krocząca z wybranego okna; może być ujemna, gdy shoty kosztują więcej, niż wypada.">?</span></h2><div class="chart"><canvas data-id="chProfit"></canvas></div></section>
     <section><h2>Obrażenia zadane wg celu <span class="help" tabindex="0" data-tip="Liczba po x to zabite potwory danego typu. Gra nie ogłasza śmierci potwora, więc każdy komunikat o XP jest zaliczany ostatnio bitemu celowi.">?</span></h2><div class="chart"><canvas data-id="chTargets"></canvas></div></section>
     <section><h2>Obrażenia otrzymane wg źródła</h2><div class="chart"><canvas data-id="chSources"></canvas></div></section>
   </div>
@@ -185,20 +192,20 @@
   </section>
 </template>
 
-<script src="systemmsg.js?v=20261114n"></script>
-<script src="gamedata.js?v=20261114n"></script>
+<script src="systemmsg.js?v=20261114q"></script>
+<script src="gamedata.js?v=20261114q"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js"></script>
-<script src="js/core.js?v=20261114n"></script>
-<script src="js/messages.js?v=20261114n"></script>
-<script src="js/lines.js?v=20261114n"></script>
-<script src="js/image.js?v=20261114n"></script>
-<script src="js/storage.js?v=20261114n"></script>
-<script src="js/capture.js?v=20261114n"></script>
-<script src="js/ocr.js?v=20261114n"></script>
-<script src="js/dashboard.js?v=20261114n"></script>
-<script src="js/files.js?v=20261114n"></script>
-<script src="js/debug.js?v=20261114n"></script>
-<script src="js/app.js?v=20261114n"></script>
+<script src="js/core.js?v=20261114q"></script>
+<script src="js/messages.js?v=20261114q"></script>
+<script src="js/lines.js?v=20261114q"></script>
+<script src="js/image.js?v=20261114q"></script>
+<script src="js/storage.js?v=20261114q"></script>
+<script src="js/capture.js?v=20261114q"></script>
+<script src="js/ocr.js?v=20261114q"></script>
+<script src="js/dashboard.js?v=20261114q"></script>
+<script src="js/files.js?v=20261114q"></script>
+<script src="js/debug.js?v=20261114q"></script>
+<script src="js/app.js?v=20261114q"></script>
 </body>
 </html>

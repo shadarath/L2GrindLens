@@ -76,10 +76,6 @@ function updateButtons() {
   $('currentInfo').textContent = ocr.state.session
     ? (running ? `sesja od ${new Date(ocr.state.session).toLocaleTimeString('pl-PL')}` : `ostatnia sesja od ${new Date(ocr.state.session).toLocaleTimeString('pl-PL')}, zakończona`)
     : 'brak sesji, kliknij Start';
-  $('nav1').classList.toggle('done', sourceReady());
-  $('nav2').classList.toggle('done', sourceReady());        // podgląd nie wymaga żadnych ustawień
-  $('nav3').classList.toggle('done', hasName());
-  $('nav4').classList.toggle('done', running || ocr.state.sessionCount > 0);
   updateGates();
 }
 cap.onChange(() => { if (!cap.state.source && ocr.state.running) ocr.stop(); updateButtons(); if (!$('tab2').hidden && sourceReady()) ocr.startLive($('ocrView')); });
@@ -152,9 +148,30 @@ $('btnClearAll').addEventListener('click', () => {
 
 // ---------- ustawienia ----------
 $('playerName').addEventListener('change', () => { msgs.opts.playerName = $('playerName').value.trim(); settings.set('playerName', msgs.opts.playerName); updateButtons(); });
+/** Pola cen shotów: wszystkie soul- i spiritshoty z bazy gry, domyślnie cena sklepowa, nadpisanie w ustawieniach. */
+function buildShotPrices() {
+  const box = $('shotPrices'), gd = window.L2_GAMEDATA;
+  box.innerHTML = '';
+  if (!gd) { box.textContent = 'brak bazy gry'; return; }
+  const saved = settings.get('shotPrices', {});
+  const shots = Object.entries(gd.items).filter(([, v]) => /^(Blessed )?(Soulshot|Spiritshot)\b/.test(v[0])).sort((a, b) => a[1][0].localeCompare(b[1][0]));
+  for (const [id, v] of shots) {
+    const lab = document.createElement('label');
+    const inp = document.createElement('input'); inp.type = 'number'; inp.min = '0'; inp.step = '1';
+    inp.value = saved[id] !== undefined && saved[id] !== '' ? saved[id] : (v[3] || 0);
+    inp.title = `cena sklepowa: ${v[3] || 0}`;
+    inp.addEventListener('change', () => {
+      const cur = settings.get('shotPrices', {});
+      if (inp.value === '' || +inp.value === (v[3] || 0)) delete cur[id]; else cur[id] = +inp.value;
+      settings.set('shotPrices', cur); dash.scheduleRender(current, true); dash.scheduleRender(history, true);
+    });
+    lab.append(v[0], inp); box.append(lab);
+  }
+}
 $('shotsPerUse').addEventListener('change', () => { settings.set('shotsPerUse', +$('shotsPerUse').value || 1); dash.scheduleRender(current, true); dash.scheduleRender(history, true); });
 
 function loadSettings() {
+  buildShotPrices();
   $('playerName').value = settings.get('playerName', ''); msgs.opts.playerName = $('playerName').value;
   $('shotsPerUse').value = settings.get('shotsPerUse', 1);
   const r = settings.get('region', null);
