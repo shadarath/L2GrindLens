@@ -9,6 +9,7 @@ const CONF_OK = 85, WORD_OK = 70, MAX_READS = 3;   // pewność OCR: linia i naj
 // Powiększenie obrazu linii dla silnika: czcionka czatu ma 9 px, silnik chce liter ok. 20 px. Zmierzone na 37 liniach:
 // x1 daje 5 odczytów innych niż x2 (fałszywe apostrofy, "9" jako "©"), x1.5 i x3 po 2, x2 zero; czas 24-37 ms na linię.
 const SCALE = 2;
+const FPS = 4;   // klatek na sekundę: maska i odciski kosztują kilka ms, OCR tylko nowych linii
 
 const state = {
   worker: null, workerReady: false,
@@ -142,7 +143,7 @@ async function processFrame(frameTime) {
       if (settled(p)) records.push(finalize(p)); else keep.push(p);
     }
     const items = assemble(records);
-    state.last = { time: frameTime.toISOString(), raw: records.map(r => `${r.text}  [${Math.round(r.conf)}]`).join('\n'), lines: items.map(i => i.text), events: [] };
+    if (records.length) state.last = { time: frameTime.toISOString(), raw: records.map(r => `${r.text}  [${Math.round(r.conf)}]`).join('\n'), lines: items.map(i => i.text) };
     const out = emit(items);
 
     // 2. nowe linie względem poprzedniej klatki: wyłącznie sufiks po nałożeniu odcisków
@@ -162,6 +163,7 @@ async function processFrame(frameTime) {
 }
 
 // ---------- podgląd na żywo: obraz dla silnika OCR albo ścisła maska (diagnostyka) ----------
+const PREVIEW_EVERY_MS = 1000;
 function startLive(view) {
   stopLive();
   state.liveTimer = setInterval(() => {
@@ -169,8 +171,30 @@ function startLive(view) {
     const tm = L2GL.image.textMask(L2GL.image.grabRegion(cap.source, cap.region, grab));
     if ($('maskView').checked) L2GL.image.showMask(tm, view); else L2GL.image.showOcrInput(tm, view);
   }, 250);
+  // Bez nasłuchu "surowy wynik OCR" pokazuje odczyt całego widocznego okna czatu: za pierwszym razem wszystkie
+  // linie, potem tylko nowe (odciski linii i nałożenie klatek jak w potoku, teksty niezmienionych linii zostają).
+  // W trakcie nasłuchu pole wypełnia potok.
+  state.preview = null;   // { lines, texts } z poprzedniego odczytu podglądu
+  state.previewTimer = setInterval(async () => {
+    if (state.running || state.previewBusy || !cap.source || !cap.region) return;
+    state.previewBusy = true;
+    try {
+      await ensureWorker();
+      const lines = L2GL.image.segmentLines(L2GL.image.textMask(L2GL.image.grabRegion(cap.source, cap.region, grab)));
+      const prev = state.preview, a = prev ? L2GL.image.alignFrames(prev.lines, lines, THRESHOLD) : null;
+      const texts = a ? prev.texts.slice(a.k, a.k + a.overlap) : [];
+      for (const l of a ? lines.slice(a.overlap) : lines) {
+        if (!state.previewTimer) return;
+        const r = await readLine(l); texts.push(`${r.text}  [${Math.round(r.conf)}]`);
+      }
+      state.preview = { lines, texts };
+      state.last = { time: new Date().toISOString(), raw: texts.join('\n'), lines: [] };
+      hooks.onFrame(state);
+    } catch (e) { status('Podgląd OCR: ' + e.message, 'bad'); }
+    finally { state.previewBusy = false; }
+  }, PREVIEW_EVERY_MS);
 }
-function stopLive() { clearInterval(state.liveTimer); state.liveTimer = null; }
+function stopLive() { clearInterval(state.liveTimer); clearInterval(state.previewTimer); state.liveTimer = state.previewTimer = null; state.preview = null; }
 
 // ---------- pętla nasłuchu ----------
 async function start() {
@@ -178,11 +202,11 @@ async function start() {
   await ensureWorker();
   state.running = true;
   state.session = new Date().toISOString(); state.sessionCount = 0;
-  state.prevLines = null; state.pending = []; state.openTail = null;
+  state.prevLines = null; state.pending = []; state.openTail = null; state.last = null;
   state.stats = { frames: 0, ocr: 0, ocrMsTotal: 0, aligned: 0, unaligned: 0, retries: 0 };
   await L2GL.db.putSession({ id: state.session, start: Date.now(), end: Date.now(), count: 0 }).catch(() => {});
   await hooks.onSessionStart(state.session);
-  state.timer = setInterval(() => { processFrame(new Date()).catch(e => status('Błąd OCR: ' + e.message, 'bad')); }, 1000 / +$('fps').value);
+  state.timer = setInterval(() => { processFrame(new Date()).catch(e => status('Błąd OCR: ' + e.message, 'bad')); }, 1000 / FPS);
   state.autosaveTimer = setInterval(() => L2GL.files.autosave(), 60000);
 }
 async function flush() {
@@ -208,5 +232,5 @@ async function stop() {
   hooks.onSessionStop(state.session);
 }
 
-L2GL.ocr = { state, hooks, ensureWorker, processFrame, start, stop, flush, startLive, stopLive, readLine, THRESHOLD, SCALE, REASON_LABEL };
+L2GL.ocr = { state, hooks, ensureWorker, processFrame, start, stop, flush, startLive, stopLive, readLine, THRESHOLD, SCALE, FPS, REASON_LABEL };
 })();

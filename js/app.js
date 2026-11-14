@@ -2,7 +2,7 @@
 (() => {
 const { $, status, settings } = L2GL;
 const cap = L2GL.capture, ocr = L2GL.ocr, dash = L2GL.dashboard, files = L2GL.files, msgs = L2GL.messages;
-const PATTERNS_KEY = 'patterns.v3';
+const TABS = [1, 2, 3, 4, 5];   // 1 źródło, 2 podgląd OCR, 3 ustawienia, 4 aktualna sesja, 5 historia
 
 // ---------- dwie instancje dashboardu ----------
 function mountDashboard(containerId) {
@@ -28,48 +28,46 @@ function showFolder() {
 const sourceReady = () => !!cap.state.source && !!cap.state.region;
 const canRun = () => sourceReady() && cap.state.kind === 'video';
 const hasSession = () => !!ocr.state.session;
+const hasName = () => !!(msgs.opts.playerName || '').trim();
+/** Krok po źródle obrazu: ustawienia, a gdy imię postaci jest już ustawione, od razu aktualna sesja. */
+const nextAfterSource = () => hasName() ? 4 : 3;
 
 // ---------- zakładki i bramki ----------
 function showTab(n) {
-  for (const i of [1, 2, 3, 4]) { $('tab' + i).hidden = i !== n; $('nav' + i).classList.toggle('current', i === n); }
-  settings.set('tab', n);
+  for (const i of TABS) { $('tab' + i).hidden = i !== n; $('nav' + i).classList.toggle('current', i === n); }
   updateGates();
   if (n === 2 && sourceReady()) ocr.startLive($('ocrView')); else ocr.stopLive();
-  if (n === 3) dash.scheduleRender(current, true);
-  if (n === 4) refreshHistory();
+  if (n === 4) dash.scheduleRender(current, true);
+  if (n === 5) refreshHistory();
   cap.drawPreview();
 }
-/** Krok 2 wymaga źródła i obszaru; krok 3 wymaga okna gry albo już istniejącej sesji. */
+/** Podgląd (2) wymaga źródła i obszaru; sesja (4) wymaga okna gry albo już istniejącej sesji. */
 function updateGates() {
   const g2 = !sourceReady();
   $('gate2').hidden = !g2; $('body2').hidden = g2;
 
-  let g3 = null;
-  if (!hasSession()) {
-    if (!sourceReady()) g3 = { title: 'Najpierw źródło obrazu', text: 'Sesję można zacząć dopiero, gdy jest obraz z gry i zaznaczony obszar czatu. Wróć do kroku 1.', btn: 'Przejdź do kroku 1: Źródło obrazu', tab: 1 };
-    else if (!canRun()) g3 = { title: 'Potrzebne okno gry', text: 'Nasłuch działa tylko na obrazie z okna gry. Zrzut ekranu służy wyłącznie do ustawienia obróbki. Wróć do kroku 1 i wybierz okno gry.', btn: 'Przejdź do kroku 1: Źródło obrazu', tab: 1 };
-    else g3 = { title: 'Sesja jeszcze nie trwa', text: 'Sprawdź w kroku 2, czy podgląd obróbki pokazuje czysty tekst, i kliknij tam Start. Możesz też zacząć od razu tutaj.', btn: 'Przejdź do kroku 2: Obróbka i OCR', tab: 2, allowStart: true };
+  let g4 = null;
+  if (!hasSession() && !canRun()) {
+    g4 = sourceReady()
+      ? { title: 'Potrzebne okno gry', text: 'Nasłuch działa tylko na obrazie z okna gry. Zrzut ekranu służy wyłącznie do sprawdzenia podglądu. Wróć do kroku 1 i wybierz okno gry.' }
+      : { title: 'Najpierw źródło obrazu', text: 'Sesję można zacząć dopiero, gdy jest obraz z gry i zaznaczony obszar czatu. Wróć do kroku 1.' };
   }
-  $('gate3').hidden = !g3; $('body3').hidden = !!g3;
-  if (g3) {
-    $('gate3Title').textContent = g3.title; $('gate3Text').textContent = g3.text;
-    $('gate3Btn').textContent = g3.btn; $('gate3Btn').dataset.goto = g3.tab;
-    $('gate3Start').hidden = !g3.allowStart;
-  }
+  $('gate4').hidden = !g4; $('body4').hidden = !!g4;
+  if (g4) { $('gate4Title').textContent = g4.title; $('gate4Text').textContent = g4.text; }
 }
-for (const i of [1, 2, 3, 4]) $('nav' + i).addEventListener('click', () => showTab(i));
-$('btnNext1').addEventListener('click', () => showTab(2));
+for (const i of TABS) $('nav' + i).addEventListener('click', () => showTab(i));
+$('btnNext1').addEventListener('click', () => showTab(nextAfterSource()));
 $('btnBack2').addEventListener('click', () => showTab(1));
+$('btnNext2').addEventListener('click', () => showTab(3));
+$('btnBack3').addEventListener('click', () => showTab(sourceReady() ? 2 : 1));
+$('btnNext3').addEventListener('click', () => showTab(4));
 for (const b of document.querySelectorAll('button[data-goto]')) b.addEventListener('click', () => showTab(+b.dataset.goto));
-$('gate3Btn').addEventListener('click', () => showTab(+$('gate3Btn').dataset.goto));
 
 // ---------- stan przycisków ----------
 function updateButtons() {
   const running = ocr.state.running;
   $('btnNext1').disabled = !sourceReady();
-  $('btnStart').disabled = !canRun() || running;
-  $('btnStart3').disabled = !canRun() || running;
-  $('gate3Start').disabled = !canRun() || running;
+  $('btnStart4').disabled = !canRun() || running;
   $('btnStop').disabled = !running;
   $('btnDebug').disabled = !canRun() && !L2GL.debug.state.running;
   $('btnDebug').textContent = L2GL.debug.state.running ? 'Debug: zatrzymaj' : 'Debug: zbieraj próbki';
@@ -79,7 +77,9 @@ function updateButtons() {
     ? (running ? `sesja od ${new Date(ocr.state.session).toLocaleTimeString('pl-PL')}` : `ostatnia sesja od ${new Date(ocr.state.session).toLocaleTimeString('pl-PL')}, zakończona`)
     : 'brak sesji, kliknij Start';
   $('nav1').classList.toggle('done', sourceReady());
-  $('nav2').classList.toggle('done', running || ocr.state.sessionCount > 0);
+  $('nav2').classList.toggle('done', sourceReady());        // podgląd nie wymaga żadnych ustawień
+  $('nav3').classList.toggle('done', hasName());
+  $('nav4').classList.toggle('done', running || ocr.state.sessionCount > 0);
   updateGates();
 }
 cap.onChange(() => { if (!cap.state.source && ocr.state.running) ocr.stop(); updateButtons(); if (!$('tab2').hidden && sourceReady()) ocr.startLive($('ocrView')); });
@@ -89,12 +89,13 @@ cap.bind($('preview'));
 $('btnShare').addEventListener('click', async () => {
   try {
     const restored = await cap.shareWindow();
-    status(restored ? 'Przywrócono zapamiętany obszar czatu. Sprawdź go na podglądzie i przejdź dalej.' : 'Zaznacz myszą obszar czatu systemowego na podglądzie, potem "Dalej".', restored ? 'ok' : '');
+    if (restored) { status('Przywrócono zapamiętany obszar czatu.', 'ok'); showTab(nextAfterSource()); }
+    else status('Zaznacz myszą obszar czatu systemowego na podglądzie, potem "Dalej".');
   } catch (e) { status('Nie udało się przechwycić okna: ' + e.message, 'bad'); }
 });
 $('fileShot').addEventListener('change', async e => {
   const f = e.target.files[0]; if (!f) return;
-  try { await cap.loadImage(f); status('Zaznacz obszar czatu i przejdź dalej, podgląd obróbki jest na żywo. Zrzut służy tylko do kalibracji, nasłuch wymaga okna gry.'); }
+  try { await cap.loadImage(f); status('Zaznacz obszar czatu i przejdź dalej. Zrzut służy tylko do sprawdzenia podglądu, nasłuch wymaga okna gry.'); }
   catch (err) { status(err.message, 'bad'); }
 });
 $('btnRegionReset').addEventListener('click', () => cap.setRegion(null, false));
@@ -104,12 +105,10 @@ $('btnRegionReset').addEventListener('click', () => cap.setRegion(null, false));
 // ---------- OCR: zdarzenia i sesje ----------
 ocr.hooks.onEvents = events => { dash.addEvents(current, events); updateButtons(); };
 ocr.hooks.onFrame = s => { $('rawOcr').textContent = s.last ? s.last.raw : ''; };
-ocr.hooks.onSessionStart = async id => { await dash.setView(current, id, true); updateButtons(); showTab(3); status('Nasłuch trwa. Zdarzenia pojawiają się w dzienniku i zapisują w magazynie.', 'ok'); };
+ocr.hooks.onSessionStart = async id => { await dash.setView(current, id, true); updateButtons(); showTab(4); status('Nasłuch trwa. Zdarzenia pojawiają się w dzienniku i zapisują w magazynie.', 'ok'); };
 ocr.hooks.onSessionStop = () => { current.view.live = false; updateButtons(); dash.scheduleRender(current, true); status('Zatrzymano. Sesja zapisana, znajdziesz ją w historii.'); };
 const start = () => ocr.start().catch(e => status(e.message, 'bad'));
-$('btnStart').addEventListener('click', start);
-$('btnStart3').addEventListener('click', start);
-$('gate3Start').addEventListener('click', start);
+$('btnStart4').addEventListener('click', start);
 $('btnStop').addEventListener('click', () => ocr.stop());
 $('btnDebug').addEventListener('click', async () => {
   try { status(L2GL.debug.state.running ? L2GL.debug.stop() : await L2GL.debug.start(), 'ok'); showFolder(); }
@@ -152,19 +151,12 @@ $('btnClearAll').addEventListener('click', () => {
 });
 
 // ---------- ustawienia ----------
-$('fps').addEventListener('change', () => settings.set('fps', $('fps').value));
-$('useDb').addEventListener('change', () => { msgs.opts.useDb = $('useDb').checked; settings.set('useDb', msgs.opts.useDb); });
-$('playerName').addEventListener('change', () => { msgs.opts.playerName = $('playerName').value.trim(); settings.set('playerName', msgs.opts.playerName); });
+$('playerName').addEventListener('change', () => { msgs.opts.playerName = $('playerName').value.trim(); settings.set('playerName', msgs.opts.playerName); updateButtons(); });
 $('shotsPerUse').addEventListener('change', () => { settings.set('shotsPerUse', +$('shotsPerUse').value || 1); dash.scheduleRender(current, true); dash.scheduleRender(history, true); });
 
 function loadSettings() {
-  $('fps').value = settings.get('fps', '4');
-  $('useDb').checked = settings.get('useDb', true); msgs.opts.useDb = $('useDb').checked;
   $('playerName').value = settings.get('playerName', ''); msgs.opts.playerName = $('playerName').value;
   $('shotsPerUse').value = settings.get('shotsPerUse', 1);
-  // wzorce zapasowe: bez interfejsu, ale wciąż edytowalne w localStorage pod kluczem l2gl.patterns.v3
-  $('patterns').value = settings.get(PATTERNS_KEY, JSON.stringify(msgs.DEFAULT_PATTERNS, null, 2));
-  if (msgs.compilePatterns($('patterns').value)) msgs.compilePatterns(JSON.stringify(msgs.DEFAULT_PATTERNS));
   const r = settings.get('region', null);
   if (r) $('regionInfo').textContent = `${r.w}×${r.h} przy (${r.x}, ${r.y}), zapamiętany, zostanie przywrócony po wyborze okna`;
 }
@@ -173,7 +165,7 @@ function loadSettings() {
 (async () => {
   loadSettings();
   if (window.L2_SYSTEMMSG) msgs.build(window.L2_SYSTEMMSG);
-  else status('Brak pliku systemmsg.js obok strony: działają tylko wzorce zapasowe.', 'bad');
+  else status('Brak pliku systemmsg.js obok strony: bez bazy komunikatów żadna linia nie zostanie rozpoznana.', 'bad');
   if (window.L2_GAMEDATA) msgs.buildDicts(window.L2_GAMEDATA);
   else status('Brak pliku gamedata.js obok strony: nazwy przedmiotów i potworów zostaną takie, jak odczytał OCR.', 'bad');
   try { await L2GL.db.open(); $('storeState').textContent = 'magazyn: IndexedDB'; $('storeState').className = 'pill on'; }
@@ -183,6 +175,6 @@ function loadSettings() {
   updateButtons();
   showTab(1);
   window.addEventListener('resize', () => { dash.scheduleRender(current); dash.scheduleRender(history); });
-  window.l2gl = { cleanLines: L2GL.lines.clean, classify: msgs.classify, matchTemplate: msgs.match, db: L2GL.db, current, history, state: ocr.state }; // do testów z konsoli
+  window.l2gl = { cleanLines: L2GL.lines.clean, classify: msgs.classify, matchTemplate: msgs.match, db: L2GL.db, current, history, state: ocr.state, showTab }; // do testów z konsoli
 })();
 })();

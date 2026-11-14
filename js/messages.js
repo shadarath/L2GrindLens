@@ -1,10 +1,8 @@
 // Klasyfikacja linii z OCR: dopasowanie do szablonów komunikatów (systemmsg.js) odległością edycyjną,
 // w której placeholdery pochłaniają dowolny fragment, a typowe pomyłki OCR kosztują mniej niż zwykły błąd.
 // Potem kanonizacja pól do słowników bazy gry (gamedata.js): nazwa przedmiotu, potwora i umiejętności
-// pochodzi z bazy, nigdy z OCR, więc jeden przedmiot to jedna pozycja. Wzorce zapasowe (wyrażenia
-// regularne) zostają tylko na wypadek braku bazy komunikatów.
+// pochodzi z bazy, nigdy z OCR, więc jeden przedmiot to jedna pozycja.
 (() => {
-const NUM = "[0-9OolI|,.]+";
 
 // id komunikatu -> [typ zdarzenia, mapowanie pól: nazwa -> placeholder lub "=stała"]
 const MSG_TYPES = {
@@ -33,26 +31,6 @@ const MSG_TYPES = {
   96: ['level_up', {}], 2344: ['death', { src: 'c1' }],
   936: ['shot', { item: 's1' }],   // "Use $s1." - zużycie soulshotów/spiritshotów, w łupach jako ujemna ilość
 };
-
-// Wzorce zapasowe, używane tylko bez bazy komunikatów (albo po wyłączeniu jej w ustawieniach).
-const DEFAULT_PATTERNS = [
-  { type: "dmg_dealt",    regex: "^(?<src>[A-Za-z0-9_]+) has inflicted (?<dmg>" + NUM + ") damage on (?<target>.+?)[.,]?$" },
-  { type: "dmg_received", regex: "^(?<target>[A-Za-z0-9_]+) has received (?<dmg>" + NUM + ") damage from (?<src>.+?)[.,]?$" },
-  { type: "exp",          regex: "^You have acquired (?<exp>" + NUM + ") XP(?: and (?<sp>" + NUM + ") SP)?" },
-  { type: "dmg_dealt",    regex: "^You hit (?:for )?(?<dmg>" + NUM + ") damage" },
-  { type: "dmg_received", regex: "^(?<src>.+?) hit you for (?<dmg>" + NUM + ") damage" },
-  { type: "exp",          regex: "^You have earned (?<exp>" + NUM + ") experience(?: and (?<sp>" + NUM + ") SP)?" },
-  { type: "item",         regex: "^You have earned (?<qty>" + NUM + ") (?<item>.+?)[.,]?$" },
-  { type: "item",         regex: "^You have earned (?<item>.+?)[.,]?$" },
-  { type: "crit",         regex: "^Critical hit" },
-  { type: "block",        regex: "shield defense has succeeded" },
-  { type: "item",         regex: "^You have obtained (?<qty>" + NUM + ") (?<item>.+?)[.,]?$" },
-  { type: "item",         regex: "^You have obtained (?<item>.+?)[.,]?$" },
-  { type: "skill",        regex: "^You use (?<skill>.+?)[.,]?$" },
-  { type: "shot",         regex: "^Use (?<item>.+?shot.*?)[.,]?$" },
-  { type: "cooldown",     regex: "re-use time" },
-  { type: "miss",         regex: "^You have missed|has evaded|^You avoided|attack has failed" },
-];
 
 // ---------- koszty pomyłek OCR ----------
 // Zamiana znaku na inny kosztuje 1; w obrębie par mylonych przez OCR 0.3; znaki interpunkcyjne między sobą 0.2.
@@ -168,8 +146,7 @@ function histGap(a, b) { let d = 0; for (let i = 0; i < 37; i++) d += Math.abs(a
 // ---------- szablony komunikatów ----------
 const templates = [], candCache = new Map();
 let anchored = [];      // szablony zaczynające się od placeholdera (kandydaci po słowie kotwicznym)
-let patterns = [];
-const opts = { useDb: true, playerName: '' };
+const opts = { playerName: '' };
 const ACCEPT = 0.25;   // maksymalny koszt na literę stałą szablonu
 /** Dopuszczalny koszt dopasowania: krótkie szablony (np. "Use $s1") prawie bez błędów, długie do ACCEPT na literę. */
 const acceptCost = literal => literal < 6 ? 0.5 : literal < 10 ? 1 : literal < 20 ? 0.2 * literal : ACCEPT * literal;
@@ -366,21 +343,13 @@ function fromMatch(m) {
   return { type, fields };
 }
 
-/** Kompiluje wzorce zapasowe z JSON; zwraca null albo komunikat błędu. */
-function compilePatterns(text) {
-  try {
-    patterns = JSON.parse(text).map(p => ({ type: p.type, re: new RegExp(p.regex, 'i') }));
-    return null;
-  } catch (e) { return e.message; }
-}
-
 /**
  * Zdarzenie dla linii: { type, fields } albo { type: 'other', fields, reason } z powodem odrzucenia
  * (no_template: żaden szablon nie pasuje, bad_fields: pasuje, ale pola nie przechodzą walidacji).
  * Dopasowanie z nazwą spoza bazy (fields.reason = unknown_item/unknown_skill) ustępuje innemu bez zastrzeżeń.
  */
 function classify(text) {
-  if (opts.useDb && templates.length) {
+  if (templates.length) {
     const ms = matches(text);
     let flagged = null;
     for (const m of ms) {
@@ -392,20 +361,8 @@ function classify(text) {
     if (flagged) return flagged;
     if (ms.length) return { type: 'other', fields: { id: ms[0].id }, reason: 'bad_fields' };
   }
-  for (const p of patterns) {
-    const m = p.re.exec(text);
-    if (!m) continue;
-    const fields = {};
-    let ok = true;
-    for (const [k, v] of Object.entries(m.groups || {})) {
-      if (v === undefined) continue;
-      fields[k] = NUM_FIELDS.test(k) ? toNum(v) : v.trim();
-      if (NAME_FIELDS.test(k) && !validName(fields[k])) ok = false;
-    }
-    if (ok) return { type: p.type, fields };
-  }
   return { type: 'other', fields: {}, reason: 'no_template' };
 }
 
-L2GL.messages = { MSG_TYPES, DEFAULT_PATTERNS, opts, ctx, build, buildDicts, match, matches, canon, classify, compilePatterns, toNum, validName, count: () => templates.length };
+L2GL.messages = { MSG_TYPES, opts, ctx, build, buildDicts, match, matches, canon, classify, toNum, validName, count: () => templates.length };
 })();

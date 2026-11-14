@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Grind Lens</title>
-<link rel="stylesheet" href="css/app.css?v=20261114h">
+<link rel="stylesheet" href="css/app.css?v=20261114l">
 </head>
 <body>
 <header>
@@ -16,9 +16,10 @@
 
 <nav class="steps" aria-label="Kroki">
   <button id="nav1" data-tab="1"><span class="n">1</span>Źródło obrazu</button>
-  <button id="nav2" data-tab="2"><span class="n">2</span>Obróbka i OCR</button>
-  <button id="nav3" data-tab="3"><span class="n">3</span>Aktualna sesja</button>
-  <button id="nav4" data-tab="4" class="aside">Historia sesji</button>
+  <button id="nav2" data-tab="2"><span class="n">2</span>Podgląd OCR</button>
+  <button id="nav3" data-tab="3"><span class="n">3</span>Ustawienia</button>
+  <button id="nav4" data-tab="4"><span class="n">4</span>Aktualna sesja</button>
+  <button id="nav5" data-tab="5" class="aside">Historia sesji</button>
 </nav>
 
 <!-- ===================== KROK 1 ===================== -->
@@ -35,7 +36,7 @@
       <span class="hint">Obszar: <span id="regionInfo">nie zaznaczony</span></span>
       <button id="btnRegionReset">Zaznacz od nowa</button>
       <span style="flex:1"></span>
-      <button id="btnNext1" class="primary" disabled>Dalej: obróbka i OCR →</button>
+      <button id="btnNext1" class="primary" disabled>Dalej →</button>
     </div>
   </section>
 </div>
@@ -44,56 +45,61 @@
 <div id="tab2" class="stack" hidden>
   <section id="gate2" class="gate" hidden>
     <h2>Najpierw źródło obrazu</h2>
-    <p>Żeby ustawić obróbkę, potrzebny jest obraz z gry i zaznaczony obszar czatu. Wróć do kroku 1, wybierz okno gry i zaznacz obszar.</p>
+    <p>Podgląd wymaga obrazu z gry i zaznaczonego obszaru czatu. Wróć do kroku 1, wybierz okno gry i zaznacz obszar.</p>
     <button class="primary" data-goto="1">Przejdź do kroku 1: Źródło obrazu</button>
   </section>
   <div id="body2" class="stack">
     <section>
-      <h2>Podgląd obróbki na żywo</h2>
+      <h2>Podgląd OCR na żywo</h2>
       <p class="hint" style="margin-top:0">Obraz, jaki dostaje silnik OCR: każda linia czatu wycięta po barwie tekstu i narysowana ciemnym tekstem na białym tle. Litery powinny być czytelne, a tło czyste. Podgląd odświeża się sam. <label style="display:inline"><input type="checkbox" id="maskView"> pokaż ścisłą maskę (biały tekst na czarnym; z niej powstają odciski linii, może wyglądać rzadko)</label></p>
-      <div class="row" style="margin-bottom:8px">
-        <label>imię postaci <input type="text" id="playerName" placeholder="np. Shad" style="width:9em"></label>
-        <label>shotów na użycie <input type="number" id="shotsPerUse" min="1" max="20" value="1"></label>
-        <span class="hint">Imię odróżnia Twoje obrażenia od obrażeń innych postaci. Liczba shotów zależy od broni: tyle sztuk odejmuje każdy komunikat "Use ...shot".</span>
-      </div>
       <div class="preview-box"><canvas id="ocrView" width="400" height="60"></canvas></div>
       <details style="margin-top:8px">
-        <summary>Surowy wynik OCR ostatnich nowych linii (w trakcie nasłuchu)</summary>
+        <summary>Surowy wynik OCR: całe widoczne okno czatu (nowe linie dochodzą na bieżąco), a w trakcie nasłuchu ostatnio przeczytane nowe linie; w nawiasie pewność 0-100</summary>
         <pre id="rawOcr" style="font:12px/1.4 var(--mono); white-space:pre-wrap; margin:6px 0 0"></pre>
-      </details>
-    </section>
-    <section>
-      <details>
-        <summary>Ustawienia zaawansowane</summary>
-        <div class="row" style="margin-top:8px">
-          <label>klatek/s <select id="fps"><option>2</option><option>3</option><option selected>4</option><option>5</option><option>8</option></select></label>
-          <label><input type="checkbox" id="useDb" checked> dopasowuj do bazy komunikatów</label>
-        </div>
-        <textarea id="patterns" hidden></textarea>
       </details>
     </section>
     <div class="row">
       <button id="btnBack2">← Wstecz</button>
       <span style="flex:1"></span>
-      <button id="btnStart" class="primary" disabled>Start i przejdź do aktualnej sesji →</button>
+      <button id="btnNext2" class="primary">Dalej: ustawienia →</button>
     </div>
   </div>
 </div>
 
-<!-- ===================== KROK 3: AKTUALNA SESJA ===================== -->
+<!-- ===================== KROK 3: USTAWIENIA ===================== -->
 <div id="tab3" class="stack" hidden>
-  <section id="gate3" class="gate" hidden>
-    <h2 id="gate3Title">Najpierw źródło obrazu</h2>
-    <p id="gate3Text"></p>
-    <div class="row" style="justify-content:center">
-      <button id="gate3Btn" class="primary"></button>
-      <button id="gate3Start" hidden>Start od razu</button>
+  <section>
+    <h2>Ustawienia</h2>
+    <div class="row">
+      <label>imię postaci <input type="text" id="playerName" placeholder="np. Shad" style="width:9em"></label>
+      <span class="hint">Imię odróżnia Twoje obrażenia od obrażeń innych postaci w komunikatach "X has inflicted ... on Y". Bez imienia wszystkie obrażenia liczą się jako Twoje.</span>
+    </div>
+    <div class="row" style="margin-top:8px">
+      <label>shotów na użycie <input type="number" id="shotsPerUse" min="1" max="20" value="1"></label>
+      <span class="hint">Zależy od broni: tyle sztuk odejmuje w łupach każdy komunikat "Use ...shot".</span>
+    </div>
+    <p class="hint">Ustawienia zapisują się same w przeglądarce. Przy następnym uruchomieniu, po wyborze okna gry, strona przechodzi od razu do aktualnej sesji.</p>
+    <div class="row">
+      <button id="btnBack3">← Wstecz</button>
+      <span style="flex:1"></span>
+      <button id="btnNext3" class="primary">Dalej: aktualna sesja →</button>
     </div>
   </section>
-  <div id="body3" class="stack">
+</div>
+
+<!-- ===================== KROK 4: AKTUALNA SESJA ===================== -->
+<div id="tab4" class="stack" hidden>
+  <section id="gate4" class="gate" hidden>
+    <h2 id="gate4Title">Najpierw źródło obrazu</h2>
+    <p id="gate4Text"></p>
+    <div class="row" style="justify-content:center">
+      <button class="primary" data-goto="1">Przejdź do kroku 1: Źródło obrazu</button>
+    </div>
+  </section>
+  <div id="body4" class="stack">
     <section>
       <div class="row">
-        <button id="btnStart3" class="primary" disabled>Start</button>
+        <button id="btnStart4" class="primary" disabled>Start</button>
         <button id="btnStop" disabled>Stop</button>
         <span id="currentInfo" class="hint"></span>
         <span style="flex:1"></span>
@@ -107,7 +113,7 @@
 </div>
 
 <!-- ===================== HISTORIA SESJI ===================== -->
-<div id="tab4" class="stack" hidden>
+<div id="tab5" class="stack" hidden>
   <section>
     <div class="row">
       <label>sesja <select id="sessionSel" style="width:auto;min-width:16em"></select></label>
@@ -179,20 +185,20 @@
   </section>
 </template>
 
-<script src="systemmsg.js?v=20261114h"></script>
-<script src="gamedata.js?v=20261114h"></script>
+<script src="systemmsg.js?v=20261114l"></script>
+<script src="gamedata.js?v=20261114l"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js"></script>
-<script src="js/core.js?v=20261114h"></script>
-<script src="js/messages.js?v=20261114h"></script>
-<script src="js/lines.js?v=20261114h"></script>
-<script src="js/image.js?v=20261114h"></script>
-<script src="js/storage.js?v=20261114h"></script>
-<script src="js/capture.js?v=20261114h"></script>
-<script src="js/ocr.js?v=20261114h"></script>
-<script src="js/dashboard.js?v=20261114h"></script>
-<script src="js/files.js?v=20261114h"></script>
-<script src="js/debug.js?v=20261114h"></script>
-<script src="js/app.js?v=20261114h"></script>
+<script src="js/core.js?v=20261114l"></script>
+<script src="js/messages.js?v=20261114l"></script>
+<script src="js/lines.js?v=20261114l"></script>
+<script src="js/image.js?v=20261114l"></script>
+<script src="js/storage.js?v=20261114l"></script>
+<script src="js/capture.js?v=20261114l"></script>
+<script src="js/ocr.js?v=20261114l"></script>
+<script src="js/dashboard.js?v=20261114l"></script>
+<script src="js/files.js?v=20261114l"></script>
+<script src="js/debug.js?v=20261114l"></script>
+<script src="js/app.js?v=20261114l"></script>
 </body>
 </html>
