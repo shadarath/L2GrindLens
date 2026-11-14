@@ -112,6 +112,30 @@ Cel: koniec literówek w nazwach, jeden przedmiot to jedna pozycja.
 
 Wpływ: wysoki dla łupów i celów, średni dla reszty.
 
+**Stan (2026-11-14): wdrożone** w `js/messages.js` (wyrażenia regularne zostały tylko jako wzorce zapasowe bez bazy):
+
+- Dopasowanie szablonu: programowanie dynamiczne po znakach, placeholder pochłania dowolny niepusty fragment
+  za darmo, zamiana znaku 1, w parach mylonych przez OCR 0.3 (o/0, l/1/i, s/5, a/g, e/c, ...), pary dwuznakowe
+  (m/rn, n/ri, d/cl, h/li) 0.3, brakujący lub dodatkowy znak 1 (spacja 0.3). Przy remisie placeholder woli
+  ciągnąć się dalej, więc "$s2 $s1" dzieli "3 Animal Bone" na "3" i "Animal Bone".
+- Akceptacja: koszt do 0.25 na literę stałą szablonu (krótkie szablony prawie bez błędów). Przy podobnym
+  koszcie wygrywa szablon z większą liczbą liter stałych ("You have obtained $s1 Adena" przed "$s1 Adena").
+- Kandydaci: zgodność dwóch pierwszych słów (odległość Levenshteina z tolerancją) albo, dla szablonów
+  zaczynających się od placeholdera, obecność słowa kotwicznego gdziekolwiek w linii.
+- Kanonizacja: `item` do przedmiotów, `src`/`target`/`who` do potworów (imię gracza sprawdzane najpierw),
+  `skill` do umiejętności; ten sam koszt edycyjny podzielony przez długość nazwy, próg 0.25, premia 0.06
+  dla przedmiotów z dropu/spoilu pięciu ostatnio spotkanych potworów. W zdarzeniu nazwa z bazy plus pole
+  `itemId`/`targetId`/`srcId`/`skillId`; wartości spoza słownika zostają surowe (imiona graczy) po teście
+  `validName`. Pole `conf` = 1 - koszt na literę.
+- Liczby: cyfry po poprawieniu pomyłek (O/Q/@ -> 0, l/I -> 1, S -> 5, B -> 8); fragment, który nie jest liczbą,
+  odrzuca szablon i próbowany jest następny.
+- Dane: w CSV jeden wpis miał "None Grade", klient pokazuje "No Grade"; `build_gamedata.py` to ujednolica.
+- Nie wdrożone (zakres E4): test wiarygodności XP względem tabeli expa potwora i odrzucanie obrażeń poza
+  zakresem sesji.
+- Wynik: korpus linii z sesji debug (w tym "Vamish", "Pattem", "Soidier", "Sgiritshot - Ho Grade", "Jou use",
+  "Ypu have obtained") klasyfikuje się poprawnie z nazwami z bazy; 57 zdarzeń z symulacji E1 bez żadnego
+  `other`. Czas: 1-40 ms na linię (najdłużej kanonizacja nazw przedmiotów).
+
 ### E4. Pewność, potwierdzanie i lista "nieznane"
 
 - Pewność z Tesseracta na poziomie słów; linia o niskiej pewności czeka na drugi, zgodny odczyt (dziś czeka
@@ -120,6 +144,30 @@ Wpływ: wysoki dla łupów i celów, średni dla reszty.
   skanonizowane powyżej progu (E3) i barwa linii zgadza się z typem (E2). Każdy brak to `unknown`.
 - Panel "nierozpoznane" w sesji: surowy tekst, miniatura linii, powód odrzucenia. Z niego rosną słowniki
   i poprawki, zamiast z domysłów.
+
+**Stan (2026-11-14): wdrożone** w `js/ocr.js`, `js/messages.js`, `js/dashboard.js`:
+
+- Pewność z Tesseracta: pewność linii i najsłabszego słowa (słowa o co najmniej 2 znakach). Odczyt jest
+  dobry przy linii >= 85 i słowie >= 70 (z próbek: poprawne linie 88-96, błędne "fend Siu" 77/31,
+  "Sifu" 78/42; "wom" 93/90 i "LadySaisa" 89/84 przechodzą, ich pilnuje słownik z E3). Zły odczyt czeka
+  na kolejną klatkę i jest czytany ponownie z nowych pikseli; koniec po dobrym odczycie, dwóch zgodnych
+  albo trzech próbach. Zdarzenie ma `fields.ocr` (pewność najlepszego odczytu).
+- Zdarzenie powstaje, gdy: odcisk nowy (E1), szablon dopasowany (E3), pola przechodzą walidację (E3).
+  Każdy brak to typ `other` z `fields.reason`: `no_template`, `bad_fields`, `fragment` (linia bez dwóch
+  słów i bez poprzednika), `empty`, `low_confidence` (odczyt słaby bez zgodnego powtórzenia, a szablon nie
+  pasuje niemal dokładnie; `fields.wouldBe` mówi, jaki typ by wyszedł). Nazwa spoza bazy nie blokuje
+  zdarzenia (łupy liczą się pod surową nazwą), ale dostaje `reason: unknown_item` / `unknown_skill`
+  i trafia do panelu, bo brak w bazie to problem danych, nie odczytu.
+- Barwa linii (E2): `fields.color` = dominująca klasa barwy maski (`beige`, `cyan`, `red`, `mixed`).
+  Zapisywana do analizy, nie bramkuje typu: w próbkach wszystkie komunikaty są beżowe, więc mapowanie
+  barwa -> typ wymaga sesji z kolorowymi wpisami (drop, szept, krzyk).
+- Panel "Nierozpoznane" w każdej instancji dashboardu (sesja bieżąca i historia): czas, miniatura linii
+  (obraz, jaki dostał silnik OCR, zapisany w zdarzeniu jako `thumb`, PNG ok. 1-2 KB), powód z pewnością OCR,
+  odczyt. Ostatnie 100, licznik w nagłówku.
+- Nie porównujemy XP z tabelą expa potwora (zależy od różnicy poziomów i składu drużyny).
+- Test: symulacja na 14 klatkach bez zmian (57 zdarzeń, 0 nierozpoznanych); klatka z 35 nowymi liniami:
+  3 linie o pewności 77-81 poszły do ponownego odczytu w następnej klatce i wyszły jako zdarzenia po
+  zgodnym powtórzeniu, "You have played for 3 hour(s)..." trafiło do panelu jako `no_template` z miniaturą.
 
 ### E5. Zestaw regresyjny
 

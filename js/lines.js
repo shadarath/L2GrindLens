@@ -1,23 +1,30 @@
-// Czyszczenie surowego tekstu OCR i wykrywanie nowych linii między klatkami.
+// Czyszczenie surowego tekstu OCR: śmieci z ikon przy lewej krawędzi, śmieci za końcem zdania, sklejanie
+// linii zawiniętych w oknie czatu (komunikat kończy się kropką, wykrzyknikiem lub pytajnikiem).
 (() => {
-// 1. usuwa śmieci z ikon przy lewej krawędzi, 2. odrzuca linie bez sensownej treści,
-// 3. skleja linie zawinięte w oknie czatu (komunikat kończy się kropką, wykrzyknikiem lub pytajnikiem).
+const terminated = t => /[.!?,]$/.test(t);
+
+/** Jedna linia po czyszczeniu: { text, words } (words = liczba słów o co najmniej 3 znakach) albo null, gdy nic nie zostało. */
+function cleanOne(line) {
+  let s = line.replace(/\s+/g, ' ').trim().replace(/^[^A-Za-z0-9]+/, '');   // ikony, myślniki, cudzysłowy
+  // krótki śmieć z ikony przed komunikatem ("77 You have...", "br) You...", "T You..."), ale nie prawdziwe słowo ("Use Soulshot")
+  const m = /^(\S{1,3})\s+(?=[A-Z])/.exec(s);
+  if (m && isJunkToken(m[1])) s = s.slice(m[0].length);
+  // śmieci za końcem zdania (krawędź okna, ikony): "...and 8 SP. 55 t" -> "...and 8 SP."
+  const end = s.search(/[.!?](?=\s)/);
+  if (end > 0 && !/[A-Za-z]{3,}/.test(s.slice(end + 1))) s = s.slice(0, end + 1);
+  s = s.trim();
+  if (!s) return null;
+  return { text: s, words: s.split(' ').filter(w => w.replace(/[^A-Za-z0-9]/g, '').length >= 3).length };
+}
+
+/** Wiele linii (tekst z \n) -> komunikaty: fragmenty doklejane do niedokończonej poprzedniej linii, samotne odpadają. */
 function clean(text) {
-  const raw = text.split('\n').map(s => s.trim()).filter(Boolean), out = [];
-  const terminated = t => /[.!?,]$/.test(t);
-  for (let s of raw) {
-    s = s.replace(/^[^A-Za-z0-9]+/, '').replace(/\s{2,}/g, ' ').trim();   // ikony, myślniki, cudzysłowy
-    // krótki śmieć z ikony przed komunikatem ("77 You have...", "br) You...", "T You..."), ale nie prawdziwe słowo ("Use Soulshot")
-    const m = /^(\S{1,3})\s+(?=[A-Z])/.exec(s);
-    if (m && isJunkToken(m[1])) s = s.slice(m[0].length);
-    for (const [re, rep] of L2GL.messages.OCR_FIXES) s = s.replace(re, rep);
-    // śmieci za końcem zdania (krawędź okna, ikony): "...and 8 SP. 55 t" -> "...and 8 SP."
-    const end = s.search(/[.!?](?=\s)/);
-    if (end > 0 && !/[A-Za-z]{3,}/.test(s.slice(end + 1))) s = s.slice(0, end + 1);
-    const realWords = s.split(' ').filter(w => w.replace(/[^A-Za-z0-9]/g, '').length >= 3).length;
-    const prev = out[out.length - 1];
-    if (realWords < 2) {
-      // fragment typu "time," albo "Lieutenant." to końcówka zawiniętej linii; samotne śmieci odpadają
+  const out = [];
+  for (const line of text.split('\n')) {
+    const c = cleanOne(line);
+    if (!c) continue;
+    const s = c.text, prev = out[out.length - 1];
+    if (c.words < 2) {
       if (prev !== undefined && !terminated(prev)) out[out.length - 1] = prev + ' ' + s;
       continue;
     }
@@ -52,5 +59,5 @@ function sim(a, b) {
   return 1 - prev[n] / Math.max(m, n);
 }
 
-L2GL.lines = { clean, sim };
+L2GL.lines = { clean, cleanOne, sim };
 })();

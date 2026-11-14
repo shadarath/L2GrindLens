@@ -152,13 +152,13 @@ $('btnClearAll').addEventListener('click', () => {
 });
 
 // ---------- ustawienia ----------
-for (const id of ['fps', 'scale']) $(id).addEventListener('change', () => settings.set(id, $(id).value));
+$('fps').addEventListener('change', () => settings.set('fps', $('fps').value));
 $('useDb').addEventListener('change', () => { msgs.opts.useDb = $('useDb').checked; settings.set('useDb', msgs.opts.useDb); });
 $('playerName').addEventListener('change', () => { msgs.opts.playerName = $('playerName').value.trim(); settings.set('playerName', msgs.opts.playerName); });
 $('shotsPerUse').addEventListener('change', () => { settings.set('shotsPerUse', +$('shotsPerUse').value || 1); dash.scheduleRender(current, true); dash.scheduleRender(history, true); });
 
 function loadSettings() {
-  $('fps').value = settings.get('fps', '4'); $('scale').value = settings.get('scale', '2');
+  $('fps').value = settings.get('fps', '4');
   $('useDb').checked = settings.get('useDb', true); msgs.opts.useDb = $('useDb').checked;
   $('playerName').value = settings.get('playerName', ''); msgs.opts.playerName = $('playerName').value;
   $('shotsPerUse').value = settings.get('shotsPerUse', 1);
@@ -174,6 +174,8 @@ function loadSettings() {
   loadSettings();
   if (window.L2_SYSTEMMSG) msgs.build(window.L2_SYSTEMMSG);
   else status('Brak pliku systemmsg.js obok strony: działają tylko wzorce zapasowe.', 'bad');
+  if (window.L2_GAMEDATA) msgs.buildDicts(window.L2_GAMEDATA);
+  else status('Brak pliku gamedata.js obok strony: nazwy przedmiotów i potworów zostaną takie, jak odczytał OCR.', 'bad');
   try { await L2GL.db.open(); $('storeState').textContent = 'magazyn: IndexedDB'; $('storeState').className = 'pill on'; }
   catch (e) { $('storeState').textContent = 'magazyn: niedostępny, dane tylko w pamięci'; }
   await files.restoreFolder();

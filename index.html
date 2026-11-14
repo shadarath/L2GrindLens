@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Grind Lens</title>
-<link rel="stylesheet" href="css/app.css">
+<link rel="stylesheet" href="css/app.css?v=20261114d">
 </head>
 <body>
 <header>
@@ -52,7 +52,6 @@
       <h2>Podgląd obróbki na żywo</h2>
       <p class="hint" style="margin-top:0">Maska tekstu, z której powstają odciski linii i obraz dla silnika OCR: biały tekst na czarnym tle. Litery powinny być ciągłe, a tło czyste. Podgląd odświeża się sam.</p>
       <div class="row" style="margin-bottom:8px">
-        <label>powiększenie dla OCR <select id="scale"><option>1.5</option><option selected>2</option><option>3</option></select></label>
         <label>imię postaci <input type="text" id="playerName" placeholder="np. Shad" style="width:9em"></label>
         <label>shotów na użycie <input type="number" id="shotsPerUse" min="1" max="20" value="1"></label>
         <span class="hint">Imię odróżnia Twoje obrażenia od obrażeń innych postaci. Liczba shotów zależy od broni: tyle sztuk odejmuje każdy komunikat "Use ...shot".</span>
@@ -164,6 +163,10 @@
     </section>
   </div>
   <section>
+    <h2>Nierozpoznane <span data-id="unknownCount" class="pill">0</span> <span class="help" tabindex="0" data-tip="Linie, z których nie powstało zdarzenie albo powstało z zastrzeżeniem: brak szablonu, pola nie pasują, nazwa spoza bazy gry, niska pewność OCR, fragment. Miniatura to obraz linii, jaki dostał silnik OCR. Stąd widać, czego brakuje w bazie albo co psuje odczyt.">?</span></h2>
+    <div class="wrap"><table class="loot unknown" data-id="unknown"><thead><tr><th>czas</th><th>linia</th><th>powód</th><th>odczyt</th></tr></thead><tbody></tbody></table></div>
+  </section>
+  <section>
     <h2>Dane</h2>
     <div class="row">
       <button data-id="btnJsonl">Pobierz JSONL tej sesji</button>
@@ -176,20 +179,20 @@
   </section>
 </template>
 
-<script src="systemmsg.js"></script>
-<script src="gamedata.js"></script>
+<script src="systemmsg.js?v=20261114d"></script>
+<script src="gamedata.js?v=20261114d"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js"></script>
-<script src="js/core.js"></script>
-<script src="js/messages.js"></script>
-<script src="js/lines.js"></script>
-<script src="js/image.js"></script>
-<script src="js/storage.js"></script>
-<script src="js/capture.js"></script>
-<script src="js/ocr.js"></script>
-<script src="js/dashboard.js"></script>
-<script src="js/files.js"></script>
-<script src="js/debug.js"></script>
-<script src="js/app.js"></script>
+<script src="js/core.js?v=20261114d"></script>
+<script src="js/messages.js?v=20261114d"></script>
+<script src="js/lines.js?v=20261114d"></script>
+<script src="js/image.js?v=20261114d"></script>
+<script src="js/storage.js?v=20261114d"></script>
+<script src="js/capture.js?v=20261114d"></script>
+<script src="js/ocr.js?v=20261114d"></script>
+<script src="js/dashboard.js?v=20261114d"></script>
+<script src="js/files.js?v=20261114d"></script>
+<script src="js/debug.js?v=20261114d"></script>
+<script src="js/app.js?v=20261114d"></script>
 </body>
 </html>

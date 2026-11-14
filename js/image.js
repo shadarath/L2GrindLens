@@ -7,16 +7,18 @@
  * wygładzanie przyciemnione i wyblakłe (kropka nad i: v 0.71, s 0.10).
  */
 function isTextColor(h, s, v, slack = 0) {
-  if (v > 0.64 - slack && s > 0.10 - slack / 4 && s < 0.72 && h > 25 && h < 75) return true;   // beżowy / żółty
-  if (v > 0.55 - slack && s > 0.30 && h > 165 && h < 210) return true;             // turkusowy
-  if (v > 0.55 - slack && s > 0.45 && (h < 15 || h > 345)) return true;            // czerwony
-  return false;
+  if (v > 0.64 - slack && s > 0.10 - slack / 4 && s < 0.72 && h > 25 && h < 75) return 1;   // beżowy / żółty
+  if (v > 0.55 - slack && s > 0.30 && h > 165 && h < 210) return 2;             // turkusowy
+  if (v > 0.55 - slack && s > 0.45 && (h < 15 || h > 345)) return 3;            // czerwony
+  return 0;
 }
+const COLOR_NAME = ['', 'beige', 'cyan', 'red'];
 
 /**
  * Maska tekstu dla wycinka: piksel jest tekstem, gdy ma barwę tekstu i w promieniu 2 px leży ciemny piksel
- * (obwódka glifu). Zwraca { mask, soft, gray, w, h }: mask (0/1) służy odciskom linii, soft to ta sama reguła
- * z luźniejszym progiem jasności (tylko do obrazu dla OCR), gray to jasność piksela 0..255.
+ * (obwódka glifu). Zwraca { mask, soft, gray, cls, w, h }: mask (0/1) służy odciskom linii, soft to ta sama reguła
+ * z luźniejszym progiem jasności (tylko do obrazu dla OCR), gray to jasność piksela 0..255, cls to klasa barwy
+ * piksela maski (1 beżowy/żółty, 2 turkusowy, 3 czerwony).
  */
 function textMask(img) {
   const { width: w, height: h, data: d } = img;
@@ -28,10 +30,10 @@ function textMask(img) {
     if (v < 0.33) { dark[i] = 1; continue; }
     const dd = Math.max(mx - mn, 1e-6);
     let hue = mx === r ? (60 * ((g - b) / dd) + 360) % 360 : mx === g ? 60 * ((b - r) / dd) + 120 : 60 * ((r - g) / dd) + 240;
-    if (isTextColor(hue, s, v)) color[i] = 1;
+    color[i] = isTextColor(hue, s, v);
     if (isTextColor(hue, s, v, 0.16)) loose[i] = 1;
   }
-  const out = new Uint8Array(w * h), soft = new Uint8Array(w * h);
+  const out = new Uint8Array(w * h), soft = new Uint8Array(w * h), cls = new Uint8Array(w * h);
   for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
     const i = y * w + x;
     if (!loose[i]) continue;
@@ -40,13 +42,13 @@ function textMask(img) {
       const yy = y + dy; if (yy < 0 || yy >= h) continue;
       for (let dx = -2; dx <= 2; dx++) { const xx = x + dx; if (xx >= 0 && xx < w && dark[yy * w + xx]) { near = 1; break; } }
     }
-    soft[i] = near; out[i] = near & color[i];
+    soft[i] = near; out[i] = near && color[i] ? 1 : 0; cls[i] = out[i] ? color[i] : 0;
   }
-  return { mask: out, soft, gray, w, h };
+  return { mask: out, soft, gray, cls, w, h };
 }
 
 /** Pasy wierszy z atramentem: linie czatu. Każda ma y0, y1, własną maskę (pełna szerokość) i liczbę pikseli tekstu. */
-function segmentLines({ mask, soft, gray, w, h }, minRows = 6, minInk = 4) {
+function segmentLines({ mask, soft, gray, cls, w, h }, minRows = 6, minInk = 4) {
   const rowInk = new Int32Array(h);
   for (let y = 0; y < h; y++) { let k = 0; for (let x = 0; x < w; x++) k += mask[y * w + x]; rowInk[y] = k; }
   const bands = [];
@@ -68,7 +70,14 @@ function segmentLines({ mask, soft, gray, w, h }, minRows = 6, minInk = 4) {
     y1 = Math.min(y1 + 3, nextStart, h);
     const m = mask.slice(y0 * w, y1 * w);
     let total = 0; for (let k = 0; k < m.length; k++) total += m[k];
-    lines.push({ y0, y1, w, h: y1 - y0, mask: m, soft: soft ? soft.slice(y0 * w, y1 * w) : null, gray: gray ? gray.slice(y0 * w, y1 * w) : null, ink: total });
+    // dominująca barwa linii: do analizy, które barwy odpowiadają którym typom komunikatów
+    let color = null;
+    if (cls) {
+      const cnt = [0, 0, 0, 0]; for (let k = y0 * w; k < y1 * w; k++) cnt[cls[k]]++;
+      const top = cnt.indexOf(Math.max(cnt[1], cnt[2], cnt[3]));
+      color = total && cnt[top] / total >= 0.7 ? COLOR_NAME[top] : 'mixed';
+    }
+    lines.push({ y0, y1, w, h: y1 - y0, mask: m, soft: soft ? soft.slice(y0 * w, y1 * w) : null, gray: gray ? gray.slice(y0 * w, y1 * w) : null, ink: total, color });
   }
   return lines;
 }
@@ -118,6 +127,12 @@ function alignFrames(prev, cur, threshold = 0.25) {
 /** Czy linia występuje w klatce (dowolna pozycja). */
 function presentIn(line, lines, threshold = 0.25) {
   return lines.some(l => lineDistance(line, l) < threshold);
+}
+/** Najbliższa linia w klatce (poniżej progu) albo null. */
+function findIn(line, lines, threshold = 0.25) {
+  let best = null, bd = threshold;
+  for (const l of lines) { const d = lineDistance(line, l); if (d < bd) { bd = d; best = l; } }
+  return best;
 }
 
 /**
@@ -170,5 +185,5 @@ function grabRegion(source, region, canvas) {
   return ctx.getImageData(0, 0, canvas.width, canvas.height);
 }
 
-L2GL.image = { textMask, segmentLines, lineDistance, alignFrames, presentIn, renderLine, showMask, grabRegion };
+L2GL.image = { textMask, segmentLines, lineDistance, alignFrames, presentIn, findIn, renderLine, showMask, grabRegion };
 })();

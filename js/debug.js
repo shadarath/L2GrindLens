@@ -43,10 +43,11 @@ async function tick() {
     const entry = {
       time: now.toISOString(), files: { crop: `${stamp}-crop.png`, bin: `${stamp}-bin.png`, full: fullName },
       source: { kind: cap.kind, width: sw, height: sh }, region: r,
-      settings: { scale: +$('scale').value, fps: +$('fps').value, useDb: $('useDb').checked, playerName: $('playerName').value, shotsPerUse: +$('shotsPerUse').value, threshold: L2GL.ocr.THRESHOLD },
+      settings: { scale: L2GL.ocr.SCALE, fps: +$('fps').value, useDb: $('useDb').checked, playerName: $('playerName').value, shotsPerUse: +$('shotsPerUse').value, threshold: L2GL.ocr.THRESHOLD },
       session: ocr.session, running: ocr.running, stats: { ...ocr.stats },
       lastOcr: ocr.last ? { time: ocr.last.time, ms: ocr.last.ms, raw: ocr.last.raw, lines: ocr.last.lines } : null,
-      lines: (ocr.lastLines || []).map(l => ({ y0: l.y0, y1: l.y1, ink: l.ink })), pending: ocr.pending.map(p => ({ y0: p.line.y0, time: p.time })), openTail: ocr.openTail && ocr.openTail.text,
+      lines: (ocr.lastLines || []).map(l => ({ y0: l.y0, y1: l.y1, ink: l.ink, color: l.color })),
+      pending: ocr.pending.map(p => ({ y0: p.line.y0, time: p.time, reads: p.reads.map(r => ({ text: r.text, conf: Math.round(r.conf), minWord: Math.round(r.minWord) })) })), openTail: ocr.openTail && ocr.openTail.text,
       eventsSinceLast: fresh.map(e => ({ time: e.time, type: e.type, fields: e.fields, text: e.text })),
     };
     await L2GL.files.appendTo(state.dir, 'debug.jsonl', JSON.stringify(entry) + '\n');

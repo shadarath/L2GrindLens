@@ -98,3 +98,6 @@ table.loot td.num, table.loot th.num { text-align: right; }
 .charts.has-expanded > section:not(.expanded) .chart { height: 160px; }
 .charts.has-expanded > section.expanded .chart { height: calc(100% - 28px); min-height: 520px; }
 @media (max-width: 900px) { .charts.has-expanded { grid-template-columns: 1fr; } .charts.has-expanded > section.expanded, .charts.has-expanded > section:not(.expanded) { grid-column: 1; grid-row: auto; } }
+.unknown img { height: 21px; max-width: 340px; image-rendering: pixelated; vertical-align: middle; }
+.unknown td.t { color: var(--muted); white-space: nowrap; }
+.unknown td.txt { color: var(--muted); font-family: var(--mono); font-size: 12px; }

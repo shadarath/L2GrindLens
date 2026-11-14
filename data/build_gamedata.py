@@ -32,7 +32,8 @@ def num(v, default=0):
 items = {}
 for r in rows('items.csv'):
     grade = r['crystal_type'].upper() if r['crystal_type'] not in ('none', 'crystal_free', '') else ''
-    items[r['item_id']] = [r['name'], r['item_type'], grade]
+    # klient pokazuje "No Grade", w CSV jeden wpis ma "None Grade" (Blessed Spiritshot)
+    items[r['item_id']] = [r['name'].replace('None Grade', 'No Grade'), r['item_type'], grade]
 
 # ---- potwory: id -> [nazwa, poziom, hp, exp, sp, agresywny, typ] ----
 monsters = {}
