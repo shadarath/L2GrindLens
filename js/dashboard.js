@@ -188,7 +188,7 @@ function renderUnknown(panel) {
 
 /** Pola zdarzenia w dzienniku: bez id szablonu, identyfikatorów z bazy i pewności OCR; pewność szablonu tylko, gdy dopasowanie nie było dokładne. */
 function fmtFields(f) {
-  return Object.entries(f).filter(([k, v]) => !['id', 'ocr', 'color', 'wouldBe'].includes(k) && !/Id$/.test(k) && (k !== 'conf' || v < 0.95)).map(([k, v]) => k === 'conf' ? `~${v}` : `${k}=${v}`).join(' ');
+  return Object.entries(f).filter(([k, v]) => !['id', 'ocr', 'color', 'wouldBe', 'badField'].includes(k) && !/Id$/.test(k) && (k !== 'conf' || v < 0.95)).map(([k, v]) => k === 'conf' ? `~${v}` : `${k}=${v}`).join(' ');
 }
 function renderEvent(panel, ev) {
   const filter = panel.q('logFilter').value;

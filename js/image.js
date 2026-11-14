@@ -164,17 +164,37 @@ function renderLine(line, scale, canvas) {
   return canvas;
 }
 
-/** Podgląd maski całego wycinka (biały tekst na czarnym) w canvasie o szerokości kontenera. */
-function showMask({ mask, w, h }, view) {
-  const avail = (view.parentElement.clientWidth || 0) - 24;
+/** Rysuje canvas `tmp` (w x h) w `view` dopasowanym do szerokości kontenera. */
+function fitInto(tmp, view) {
+  // szerokość liczona z sekcji, nie z ramki podglądu: ramka jest inline-block i sama dopasowuje się do obrazu,
+  // dzięki czemu pasek przewijania leży tuż przy jego krawędzi; 44 = wcięcia sekcji i miejsce na pasek
+  const host = view.closest('section') || view.parentElement;
+  const w = tmp.width, h = tmp.height, avail = (host.clientWidth || 0) - 44;
   if (avail < 50 || !w) return;
+  const vw = Math.min(w, avail), vh = Math.round(h * vw / w);
+  if (view.width !== vw || view.height !== vh) { view.width = vw; view.height = vh; }
+  const ctx = view.getContext('2d'); ctx.imageSmoothingEnabled = vw !== w; ctx.drawImage(tmp, 0, 0, vw, vh);
+}
+
+/** Podgląd ścisłej maski całego wycinka (biały tekst na czarnym): to, z czego powstają odciski linii. */
+function showMask({ mask, w, h }, view) {
   const tmp = document.createElement('canvas'); tmp.width = w; tmp.height = h;
   const img = tmp.getContext('2d').createImageData(w, h), d = img.data;
   for (let i = 0; i < w * h; i++) { const v = mask[i] ? 255 : 0; d[i * 4] = d[i * 4 + 1] = d[i * 4 + 2] = v; d[i * 4 + 3] = 255; }
   tmp.getContext('2d').putImageData(img, 0, 0);
-  const vw = Math.min(w, avail), vh = Math.round(h * vw / w);
-  if (view.width !== vw || view.height !== vh) { view.width = vw; view.height = vh; }
-  view.getContext('2d').drawImage(tmp, 0, 0, vw, vh);
+  fitInto(tmp, view);
+}
+
+/** Podgląd tego, co dostaje silnik OCR: obrazy kolejnych linii (ciemny tekst na białym) na swoich miejscach w wycinku. */
+function showOcrInput(tm, view) {
+  const tmp = document.createElement('canvas'); tmp.width = tm.w; tmp.height = tm.h;
+  const ctx = tmp.getContext('2d'); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, tm.w, tm.h);
+  const lc = document.createElement('canvas');
+  for (const line of segmentLines(tm)) {
+    renderLine(line, 1, lc);                                  // obraz linii ma margines 4 px z każdej strony
+    ctx.drawImage(lc, 4, 4, line.w, line.h, 0, line.y0, line.w, line.h);
+  }
+  fitInto(tmp, view);
 }
 
 /** Wycinek obszaru ze źródła w skali 1:1 jako ImageData. */
@@ -185,5 +205,5 @@ function grabRegion(source, region, canvas) {
   return ctx.getImageData(0, 0, canvas.width, canvas.height);
 }
 
-L2GL.image = { textMask, segmentLines, lineDistance, alignFrames, presentIn, findIn, renderLine, showMask, grabRegion };
+L2GL.image = { textMask, segmentLines, lineDistance, alignFrames, presentIn, findIn, renderLine, showMask, showOcrInput, grabRegion };
 })();

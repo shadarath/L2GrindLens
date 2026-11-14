@@ -312,7 +312,7 @@ function validName(v) {
   return v.split(/\s+/).every(t => t.replace(/[^A-Za-z0-9]/g, '').length >= 2 || /^\+?\d+$/.test(t) || /^[-:]$/.test(t));
 }
 
-const NUM_FIELDS = /^(dmg|exp|sp|qty|sec)$/, NAME_FIELDS = /^(item|skill|src|target|who)$/;
+const NUM_FIELDS = /^(dmg|exp|sp|qty|sec)$/, OPTIONAL_NUM = /^(sp|sec)$/, NAME_FIELDS = /^(item|skill|src|target|who)$/;
 const DICT_FOR = { item: 'items', skill: 'skills', src: 'monsters', target: 'monsters', who: 'monsters' };
 
 /** Czy wartość to imię gracza (z tolerancją na pomyłki OCR). */
@@ -338,7 +338,11 @@ function fromMatch(m) {
       if (v === undefined || v === '') continue;
       if (NUM_FIELDS.test(name)) {
         fields[name] = toNum(v);
-        if (fields[name] === null) return null;
+        if (fields[name] === null) {
+          if (!OPTIONAL_NUM.test(name)) return null;
+          // pole poboczne (SP przy XP, sekundy odnowienia) nieczytelne: zdarzenie zostaje, z zastrzeżeniem
+          delete fields[name]; fields.reason = 'bad_number'; fields.badField = name;
+        }
       } else if (NAME_FIELDS.test(name)) {
         if (name !== 'item' && name !== 'skill' && isPlayer(v)) { fields[name] = opts.playerName.trim(); continue; }
         const c = canon(v, DICT_FOR[name]);

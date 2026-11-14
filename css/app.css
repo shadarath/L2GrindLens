@@ -101,3 +101,5 @@ table.loot td.num, table.loot th.num { text-align: right; }
 .unknown img { height: 21px; max-width: 340px; image-rendering: pixelated; vertical-align: middle; }
 .unknown td.t { color: var(--muted); white-space: nowrap; }
 .unknown td.txt { color: var(--muted); font-family: var(--mono); font-size: 12px; }
+.preview-box { display: inline-block; max-width: 100%; max-height: 400px; overflow: auto; border: 1px solid var(--line); vertical-align: top; }
+.preview-box canvas { display: block; }

@@ -44,7 +44,7 @@ function ensureWorker() {
 
 const REASON_LABEL = {
   no_template: 'brak szablonu', bad_fields: 'pola nie pasują do szablonu', unknown_item: 'przedmiot spoza bazy',
-  unknown_skill: 'umiejętność spoza bazy', low_confidence: 'niska pewność OCR', fragment: 'fragment lub śmieć', empty: 'pusty odczyt',
+  unknown_skill: 'umiejętność spoza bazy', bad_number: 'nieczytelna liczba w polu pobocznym', low_confidence: 'niska pewność OCR', fragment: 'fragment lub śmieć', empty: 'pusty odczyt',
 };
 
 /** Zamienia gotowe teksty linii na zdarzenia, zapisuje je i zgłasza do dashboardu. */
@@ -161,12 +161,13 @@ async function processFrame(frameTime) {
   } finally { state.busy = false; }
 }
 
-// ---------- podgląd na żywo: maska tekstu ----------
+// ---------- podgląd na żywo: obraz dla silnika OCR albo ścisła maska (diagnostyka) ----------
 function startLive(view) {
   stopLive();
   state.liveTimer = setInterval(() => {
     if (!cap.source || !cap.region) return;
-    L2GL.image.showMask(L2GL.image.textMask(L2GL.image.grabRegion(cap.source, cap.region, grab)), view);
+    const tm = L2GL.image.textMask(L2GL.image.grabRegion(cap.source, cap.region, grab));
+    if ($('maskView').checked) L2GL.image.showMask(tm, view); else L2GL.image.showOcrInput(tm, view);
   }, 250);
 }
 function stopLive() { clearInterval(state.liveTimer); state.liveTimer = null; }
