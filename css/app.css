@@ -108,3 +108,7 @@ table.loot td.num, table.loot th.num { text-align: right; }
 .unknown td.txt { color: var(--muted); font-family: var(--mono); font-size: 12px; }
 .preview-box { display: inline-block; max-width: 100%; max-height: 400px; overflow: auto; border: 1px solid var(--line); vertical-align: top; }
 .preview-box canvas { display: block; }
+table.loot tr.owner th { padding-top: 10px; color: var(--fg); font-weight: 600; }
+table.loot a { color: inherit; text-decoration: underline; text-decoration-style: dotted; text-underline-offset: 2px; }
+table.loot a:hover { color: var(--accent); }
+.k.item_party { color: var(--ok); font-weight: 400; }

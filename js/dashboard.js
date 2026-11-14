@@ -73,6 +73,26 @@ function scheduleRender(panel, now) {
   if (!panel.renderTimer) panel.renderTimer = setTimeout(() => { panel.renderTimer = null; render(panel); }, 1500);
 }
 
+/**
+ * Nicki z OCR sprowadzone do najczęstszej pisowni: "Siu", "Sifu" i "Silu" to jeden gracz. Wejście: Map nick -> liczba
+ * wystąpień; wyjście: Map nick -> reprezentant. Reprezentantem zostaje najczęstsza pisownia, kolejne dołączają,
+ * gdy podobieństwo (Levenshtein) wynosi co najmniej 0.7.
+ */
+function canonNames(counts) {
+  const reps = [], map = new Map();
+  for (const [name] of [...counts.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))) {
+    const rep = reps.find(r => L2GL.lines.sim(r, name) >= 0.7);
+    if (rep) map.set(name, rep); else { reps.push(name); map.set(name, name); }
+  }
+  return map;
+}
+
+/** Adres przedmiotu na lineage2wiki.org (kronika C1): identyfikator decyduje, nazwa w adresie jest tylko dla czytelności. */
+function wikiUrl(id, name) {
+  const slug = (name || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  return `https://lineage2wiki.org/c1/item/${id}/${slug ? slug + '/' : ''}`;
+}
+
 /** Cena przedmiotu w Adenie: cena shota z ustawień, inaczej cena z bazy gry, inaczej 0 (przedmiot spoza bazy). */
 function priceOf(f) {
   if (!f.itemId) return 0;
@@ -88,10 +108,22 @@ function render(panel) {
   const end = running ? Date.now() : (evs.length ? evs[evs.length - 1].ts : start);
   const durMin = Math.max((end - start) / 60000, 1 / 60);
   let dmg = 0, hits = 0, crit = 0, dmgIn = 0, exp = 0, sp = 0, adena = 0, items = 0, profit = 0;
-  const byTarget = new Map(), bySource = new Map(), loot = new Map(), kills = new Map();
+  const byTarget = new Map(), bySource = new Map(), kills = new Map();
   const samples = { dmg: [], dmgIn: [], exp: [], sp: [], profit: [] }; // punkty {ts, v} do średnich kroczących
   let lastTarget = null, lastTargetTs = 0, killsTotal = 0;
   const shotsPerUse = Math.max(1, parseInt($('shotsPerUse').value, 10) || 1);
+  // łupy: właściciel ('' = ja, potem członkowie drużyny w kolejności pojawienia się) -> przedmiot -> {qty, n, value, itemId}
+  const whoCounts = new Map();
+  for (const ev of evs) if (ev.type === 'item_party' && ev.fields && ev.fields.who) whoCounts.set(ev.fields.who, (whoCounts.get(ev.fields.who) || 0) + 1);
+  const nick = canonNames(whoCounts);
+  const lootBy = new Map([['', new Map()]]);
+  const addLoot = (owner, f, qty) => {
+    if (!lootBy.has(owner)) lootBy.set(owner, new Map());
+    const m = lootBy.get(owner), key = f.item || '?';
+    const l = m.get(key) || { qty: 0, n: 0, value: 0, itemId: f.itemId };
+    l.qty += qty; l.n++; l.value += qty * priceOf(f); m.set(key, l);
+    return l;
+  };
   for (const ev of evs) {
     const f = ev.fields || {};
     if (ev.type === 'dmg_dealt' && f.dmg) {
@@ -111,13 +143,14 @@ function render(panel) {
     if (ev.type === 'item') {
       const qty = f.qty || 1;
       if ((f.item || '').toLowerCase() === 'adena') adena += qty; else items += qty;
-      const l = loot.get(f.item || '?') || { qty: 0, n: 0 }; l.qty += qty; l.n++; loot.set(f.item || '?', l);
+      addLoot('', f, qty);
       const v = qty * priceOf(f);
       if (v) { profit += v; samples.profit.push({ ts: ev.ts, v }); }
     }
+    if (ev.type === 'item_party' && f.who) addLoot(nick.get(f.who) || f.who, f, f.qty || 1);
     if (ev.type === 'shot' && f.item) {
       // zużyte shoty: ujemna ilość w łupach, tyle na użycie, ile ustawiono dla broni; koszt obniża zysk
-      const l = loot.get(f.item) || { qty: 0, n: 0 }; l.qty -= shotsPerUse; l.n++; loot.set(f.item, l);
+      addLoot('', f, -shotsPerUse);
       const v = -shotsPerUse * priceOf(f);
       if (v) { profit += v; samples.profit.push({ ts: ev.ts, v }); }
     }
@@ -130,10 +163,21 @@ function render(panel) {
   q('tKills').textContent = fmt.n(killsTotal); q('tProfit').textContent = fmt.n(profit);
 
   const tb = q('loot').querySelector('tbody'); tb.innerHTML = '';
-  for (const [item, l] of [...loot.entries()].sort((a, b) => b[1].qty - a[1].qty)) {
-    const tr = document.createElement('tr');
-    tr.innerHTML = `<td></td><td class="num">${fmt.n(l.qty)}</td><td class="num">${l.n}</td>`;
-    tr.firstChild.textContent = item; tb.append(tr);
+  for (const [owner, m] of lootBy) {
+    if (lootBy.size > 1) {   // nagłówki właścicieli tylko, gdy jest łup drużyny
+      const total = [...m.values()].reduce((s, l) => s + l.value, 0);
+      const tr = document.createElement('tr'); tr.className = 'owner';
+      tr.innerHTML = '<th colspan="3"></th><th class="num"></th>';
+      tr.children[0].textContent = owner ? owner : 'Ty'; tr.children[1].textContent = fmt.n(total);
+      tb.append(tr);
+    }
+    for (const [item, l] of [...m.entries()].sort((a, b) => b[1].qty - a[1].qty)) {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td></td><td class="num">${fmt.n(l.qty)}</td><td class="num">${l.n}</td><td class="num">${fmt.n(l.value)}</td>`;
+      if (l.itemId) { const a = document.createElement('a'); a.href = wikiUrl(l.itemId, item); a.target = '_blank'; a.rel = 'noopener'; a.textContent = item; tr.firstChild.append(a); }
+      else tr.firstChild.textContent = item;
+      tb.append(tr);
+    }
   }
 
   renderUnknown(panel);
@@ -235,5 +279,5 @@ function renderEvent(panel, ev) {
 }
 function redrawLog(panel) { panel.q('log').innerHTML = ''; for (const ev of panel.view.events.slice(-500)) renderEvent(panel, ev); }
 
-L2GL.dashboard = { create, setView, addEvents, fillSessionList, scheduleRender, render, redrawLog, priceOf };
+L2GL.dashboard = { create, setView, addEvents, fillSessionList, scheduleRender, render, redrawLog, priceOf, canonNames, wikiUrl };
 })();

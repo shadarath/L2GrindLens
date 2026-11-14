@@ -294,7 +294,7 @@ function validName(v) {
 }
 
 const NUM_FIELDS = /^(dmg|exp|sp|qty|sec)$/, OPTIONAL_NUM = /^(sp|sec)$/, NAME_FIELDS = /^(item|skill|src|target|who)$/;
-const DICT_FOR = { item: 'items', skill: 'skills', src: 'monsters', target: 'monsters', who: 'monsters' };
+const DICT_FOR = { item: 'items', skill: 'skills', src: 'monsters', target: 'monsters' };   // who (łup drużyny) to gracz: bez słownika
 
 /** Czy wartość to imię gracza (z tolerancją na pomyłki OCR). */
 function isPlayer(v) {
