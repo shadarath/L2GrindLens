@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Grind Lens</title>
-<link rel="stylesheet" href="css/app.css?v=20261114s">
+<link rel="stylesheet" href="css/app.css?v=20261114w">
 </head>
 <body>
 <header>
@@ -158,9 +158,8 @@
   <div class="charts">
     <section data-rolling><h2>XP i SP na minutę <span class="help" tabindex="0" data-tip="Średnia z ostatnich 2 minut, 15 minut albo godziny (wybór obok). Dłuższe okno wygładza wykres, ale później pokazuje zmiany. XP po lewej, SP po prawej.">?</span></h2><div class="chart"><canvas data-id="chExpSp"></canvas></div></section>
     <section data-rolling><h2>Obrażenia na minutę <span class="help" tabindex="0" data-tip="Średnia z ostatnich 2 minut, 15 minut albo godziny (wybór obok). Dłuższe okno wygładza wykres, ale później pokazuje zmiany.">?</span></h2><div class="chart"><canvas data-id="chDmg"></canvas></div></section>
-    <section data-rolling><h2>Zysk na minutę (Adena) <span class="help" tabindex="0" data-tip="Zebrane przedmioty po cenach sklepowych minus zużyte shoty po cenach z ustawień. Schodzi poniżej zera, gdy shoty kosztują więcej, niż wypada.">?</span></h2><div class="chart"><canvas data-id="chProfit"></canvas></div></section>
-    <section><h2>Obrażenia zadane wg celu <span class="help" tabindex="0" data-tip="Liczba po x to zabite potwory danego typu, liczone po komunikatach o XP. Zabicie w drużynie bez Twojego uderzenia nie zostanie policzone.">?</span></h2><div class="chart"><canvas data-id="chTargets"></canvas></div></section>
-    <section><h2>Obrażenia otrzymane wg źródła</h2><div class="chart"><canvas data-id="chSources"></canvas></div></section>
+    <section data-rolling><h2>Zysk na minutę (Adena) <span class="help" tabindex="0" data-tip="Mój zysk: zebrane przedmioty po cenach sklepowych minus zużyte shoty po cenach z ustawień; schodzi poniżej zera, gdy shoty kosztują więcej, niż wypada. Cała drużyna: mój zysk plus łupy pozostałych członków drużyny (ich kosztów shotów nie widać w czacie).">?</span></h2><div class="chart"><canvas data-id="chProfit"></canvas></div></section>
+    <section><h2>Obrażenia wg potwora <span class="help" tabindex="0" data-tip="Od środka w prawo obrażenia zadane, w lewo otrzymane. Liczba po x to zabite potwory danego typu, liczone po komunikatach o XP; zabicie w drużynie bez Twojego uderzenia nie zostanie policzone.">?</span></h2><div class="chart"><canvas data-id="chMonsters"></canvas></div></section>
   </div>
   <div class="cols">
     <section>
@@ -192,20 +191,20 @@
   </section>
 </template>
 
-<script src="systemmsg.js?v=20261114s"></script>
-<script src="gamedata.js?v=20261114s"></script>
+<script src="systemmsg.js?v=20261114w"></script>
+<script src="gamedata.js?v=20261114w"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js"></script>
-<script src="js/core.js?v=20261114s"></script>
-<script src="js/messages.js?v=20261114s"></script>
-<script src="js/lines.js?v=20261114s"></script>
-<script src="js/image.js?v=20261114s"></script>
-<script src="js/storage.js?v=20261114s"></script>
-<script src="js/capture.js?v=20261114s"></script>
-<script src="js/ocr.js?v=20261114s"></script>
-<script src="js/dashboard.js?v=20261114s"></script>
-<script src="js/files.js?v=20261114s"></script>
-<script src="js/debug.js?v=20261114s"></script>
-<script src="js/app.js?v=20261114s"></script>
+<script src="js/core.js?v=20261114w"></script>
+<script src="js/messages.js?v=20261114w"></script>
+<script src="js/lines.js?v=20261114w"></script>
+<script src="js/image.js?v=20261114w"></script>
+<script src="js/storage.js?v=20261114w"></script>
+<script src="js/capture.js?v=20261114w"></script>
+<script src="js/ocr.js?v=20261114w"></script>
+<script src="js/dashboard.js?v=20261114w"></script>
+<script src="js/files.js?v=20261114w"></script>
+<script src="js/debug.js?v=20261114w"></script>
+<script src="js/app.js?v=20261114w"></script>
 </body>
 </html>

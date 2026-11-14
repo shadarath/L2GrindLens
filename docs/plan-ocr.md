@@ -72,6 +72,16 @@ Wpływ: wysoki. Rozwiązuje duplikaty u źródła, niezależnie od jakości OCR.
 - Wynik na sesji `samples/debug/2026-11-14_15-32-36`: 57 zdarzeń dla 57 nowych linii, 13/13 par klatek
   dopasowanych (stary potok: 89 zdarzeń). Pozostałe błędy to literówki OCR w nazwach ("Soidier", "Vamish",
   "spintshot"), czyli zakres E3.
+- Klatka odniesienia (2026-11-14, po próbce `samples/debug/2026-11-14_20-28-46`): ruch kamery psuł na jedną
+  klatkę maskę tekstu (tło za czatem), taka klatka stawała się odniesieniem i następna dobra wyglądała na
+  całkiem nową, więc cały widoczny czat wchodził drugi raz do OCR i do zdarzeń. Teraz klatka niepasująca do
+  odniesienia jest pomijana (oczekujące linie nietknięte); odniesienie zmienia się dopiero po 3 zgodnych ze sobą
+  klatkach (resynchronizacja). Linie z resynchronizacji, ze skoku o 8+ linii w jednej klatce i po przewinięciu
+  czatu w górę (dopasowanie z ujemnym przesunięciem) są partią podejrzaną: po odczycie porównane po kolei
+  z ostatnimi 150 tekstami linii (te same liczby, podobieństwo 0.85, co najmniej 60% trafień w kolejności)
+  i powtórki odpadają; teksty zastanych linii są czytane przy starcie do tej historii, bez zdarzeń. Testy
+  w przeglądarce: klatki z symulowanym ruchem kamery i stałą zmianą tła 0 zdarzeń, przewinięcie o 2 linie
+  i powrót 0 zdarzeń, sekwencja 15-32-36 nadal 57 zdarzeń także z wtrąconymi zepsutymi klatkami.
 
 ### E2. Maska kolorów i lepsza binaryzacja
 

@@ -104,22 +104,29 @@ function lineDistance(a, b) {
 }
 
 /**
- * Dopasowanie poprzedniej klatki do bieżącej: szuka najmniejszego przesunięcia k (liczby nowych linii), przy
- * którym nałożone linie prev[i+k] ~ cur[i] mają średnią odległość poniżej progu. Zwraca { k, overlap, mean }
- * albo null, gdy żadne przesunięcie nie pasuje.
+ * Dopasowanie poprzedniej klatki do bieżącej: szuka najmniejszego co do wartości przesunięcia k, przy którym
+ * nałożone linie mają średnią odległość poniżej progu. k >= 0: cur[i] ~ prev[i+k], czyli k nowych linii u dołu;
+ * k < 0: cur[i-k] ~ prev[i], czyli czat przewinięty w górę i u góry widać |k| starszych wpisów. Zwraca
+ * { k, overlap, mean } albo null, gdy żadne przesunięcie nie pasuje.
  */
 function alignFrames(prev, cur, threshold = 0.25) {
-  for (let k = 0; k < prev.length; k++) {
-    const overlap = Math.min(prev.length - k, cur.length);
-    if (overlap < 3) break;
+  const test = k => {
+    const po = Math.max(k, 0), co = Math.max(-k, 0);
+    const overlap = Math.min(prev.length - po, cur.length - co);
+    if (overlap < 3) return null;
     let sum = 0, bad = 0;
     for (let i = 0; i < overlap; i++) {
-      const d = lineDistance(prev[i + k], cur[i]);
+      const d = lineDistance(prev[i + po], cur[i + co]);
       sum += d; if (d > 0.5) bad++;
-      if (bad > Math.max(1, overlap * 0.2)) { sum = Infinity; break; }
+      if (bad > Math.max(1, overlap * 0.2)) return null;
     }
     const mean = sum / overlap;
-    if (mean < threshold) return { k, overlap, mean };
+    return mean < threshold ? { k, overlap, mean } : null;
+  };
+  const maxShift = Math.max(prev.length, cur.length) - 3;
+  for (let s = 0; s <= maxShift; s++) {
+    const a = test(s) || (s > 0 && test(-s));
+    if (a) return a;
   }
   return null;
 }

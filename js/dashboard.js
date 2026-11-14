@@ -109,7 +109,9 @@ function render(panel) {
   const durMin = Math.max((end - start) / 60000, 1 / 60);
   let dmg = 0, hits = 0, crit = 0, dmgIn = 0, exp = 0, sp = 0, adena = 0, items = 0, profit = 0;
   const byTarget = new Map(), bySource = new Map(), kills = new Map();
-  const samples = { dmg: [], dmgIn: [], exp: [], sp: [], profit: [] }; // punkty {ts, v} do średnich kroczących
+  const samples = { dmg: [], dmgIn: [], exp: [], sp: [], profit: [], profitTeam: [] }; // punkty {ts, v} do średnich kroczących
+  // zysk: mój (łupy minus shoty) i całej drużyny (mój plus łupy pozostałych; ich kosztów shotów nie widać w czacie)
+  const addProfit = (ts, v, mine) => { if (!v) return; if (mine) { profit += v; samples.profit.push({ ts, v }); } samples.profitTeam.push({ ts, v }); };
   let lastTarget = null, lastTargetTs = 0, killsTotal = 0;
   const shotsPerUse = Math.max(1, parseInt($('shotsPerUse').value, 10) || 1);
   // łupy: właściciel ('' = ja, potem członkowie drużyny w kolejności pojawienia się) -> przedmiot -> {qty, n, value, itemId}
@@ -144,15 +146,16 @@ function render(panel) {
       const qty = f.qty || 1;
       if ((f.item || '').toLowerCase() === 'adena') adena += qty; else items += qty;
       addLoot('', f, qty);
-      const v = qty * priceOf(f);
-      if (v) { profit += v; samples.profit.push({ ts: ev.ts, v }); }
+      addProfit(ev.ts, qty * priceOf(f), true);
     }
-    if (ev.type === 'item_party' && f.who) addLoot(nick.get(f.who) || f.who, f, f.qty || 1);
+    if (ev.type === 'item_party' && f.who) {
+      const qty = f.qty || 1; addLoot(nick.get(f.who) || f.who, f, qty);
+      addProfit(ev.ts, qty * priceOf(f), false);
+    }
     if (ev.type === 'shot' && f.item) {
       // zużyte shoty: ujemna ilość w łupach, tyle na użycie, ile ustawiono dla broni; koszt obniża zysk
       addLoot('', f, -shotsPerUse);
-      const v = -shotsPerUse * priceOf(f);
-      if (v) { profit += v; samples.profit.push({ ts: ev.ts, v }); }
+      addProfit(ev.ts, -shotsPerUse * priceOf(f), true);
     }
   }
   q('tDur').textContent = view.session ? fmt.dur(end - start) : '–';
@@ -211,7 +214,6 @@ function render(panel) {
   const base = { responsive: true, maintainAspectRatio: false, animation: false, interaction: { mode: 'index', intersect: false },
     scales: { x: { ticks: { color: ink, maxTicksLimit: 12 }, grid: { color: grid } }, y: axis({ beginAtZero: true }) },
     plugins: { legend: { labels: { color: ink, boxWidth: 12 } } } };
-  const single = { ...base, plugins: { legend: { display: false } } };
   const line = color => ({ borderColor: color, backgroundColor: color, borderWidth: 2, pointRadius: 0, pointHoverRadius: 5, tension: .2 });
   // XP i SP na jednym wykresie: skala XP po lewej, SP po prawej
   const dual = { ...base, scales: { x: base.scales.x, y: axis({ beginAtZero: true, position: 'left', title: { display: true, text: 'XP', color: ink } }), y1: axis({ beginAtZero: true, position: 'right', title: { display: true, text: 'SP', color: ink }, grid: { drawOnChartArea: false } }) } };
@@ -220,13 +222,23 @@ function render(panel) {
   const wDmg = windowOf('chDmg');
   upsert(panel, 'chDmg', 'line', labels, [{ label: 'zadane', data: rolling('dmg', wDmg), ...line(s1) }, { label: 'otrzymane', data: rolling('dmgIn', wDmg), ...line(s2) }], base);
   // zysk może być ujemny (koszt shotów), więc oś bez przymusu zera, ale z zerem w zasięgu
-  const profitOpts = { ...single, scales: { x: base.scales.x, y: axis({ beginAtZero: false, suggestedMin: 0, suggestedMax: 0 }) } };
-  upsert(panel, 'chProfit', 'line', labels, [{ label: 'zysk', data: rolling('profit', windowOf('chProfit')), ...line(ok) }], profitOpts);
-  const top = m => [...m.entries()].sort((a, b) => b[1] - a[1]).slice(0, 8);
-  const hbar = { ...base, indexAxis: 'y', plugins: { legend: { display: false } }, scales: { x: axis({ beginAtZero: true }), y: { ticks: { color: ink }, grid: { display: false } } } };
+  const profitOpts = { ...base, scales: { x: base.scales.x, y: axis({ beginAtZero: false, suggestedMin: 0, suggestedMax: 0 }) } };
+  const wProfit = windowOf('chProfit');
+  upsert(panel, 'chProfit', 'line', labels, [{ label: 'mój zysk', data: rolling('profit', wProfit), ...line(ok) }, { label: 'cała drużyna', data: rolling('profitTeam', wProfit), ...line(s2) }], profitOpts);
+  // Obrażenia wg potwora na jednym wykresie: od środka w prawo zadane, w lewo otrzymane (wartości ujemne, podpisy bez znaku).
+  const names = [...new Set([...byTarget.keys(), ...bySource.keys()])]
+    .sort((a, b) => ((byTarget.get(b) || 0) + (bySource.get(b) || 0)) - ((byTarget.get(a) || 0) + (bySource.get(a) || 0))).slice(0, 8);
+  const dealt = names.map(n => byTarget.get(n) || 0), received = names.map(n => -(bySource.get(n) || 0));
+  const extent = Math.max(1, ...dealt, ...received.map(v => -v));
+  const abs = v => fmt.n(Math.abs(v));
+  const butterfly = { ...base, indexAxis: 'y',
+    scales: { x: axis({ stacked: true, min: -extent, max: extent, ticks: { color: ink, precision: 0, callback: v => abs(v) } }), y: { stacked: true, ticks: { color: ink }, grid: { display: false } } },
+    plugins: { legend: { labels: { color: ink, boxWidth: 12 } }, tooltip: { callbacks: { label: c => `${c.dataset.label}: ${abs(c.raw)}` } } } };
   const targetLabel = name => kills.get(name) ? `${name} x${kills.get(name)}` : name;
-  upsert(panel, 'chTargets', 'bar', top(byTarget).map(e => targetLabel(e[0])), [{ label: 'obrażenia', data: top(byTarget).map(e => e[1]), backgroundColor: s1, borderRadius: 3, borderSkipped: 'left' }], hbar);
-  upsert(panel, 'chSources', 'bar', top(bySource).map(e => e[0]), [{ label: 'obrażenia', data: top(bySource).map(e => e[1]), backgroundColor: s2, borderRadius: 3, borderSkipped: 'left' }], hbar);
+  upsert(panel, 'chMonsters', 'bar', names.map(targetLabel), [
+    { label: 'zadane', data: dealt, backgroundColor: s1, borderRadius: 3, borderSkipped: 'left' },
+    { label: 'otrzymane', data: received, backgroundColor: s2, borderRadius: 3, borderSkipped: 'right' },
+  ], butterfly);
 }
 
 function upsert(panel, id, type, labels, datasets, options) {

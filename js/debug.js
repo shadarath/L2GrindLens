@@ -45,6 +45,7 @@ async function tick() {
       source: { kind: cap.kind, width: sw, height: sh }, region: r,
       settings: { scale: L2GL.ocr.SCALE, fps: L2GL.ocr.FPS, playerName: $('playerName').value, shotsPerUse: +$('shotsPerUse').value, threshold: L2GL.ocr.THRESHOLD },
       session: ocr.session, running: ocr.running, stats: { ...ocr.stats },
+      sync: { unstable: ocr.unstable ? ocr.unstable.n : 0, scrolled: ocr.scrolled, held: ocr.held.length, recent: ocr.recent.length },
       lastOcr: ocr.last ? { time: ocr.last.time, ms: ocr.last.ms, raw: ocr.last.raw, lines: ocr.last.lines } : null,
       lines: (ocr.lastLines || []).map(l => ({ y0: l.y0, y1: l.y1, ink: l.ink, color: l.color })),
       pending: ocr.pending.map(p => ({ y0: p.line.y0, time: p.time, reads: p.reads.map(r => ({ text: r.text, conf: Math.round(r.conf), minWord: Math.round(r.minWord) })) })), openTail: ocr.openTail && ocr.openTail.text,
