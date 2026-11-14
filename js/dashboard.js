@@ -112,7 +112,9 @@ function render(panel) {
   }
 
   const s = L2GL.ocr.state.stats;
-  q('ocrStats').textContent = view.live && s.ocr ? `OCR: ${s.frames} klatek pobranych, ${s.ocr} rozpoznanych, średnio ${Math.round(s.ocrMsTotal / s.ocr)} ms na klatkę.` : '';
+  q('ocrStats').textContent = view.live && s.frames
+    ? `Klatek: ${s.frames}, dopasowanych do poprzedniej: ${s.aligned}, niedopasowanych: ${s.unaligned}. Linii przeczytanych OCR: ${s.ocr}` + (s.ocr ? `, średnio ${Math.round(s.ocrMsTotal / s.ocr)} ms na linię.` : '.')
+    : '';
 
   if (typeof Chart === 'undefined') return;
   // Oś czasu co 10 s (dla długich sesji rzadziej); wartość w punkcie t = suma z ostatnich 2 minut przed t

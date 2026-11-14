@@ -21,6 +21,28 @@ async function ensureFolder(interactive) {
   return true;
 }
 
+/** Podfolder w folderze danych (tworzony w razie potrzeby), np. ['debug', 'sesja']. Wymaga wybranego folderu. */
+async function ensureDir(parts, interactive) {
+  if (!await ensureFolder(interactive)) return null;
+  let dir = dirHandle;
+  for (const p of parts) dir = await dir.getDirectoryHandle(p, { create: true });
+  return dir;
+}
+
+/** Zapis pliku do wskazanego uchwytu folderu. */
+async function writeTo(dir, name, blob) {
+  const fh = await dir.getFileHandle(name, { create: true });
+  const w = await fh.createWritable(); await w.write(blob); await w.close();
+}
+
+/** Dopisanie tekstu na końcu pliku w folderze (np. dziennik JSONL). */
+async function appendTo(dir, name, text) {
+  const fh = await dir.getFileHandle(name, { create: true });
+  const size = (await fh.getFile()).size;
+  const w = await fh.createWritable({ keepExistingData: true });
+  await w.seek(size); await w.write(text); await w.close();
+}
+
 /** Zapisuje do folderu danych albo (gdy interaktywnie i bez folderu) pobiera plik. Zwraca 'folder' lub 'download'. */
 async function writeFile(name, blob, interactive) {
   if (await ensureFolder(interactive)) {
@@ -80,5 +102,5 @@ async function exportCsv(view) { const w = await writeFile(`events-${sessionTag(
 
 async function pickFolder() { if (await ensureFolder(true)) return `Folder danych: ${dirHandle.name}.`; return 'Nie wybrano folderu.'; }
 
-L2GL.files = { restoreFolder, pickFolder, saveSqlite, autosave, exportJsonl, exportCsv, folderName: () => dirHandle && dirHandle.name };
+L2GL.files = { restoreFolder, pickFolder, ensureDir, writeTo, appendTo, saveSqlite, autosave, exportJsonl, exportCsv, folderName: () => dirHandle && dirHandle.name };
 })();

@@ -18,6 +18,7 @@ function mountDashboard(containerId) {
 }
 const current = mountDashboard('dashCurrent');
 const history = mountDashboard('dashHistory');
+dash.current = current; dash.history = history;
 function showFolder() {
   const t = files.folderName() ? `folder: ${files.folderName()}` : 'folder nie wybrany, pliki trafiają do Pobranych';
   current.q('folderInfo').textContent = t; history.q('folderInfo').textContent = t;
@@ -70,6 +71,8 @@ function updateButtons() {
   $('btnStart3').disabled = !canRun() || running;
   $('gate3Start').disabled = !canRun() || running;
   $('btnStop').disabled = !running;
+  $('btnDebug').disabled = !canRun() && !L2GL.debug.state.running;
+  $('btnDebug').textContent = L2GL.debug.state.running ? 'Debug: zatrzymaj' : 'Debug: zbieraj próbki';
   $('liveState').textContent = running ? 'nasłuch trwa' : 'zatrzymany';
   $('liveState').className = 'pill' + (running ? ' on' : '');
   $('currentInfo').textContent = ocr.state.session
@@ -108,6 +111,11 @@ $('btnStart').addEventListener('click', start);
 $('btnStart3').addEventListener('click', start);
 $('gate3Start').addEventListener('click', start);
 $('btnStop').addEventListener('click', () => ocr.stop());
+$('btnDebug').addEventListener('click', async () => {
+  try { status(L2GL.debug.state.running ? L2GL.debug.stop() : await L2GL.debug.start(), 'ok'); showFolder(); }
+  catch (e) { status('Debug: ' + e.message, 'bad'); }
+  updateButtons();
+});
 
 // ---------- historia ----------
 async function refreshHistory() {
@@ -144,17 +152,13 @@ $('btnClearAll').addEventListener('click', () => {
 });
 
 // ---------- ustawienia ----------
-$('thr').addEventListener('input', () => { $('thrVal').textContent = $('thr').value; settings.set('thr', +$('thr').value); });
 for (const id of ['fps', 'scale']) $(id).addEventListener('change', () => settings.set(id, $(id).value));
-$('bright').addEventListener('change', () => settings.set('bright', $('bright').checked));
 $('useDb').addEventListener('change', () => { msgs.opts.useDb = $('useDb').checked; settings.set('useDb', msgs.opts.useDb); });
 $('playerName').addEventListener('change', () => { msgs.opts.playerName = $('playerName').value.trim(); settings.set('playerName', msgs.opts.playerName); });
 $('shotsPerUse').addEventListener('change', () => { settings.set('shotsPerUse', +$('shotsPerUse').value || 1); dash.scheduleRender(current, true); dash.scheduleRender(history, true); });
 
 function loadSettings() {
-  $('thr').value = settings.get('thr', 140); $('thrVal').textContent = $('thr').value;
   $('fps').value = settings.get('fps', '4'); $('scale').value = settings.get('scale', '2');
-  $('bright').checked = settings.get('bright', true);
   $('useDb').checked = settings.get('useDb', true); msgs.opts.useDb = $('useDb').checked;
   $('playerName').value = settings.get('playerName', ''); msgs.opts.playerName = $('playerName').value;
   $('shotsPerUse').value = settings.get('shotsPerUse', 1);

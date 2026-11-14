@@ -11,6 +11,7 @@ events*.csv
 
 # --- próbki OCR (zrzuty z gry) ---
 samples/
+debug/
 
 # --- Claude Code: ustawienia lokalne ---
 .claude/settings.local.json

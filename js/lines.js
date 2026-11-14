@@ -52,30 +52,5 @@ function sim(a, b) {
   return 1 - prev[n] / Math.max(m, n);
 }
 
-/**
- * Czy to ta sama linia w dwóch klatkach: litery z tolerancją na pomyłki OCR, ale liczby muszą się zgadzać
- * co do cyfry, inaczej "You hit for 187 damage." i "You hit for 178 damage." zlałyby się w jedno zdarzenie.
- */
-function same(a, b) {
-  // liczby = ciągi znaków z co najmniej jedną prawdziwą cyfrą (z poprawką O/l/I czytanych zamiast 0/1)
-  const digits = s => (s.match(/[0-9OolI|]*[0-9][0-9OolI|]*/g) || []).map(t => t.replace(/[oO]/g, '0').replace(/[lI|]/g, '1')).join(',');
-  return digits(a) === digits(b) && sim(a, b) >= 0.8;
-}
-
-/**
- * Linie z bieżącej klatki, których nie było w poprzedniej. Szuka najdłuższego nałożenia końca poprzedniej
- * klatki na początek bieżącej; w nałożeniu wolno się różnić pojedynczym liniom (szum OCR przy zmianie tła),
- * bo one i tak są stare. Bez nałożenia zostaje porównanie każdej linii z całą poprzednią klatką.
- */
-function newLines(prev, cur) {
-  for (let k = Math.min(prev.length, cur.length); k >= 1; k--) {
-    const allowed = k >= 2 ? Math.max(1, Math.floor(k / 3)) : 0;
-    let bad = 0;
-    for (let i = 0; i < k && bad <= allowed; i++) if (!same(prev[prev.length - k + i], cur[i])) bad++;
-    if (bad <= allowed) return cur.slice(k);
-  }
-  return cur.filter(c => !prev.some(p => same(p, c)));
-}
-
-L2GL.lines = { clean, sim, same, newLines };
+L2GL.lines = { clean, sim };
 })();

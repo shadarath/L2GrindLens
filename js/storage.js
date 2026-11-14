@@ -48,7 +48,11 @@ const db = {
   },
 
   kvGet(key) { return this.ok ? this.req(this.st('kv').get(key)).then(r => r && r.value) : Promise.resolve(undefined); },
-  kvSet(key, value) { return this.ok ? this.req(this.st('kv', 'readwrite').put({ key, value })) : Promise.resolve(); },
+  kvSet(key, value) {
+    if (!this.ok) return Promise.resolve();
+    try { return this.req(this.st('kv', 'readwrite').put({ key, value })); }
+    catch (e) { return Promise.reject(e); }   // np. wartość nieklonowalna: błąd jako odrzucona obietnica, nie wyjątek
+  },
 };
 
 L2GL.db = db;
