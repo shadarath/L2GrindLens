@@ -187,7 +187,7 @@ function render(panel) {
 
   const s = L2GL.ocr.state.stats;
   q('ocrStats').textContent = view.live && s.frames
-    ? `Klatek: ${s.frames}, dopasowanych do poprzedniej: ${s.aligned}, niedopasowanych: ${s.unaligned}. Linii przeczytanych OCR: ${s.ocr}` + (s.ocr ? `, średnio ${Math.round(s.ocrMsTotal / s.ocr)} ms na linię, powtórnych odczytów: ${s.retries || 0}.` : '.')
+    ? `Klatek: ${s.frames}, dopasowanych do poprzedniej: ${s.aligned}, niedopasowanych: ${s.unaligned}. Linii przeczytanych OCR: ${s.ocr}` + (s.ocr ? `, średnio ${Math.round(s.ocrMsTotal / s.ocr)} ms na linię, powtórnych odczytów: ${s.retries || 0}, w obserwacji: ${s.rereads || 0} (z obrazu minimum: ${s.minReads || 0}), poprawek wstecz: ${s.revisions || 0}, linii straconych bez odczytu: ${s.lost || 0}.` : '.')
     : '';
 
   if (typeof Chart === 'undefined') return;
@@ -275,21 +275,33 @@ function renderUnknown(panel) {
 
 /** Pola zdarzenia w dzienniku: bez id szablonu, identyfikatorów z bazy i pewności OCR; pewność szablonu tylko, gdy dopasowanie nie było dokładne. */
 function fmtFields(f) {
-  return Object.entries(f).filter(([k, v]) => !['id', 'ocr', 'color', 'wouldBe', 'badField'].includes(k) && !/Id$/.test(k) && (k !== 'conf' || v < 0.95)).map(([k, v]) => k === 'conf' ? `~${v}` : `${k}=${v}`).join(' ');
+  return Object.entries(f).filter(([k, v]) => !['id', 'ocr', 'color', 'wouldBe', 'badField', 'rev', 'reads'].includes(k) && !/Id$/.test(k) && (k !== 'conf' || v < 0.95)).map(([k, v]) => k === 'conf' ? `~${v}` : `${k}=${v}`).join(' ');
+}
+const rows = new WeakMap();   // zdarzenie -> jego wiersz dziennika (do poprawek wstecz)
+function fillRow(el, ev) {
+  const t = new Date(ev.ts), f = ev.fields || {};
+  const idTag = f.id !== undefined ? ` <span class="t">#${f.id}</span>` : '';
+  const rev = f.rev ? ` <span class="t rev" title="poprawione wstecz (${f.rev}. poprawka, ${f.reads} odczytów linii)">↻${f.rev}</span>` : '';
+  el.innerHTML = `<span class="t">${t.toLocaleTimeString('pl-PL')}.${String(t.getMilliseconds()).padStart(3, '0')}</span><span class="k ${ev.type}">${ev.type}${idTag}${rev}</span><span><span class="f"></span> <span class="txt"></span></span>`;
+  el.querySelector('.f').textContent = fmtFields(f);
+  el.querySelector('.txt').textContent = ev.text;
 }
 function renderEvent(panel, ev) {
   const filter = panel.q('logFilter').value;
   if (filter && ev.type !== filter) return;
   const el = document.createElement('div'); el.className = 'ev';
-  const t = new Date(ev.ts);
-  const idTag = ev.fields && ev.fields.id !== undefined ? ` <span class="t">#${ev.fields.id}</span>` : '';
-  el.innerHTML = `<span class="t">${t.toLocaleTimeString('pl-PL')}.${String(t.getMilliseconds()).padStart(3, '0')}</span><span class="k ${ev.type}">${ev.type}${idTag}</span><span><span class="f"></span> <span class="txt"></span></span>`;
-  el.querySelector('.f').textContent = fmtFields(ev.fields || {});
-  el.querySelector('.txt').textContent = ev.text;
+  fillRow(el, ev); rows.set(ev, el);
   const log = panel.q('log'); log.prepend(el);
   while (log.childElementCount > 500) log.lastChild.remove();
 }
+/** Zdarzenia poprawione wstecz (te same obiekty, zmieniona treść): odświeżenie wierszy dziennika i przeliczenie widoku. */
+function updateEvents(panel, events) {
+  if (!panel.view.live) return;
+  for (const ev of events) { const el = rows.get(ev); if (el) fillRow(el, ev); }
+  panel.unknownN = -1;   // panel nierozpoznanych odświeża się także, gdy liczba pozycji się nie zmieniła
+  scheduleRender(panel);
+}
 function redrawLog(panel) { panel.q('log').innerHTML = ''; for (const ev of panel.view.events.slice(-500)) renderEvent(panel, ev); }
 
-L2GL.dashboard = { create, setView, addEvents, fillSessionList, scheduleRender, render, redrawLog, priceOf, canonNames, wikiUrl };
+L2GL.dashboard = { create, setView, addEvents, updateEvents, fillSessionList, scheduleRender, render, redrawLog, priceOf, canonNames, wikiUrl };
 })();

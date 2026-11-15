@@ -25,6 +25,7 @@ const db = {
   st(name, mode) { return this.h.transaction(name, mode || 'readonly').objectStore(name); },
 
   add(ev) { return this.ok ? this.req(this.st('events', 'readwrite').add(ev)) : Promise.resolve(); },
+  put(ev) { return this.ok && ev.id !== undefined ? this.req(this.st('events', 'readwrite').put(ev)) : Promise.resolve(); },
   eventsOf(session) { return this.ok ? this.req(this.st('events').index('session').getAll(session)) : Promise.resolve([]); },
   allEvents() { return this.ok ? this.req(this.st('events').getAll()) : Promise.resolve([]); },
   sessions() { return this.ok ? this.req(this.st('sessions').getAll()) : Promise.resolve([]); },

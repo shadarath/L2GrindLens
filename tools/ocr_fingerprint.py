@@ -8,7 +8,7 @@ Użycie:
   python tools/ocr_fingerprint.py samples/debug/<sesja> --vis     # dodatkowo obrazki do podglądu w samples/debug/<sesja>/analysis/
 
 Co liczy:
-  1. maska tekstu: piksele o barwie tekstu czatu (beżowy/żółty, turkusowy, czerwony) leżące przy ciemnej obwódce glifów;
+  1. maska tekstu: jasne piksele przy ciemnej obwódce glifów (bez względu na barwę tekstu);
   2. linie: pasy wierszy z atramentem w profilu poziomym;
   3. odcisk linii: maska pasa; odległość = 1 - pokrycie pikseli tekstu (z tolerancją przesunięcia ±2 px);
   4. dla każdej pary kolejnych klatek: przesunięcie k (liczba nowych linii) o najniższej średniej odległości,
@@ -45,16 +45,31 @@ def dilate(mask, r):
     return out
 
 
-def text_mask(rgb, use_outline=True):
-    """Tekst czatu: barwa z listy + (opcjonalnie) ciemna obwódka glifu w promieniu 2 px."""
-    h, s, v = hsv(rgb)
-    beige = (v > 0.64) & (s > 0.10) & (s < 0.72) & (h > 25) & (h < 75)   # "biały" systemowy (przez podkładkę beżowy) i żółty dropów
-    cyan = (v > 0.55) & (s > 0.30) & (h > 165) & (h < 210)
-    red = (v > 0.55) & (s > 0.45) & ((h < 15) | (h > 345))
-    color = beige | cyan | red
-    if not use_outline:
-        return color
-    return color & dilate(v < 0.33, 2)
+def shifted(mask, dy, dx, fill=0):
+    """Tablica przesunięta o (dy, dx) z wartością `fill` na brzegu (bez zawijania)."""
+    out = np.full_like(mask, fill)
+    h, w = mask.shape
+    ys, yd = (slice(dy, h), slice(0, h - dy)) if dy >= 0 else (slice(0, h + dy), slice(-dy, h))
+    xs, xd = (slice(dx, w), slice(0, w - dx)) if dx >= 0 else (slice(0, w + dx), slice(-dx, w))
+    out[yd, xd] = mask[ys, xs]
+    return out
+
+
+V_TEXT, V_DARK, V_DARK2, DARK_REL = 0.5, 0.33, 0.45, 0.6
+
+
+def text_mask(rgb):
+    """Tekst czatu bez względu na barwę (jak js/image.js textMask): piksel jasny (lightness > V_TEXT)
+    przy ciemnej obwódce glifu: ciemne co najmniej 3 z 8 sąsiadów albo ciemny sąsiad w obu osiach. Sąsiad jest
+    ciemny, gdy jest ciemniejszy niż V_DARK albo niż DARK_REL jasności piksela (najwyżej V_DARK2)."""
+    r, g, b = [rgb[..., i].astype(np.float32) / 255 for i in range(3)]
+    v = np.maximum.reduce([0.299 * r + 0.587 * g + 0.114 * b, 0.9 * r, 0.8 * g, 0.6 * b])   # jasność jak lightness w js/image.js
+    lim = np.maximum(V_DARK, np.minimum(V_DARK2, DARK_REL * v))   # próg obwódki dla każdego piksela
+    nb = lambda dy, dx: shifted(v, dy, dx, fill=9.0) < lim
+    l, r, u, d = nb(0, 1), nb(0, -1), nb(1, 0), nb(-1, 0)
+    diag = sum(nb(dy, dx).astype(np.int32) for dy in (-1, 1) for dx in (-1, 1))
+    n = l.astype(np.int32) + r + u + d + diag
+    return (v > V_TEXT) & ((n >= 3) | ((l | r) & (u | d)))
 
 
 # ---------------- linie i odciski ----------------

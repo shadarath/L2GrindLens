@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Grind Lens</title>
-<link rel="stylesheet" href="css/app.css?v=20261115b">
+<link rel="stylesheet" href="css/app.css?v=20261115n">
 </head>
 <body>
 <header>
@@ -109,7 +109,8 @@
         <button id="btnStop" disabled>Stop</button>
         <span id="currentInfo" class="hint"></span>
         <span style="flex:1"></span>
-        <button id="btnDebug" disabled title="Co 15 s zapisuje do folderu danych zrzuty czatu i dziennik odczytu. Przydaje się, gdy coś czyta się źle: z próbek można poprawić rozpoznawanie.">Debug: zbieraj próbki</button>
+        <button id="btnDebug" disabled title="Co 10 s zapisuje do folderu danych zrzut czatu, maskę tekstu i wpis dziennika (odczyty, obserwowane linie, poprawki wstecz, zdarzenia), co minutę pełną klatkę okna i serię 8 kolejnych klatek czatu. Około 300 MB na godzinę. Przydaje się, gdy coś czyta się źle: z próbek można poprawić rozpoznawanie.">Debug: zbieraj próbki</button>
+        <label class="hint" title="Zapisuje każdą klatkę wycinka czatu, jaką dostaje potok (4 na sekundę), bez kompresji, w paczkach rec-*.bin po 60 klatek. Około 100 MB na minutę. Do testów łączenia wielu klatek tej samej linii."><input type="checkbox" id="debugRec"> każda klatka (100 MB/min)</label>
         <span id="debugState" class="pill">debug wyłączony</span>
         <span id="liveState" class="pill">zatrzymany</span>
       </div>
@@ -175,7 +176,7 @@
     </section>
   </div>
   <section>
-    <h2>Nierozpoznane <span data-id="unknownCount" class="pill">0</span> <span class="help" tabindex="0" data-tip="Linie czatu, których nie udało się pewnie rozpoznać, z powodem. Nie wchodzą do statystyk (poza przedmiotami spoza bazy, które liczą się pod odczytaną nazwą). Przycisk pobiera je wszystkie z miniaturami jako jeden plik JSON; plik wystarczy przesłać do analizy.">?</span> <button data-id="btnUnknown" class="mini">Pobierz do analizy</button></h2>
+    <h2>Nierozpoznane <span data-id="unknownCount" class="pill">0</span> <span class="help" tabindex="0" data-tip="Linie czatu, których nie udało się pewnie rozpoznać, z powodem. Nie wchodzą do statystyk (poza przedmiotami spoza bazy, które liczą się pod odczytaną nazwą). Linia zostaje pod obserwacją, dopóki jest na ekranie: gdy tło pod nią się zmieni, jest czytana ponownie, a lepszy odczyt poprawia zdarzenie wstecz (w dzienniku znacznik ↻). Przycisk pobiera je wszystkie z miniaturami jako jeden plik JSON; plik wystarczy przesłać do analizy.">?</span> <button data-id="btnUnknown" class="mini">Pobierz do analizy</button></h2>
     <div class="wrap"><table class="loot unknown" data-id="unknown"><thead><tr><th>czas</th><th>linia</th><th>powód</th><th>odczyt</th></tr></thead><tbody></tbody></table></div>
   </section>
   <section>
@@ -191,20 +192,20 @@
   </section>
 </template>
 
-<script src="systemmsg.js?v=20261115b"></script>
-<script src="gamedata.js?v=20261115b"></script>
+<script src="systemmsg.js?v=20261115n"></script>
+<script src="gamedata.js?v=20261115n"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js"></script>
-<script src="js/core.js?v=20261115b"></script>
-<script src="js/messages.js?v=20261115b"></script>
-<script src="js/lines.js?v=20261115b"></script>
-<script src="js/image.js?v=20261115b"></script>
-<script src="js/storage.js?v=20261115b"></script>
-<script src="js/capture.js?v=20261115b"></script>
-<script src="js/ocr.js?v=20261115b"></script>
-<script src="js/dashboard.js?v=20261115b"></script>
-<script src="js/files.js?v=20261115b"></script>
-<script src="js/debug.js?v=20261115b"></script>
-<script src="js/app.js?v=20261115b"></script>
+<script src="js/core.js?v=20261115n"></script>
+<script src="js/messages.js?v=20261115n"></script>
+<script src="js/lines.js?v=20261115n"></script>
+<script src="js/image.js?v=20261115n"></script>
+<script src="js/storage.js?v=20261115n"></script>
+<script src="js/capture.js?v=20261115n"></script>
+<script src="js/ocr.js?v=20261115n"></script>
+<script src="js/dashboard.js?v=20261115n"></script>
+<script src="js/files.js?v=20261115n"></script>
+<script src="js/debug.js?v=20261115n"></script>
+<script src="js/app.js?v=20261115n"></script>
 </body>
 </html>

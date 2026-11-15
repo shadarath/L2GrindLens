@@ -113,3 +113,4 @@ table.loot a { color: inherit; text-decoration: underline; text-decoration-style
 table.loot a:hover { color: var(--accent); }
 .k.item_party { color: var(--ok); font-weight: 400; }
 h2 button.mini { font-size: 12px; padding: 2px 8px; margin-left: 6px; text-transform: none; letter-spacing: 0; vertical-align: middle; }
+.ev .rev { color: var(--warn); font-weight: 600; }

@@ -110,6 +110,7 @@ $('btnRegionReset').addEventListener('click', () => cap.setRegion(null, false));
 
 // ---------- OCR: zdarzenia i sesje ----------
 ocr.hooks.onEvents = events => { dash.addEvents(current, events); updateButtons(); };
+ocr.hooks.onEventsUpdated = events => dash.updateEvents(current, events);
 ocr.hooks.onFrame = s => { $('rawOcr').textContent = s.last ? s.last.raw : ''; };
 ocr.hooks.onSessionStart = async id => { await dash.setView(current, id, true); updateButtons(); showTab(4); status('Nasłuch trwa.', 'ok'); };
 ocr.hooks.onSessionStop = () => { current.view.live = false; updateButtons(); dash.scheduleRender(current, true); status('Zatrzymano. Sesja jest w historii.'); };

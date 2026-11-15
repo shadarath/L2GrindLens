@@ -328,7 +328,10 @@ function fromMatch(m) {
         if (name !== 'item' && name !== 'skill' && isPlayer(v)) { fields[name] = opts.playerName.trim(); continue; }
         const c = canon(v, DICT_FOR[name]);
         if (c) { fields[name] = c.name; fields[name + 'Id'] = c.id; if (DICT_FOR[name] === 'monsters') noteMonster(c.id); }
-        else {
+        else if (name === 'item' && canon(v, 'skills')) {
+          // "You have earned Weapon Mastery.": ten sam szablon co zdobycie przedmiotu, ale nazwa jest umiejętnością
+          const sk = canon(v, 'skills'); fields.skill = sk.name; fields.skillId = sk.id; type = 'msg';
+        } else {
           if (!validName(v)) return null;
           fields[name] = v;
           if (name === 'item' || name === 'skill') fields.reason = 'unknown_' + name;   // zdarzenie zostaje, ale trafia też do "nierozpoznanych"
