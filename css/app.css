@@ -112,3 +112,4 @@ table.loot tr.owner th { padding-top: 10px; color: var(--fg); font-weight: 600; 
 table.loot a { color: inherit; text-decoration: underline; text-decoration-style: dotted; text-underline-offset: 2px; }
 table.loot a:hover { color: var(--accent); }
 .k.item_party { color: var(--ok); font-weight: 400; }
+h2 button.mini { font-size: 12px; padding: 2px 8px; margin-left: 6px; text-transform: none; letter-spacing: 0; vertical-align: middle; }

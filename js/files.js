@@ -100,7 +100,29 @@ function csv(view) {
 async function exportJsonl(view) { const w = await writeFile(`events-${sessionTag(view)}.jsonl`, new Blob([jsonl(view)], { type: 'text/plain' }), true); return w === 'folder' ? 'Zapisano JSONL w folderze danych.' : 'Pobrano JSONL.'; }
 async function exportCsv(view) { const w = await writeFile(`events-${sessionTag(view)}.csv`, new Blob([csv(view)], { type: 'text/csv' }), true); return w === 'folder' ? 'Zapisano CSV w folderze danych.' : 'Pobrano CSV.'; }
 
+/**
+ * Nierozpoznane linie sesji jako jeden plik JSON do analizy: tekst z OCR, powód, pewność, barwa, pola
+ * szablonu i miniatura linii (PNG jako data URL, obraz, jaki dostał silnik OCR). Plik jest samowystarczalny,
+ * można go wysłać bez zrzutów ekranu.
+ */
+async function exportUnknown(view) {
+  const list = view.events.filter(e => e.type === 'other' || (e.fields && e.fields.reason));
+  const labels = L2GL.ocr.REASON_LABEL, skip = ['reason', 'wouldBe', 'ocr', 'color'];
+  const data = {
+    app: 'Grind Lens', kind: 'unknown-lines', exported: new Date().toISOString(), session: view.session,
+    ocr: { threshold: L2GL.ocr.THRESHOLD, scale: L2GL.ocr.SCALE, fps: L2GL.ocr.FPS },
+    count: list.length,
+    lines: list.map(e => {
+      const f = e.fields || {};
+      return { time: e.time, text: e.text, type: e.type, reason: f.reason, reasonLabel: labels[f.reason] || f.reason || null, wouldBe: f.wouldBe || null,
+        ocr: f.ocr, color: f.color || null, fields: Object.fromEntries(Object.entries(f).filter(([k]) => !skip.includes(k))), thumb: e.thumb || null };
+    }),
+  };
+  const w = await writeFile(`nierozpoznane-${sessionTag(view)}.json`, new Blob([JSON.stringify(data, null, 1)], { type: 'application/json' }), true);
+  return w === 'folder' ? `Zapisano ${list.length} nierozpoznanych linii w folderze danych.` : `Pobrano ${list.length} nierozpoznanych linii.`;
+}
+
 async function pickFolder() { if (await ensureFolder(true)) return `Folder danych: ${dirHandle.name}.`; return 'Nie wybrano folderu.'; }
 
-L2GL.files = { restoreFolder, pickFolder, ensureDir, writeTo, appendTo, saveSqlite, autosave, exportJsonl, exportCsv, folderName: () => dirHandle && dirHandle.name };
+L2GL.files = { restoreFolder, pickFolder, ensureDir, writeTo, appendTo, saveSqlite, autosave, exportJsonl, exportCsv, exportUnknown, folderName: () => dirHandle && dirHandle.name };
 })();

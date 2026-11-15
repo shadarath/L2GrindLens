@@ -12,6 +12,7 @@ function mountDashboard(containerId) {
   const run = (fn, errPrefix) => async () => { try { status(await fn(), 'ok'); } catch (e) { status(errPrefix + e.message, 'bad'); } };
   panel.q('btnJsonl').addEventListener('click', run(() => files.exportJsonl(panel.view), 'Eksport nie powiódł się: '));
   panel.q('btnCsv').addEventListener('click', run(() => files.exportCsv(panel.view), 'Eksport nie powiódł się: '));
+  panel.q('btnUnknown').addEventListener('click', run(() => files.exportUnknown(panel.view), 'Eksport nie powiódł się: '));
   panel.q('btnSqlite').addEventListener('click', run(() => files.saveSqlite(false), 'Zapis SQLite nie powiódł się: '));
   panel.q('btnFolder').addEventListener('click', run(async () => { const m = await files.pickFolder(); showFolder(); return m; }, 'Nie udało się wybrać folderu: '));
   return panel;
