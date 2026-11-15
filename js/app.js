@@ -23,6 +23,15 @@ dash.current = current; dash.history = history;
 function showFolder() {
   const t = files.folderName() ? `folder: ${files.folderName()}` : 'folder nie wybrany, pliki trafiają do Pobranych';
   current.q('folderInfo').textContent = t; history.q('folderInfo').textContent = t;
+  // podpowiedź przy stanie magazynu w nagłówku: gdzie trafiają dane
+  const el = $('storeState');
+  const store = el.classList.contains('on')
+    ? 'Zdarzenia sesji: baza IndexedDB przeglądarki dla tego adresu strony (w profilu przeglądarki, bez własnego pliku).'
+    : 'Zdarzenia sesji: tylko w pamięci strony, znikną po jej zamknięciu.';
+  const copy = files.folderName()
+    ? `Kopia SQLite: ${files.folderName()}/l2grindlens.sqlite, odświeżana co minutę w trakcie sesji i przy zatrzymaniu (przeglądarka nie zdradza pełnej ścieżki folderu).`
+    : 'Kopia SQLite: folder danych nie wybrany, "Zapisz bazę SQLite" pobiera plik do Pobranych.';
+  el.title = store + '\n' + copy;
 }
 
 // ---------- stan kroków ----------

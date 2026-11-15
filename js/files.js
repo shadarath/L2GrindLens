@@ -118,8 +118,11 @@ async function exportUnknown(view) {
         ocr: f.ocr, color: f.color || null, fields: Object.fromEntries(Object.entries(f).filter(([k]) => !skip.includes(k))), thumb: e.thumb || null };
     }),
   };
-  const w = await writeFile(`nierozpoznane-${sessionTag(view)}.json`, new Blob([JSON.stringify(data, null, 1)], { type: 'application/json' }), true);
-  return w === 'folder' ? `Zapisano ${list.length} nierozpoznanych linii w folderze danych.` : `Pobrano ${list.length} nierozpoznanych linii.`;
+  // zwykłe pobranie przez przeglądarkę (do Pobranych), bez folderu danych i bez pytania o uprawnienia
+  const name = `nierozpoznane-${sessionTag(view)}.json`, blob = new Blob([JSON.stringify(data, null, 1)], { type: 'application/json' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  return `Pobrano ${list.length} nierozpoznanych linii (${name}).`;
 }
 
 async function pickFolder() { if (await ensureFolder(true)) return `Folder danych: ${dirHandle.name}.`; return 'Nie wybrano folderu.'; }
