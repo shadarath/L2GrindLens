@@ -421,6 +421,15 @@ Przyczyny i co zrobiono:
 - Sieroty "ume." / "time." (kontynuacja zawiniętego "re-use time." bez ogona): 3 sztuki, nie zbadane.
 - Nic do dodania do bazy szablonów: wszystkie prawdziwe komunikaty z sesji w niej są ("Transaction completed.",
   "You have equipped your $s1.", "You obtained $s1 Recommendation(s).", "Attention: $c1 has picked up $s2.").
+- Przedmioty questowe (2026-11-15): "You have earned Adamantite Ore." wychodziło jako łup "Adamantite Ring" (koszt
+  0.22 poniżej progu 0.25, bo długi wspólny przedrostek rozmywa koszt całkiem innego słowa). Baza gry
+  (lineage2wiki c1, `gamedb/items.csv`) nie ma przedmiotów questowych, więc nie da się ich dodać z danych.
+  Kanonizacja nazw (`canon`, `wordsAgree` w `js/messages.js`) nie może zamieniać całych słów: każde słowo musi mieć
+  odpowiednik na tej samej pozycji w granicach tolerancji literówek (1 dla słów do 3 liter, 2 do 6, 3 dłuższych);
+  inna liczba słów (sklejone "YoungKeltir", rozbite "Bearded Kel tir") przechodzi tylko przy koszcie całości
+  do 0.12. "Adamantite Ore" zostaje surową nazwą z zastrzeżeniem `unknown_item` (liczy się jako łup bez ceny
+  i trafia do panelu nierozpoznanych), "Leather Stocklng", "Vamish", "Sgiritshot - Ho Grade", "Eider Wolf",
+  "Elder Keftir", "Gant Toad" nadal dopasowują się do właściwych nazw.
 
 ### Eksperyment: łączenie wielu klatek tej samej linii (2026-11-15, nie wdrożone)
 

@@ -240,6 +240,17 @@ function buildDicts(data) {
  * przez długość dłuższej nazwy; przyjmowane do 0.25. Przedmioty z tabel dropu ostatnio spotkanych potworów
  * mają niewielką premię, więc przy dwóch podobnych nazwach wygrywa ta, która może tu wypaść.
  */
+/**
+ * Dopasowanie nazwy nie może zamieniać całych słów: "Adamantite Ore" (przedmiot questowy, spoza bazy) wychodziło jako
+ * "Adamantite Ring" z kosztem 0.22, bo długi wspólny przedrostek rozmywa koszt całkiem innego słowa. Każde słowo musi
+ * mieć odpowiednik na tej samej pozycji w granicach tolerancji literówek; inna liczba słów (sklejone albo rozbite
+ * przez OCR) przechodzi tylko przy bardzo bliskim dopasowaniu całości.
+ */
+const CLOSE = 0.12;
+function wordsAgree(q, key) {
+  const a = q.split(' '), b = key.split(' ');
+  return a.length === b.length && a.every((w, i) => lev(w, b[i]) <= tol(w));
+}
 function canon(value, dictName) {
   const list = dicts[dictName];
   if (!list || !list.length) return null;
@@ -257,7 +268,7 @@ function canon(value, dictName) {
     const r = align(e.units, q, bound, false);
     if (!r) continue;
     const score = r.cost / len - bonus;
-    if (score < bestScore) { bestScore = score; best = { id: e.id, name: e.name, norm: r.cost / len }; }
+    if (score < bestScore && (r.cost / len <= CLOSE || wordsAgree(q, e.key))) { bestScore = score; best = { id: e.id, name: e.name, norm: r.cost / len }; }
   }
   return best;
 }
