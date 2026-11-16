@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Grind Lens</title>
-<link rel="stylesheet" href="css/app.css?v=20261116h">
+<link rel="stylesheet" href="css/app.css?v=20261116o">
 </head>
 <body>
 <header>
@@ -41,17 +41,15 @@
     <h2>Źródło obrazu</h2>
     <div class="row">
       <button id="btnShare" class="primary">Wybierz okno gry</button>
-      <label>lub zrzut ekranu <input type="file" id="fileShot" accept="image/*"></label>
     </div>
     <p class="hint">Gra w oknie lub w trybie borderless. Po wybraniu okna zaznacz myszą sam tekst czatu systemowego, bez ikon i krawędzi okna. Obszar jest zapamiętywany, przy następnym uruchomieniu wystarczy wybrać okno.</p>
-    <canvas id="preview" width="640" height="360"></canvas>
+    <canvas id="preview" class="empty" width="640" height="360"></canvas>
     <div class="row" style="margin-top:8px">
       <span class="hint">Obszar: <span id="regionInfo">nie zaznaczony</span></span>
       <button id="btnRegionReset">Zaznacz od nowa</button>
-      <span style="flex:1"></span>
-      <button id="btnNext1" class="primary" disabled>Dalej →</button>
     </div>
   </section>
+  <div class="row next"><span style="flex:1"></span><button id="btnNext1" class="primary" disabled>Przejdź do aktualnej sesji</button></div>
 </div>
 
 <!-- ===================== KROK 2 ===================== -->
@@ -71,11 +69,7 @@
         <pre id="rawOcr" style="font:12px/1.4 var(--mono); white-space:pre-wrap; margin:6px 0 0"></pre>
       </details>
     </section>
-    <div class="row">
-      <button id="btnBack2">← Wstecz</button>
-      <span style="flex:1"></span>
-      <button id="btnNext2" class="primary">Dalej: ustawienia →</button>
-    </div>
+    <div class="row next"><span style="flex:1"></span><button id="btnNext2" class="primary">Przejdź do aktualnej sesji</button></div>
   </div>
 </div>
 
@@ -95,13 +89,9 @@
   </section>
   <section>
     <h2>Ceny shotów <span class="help" tabindex="0" data-tip="Po tych cenach zużyte shoty obniżają zysk. Domyślnie ceny sklepowe; wpisz własne, jeśli kupujesz taniej.">?</span></h2>
-    <div id="shotPrices" class="row"></div>
-    <div class="row" style="margin-top:12px">
-      <button id="btnBack3">← Wstecz</button>
-      <span style="flex:1"></span>
-      <button id="btnNext3" class="primary">Dalej: aktualna sesja →</button>
-    </div>
+    <table id="shotPrices" class="shots"></table>
   </section>
+  <div class="row next"><span style="flex:1"></span><button id="btnNext3" class="primary">Przejdź do aktualnej sesji</button></div>
 </div>
 
 <!-- ===================== KROK 4: AKTUALNA SESJA ===================== -->
@@ -121,16 +111,16 @@
         <b id="sessionDur" class="dur" title="czas sesji">–</b>
         <span id="currentInfo" class="hint"></span>
         <span style="flex:1"></span>
-        <span id="liveState" class="pill">zatrzymany</span>
-      </div>
-      <details class="debug-tools">
-        <summary>Narzędzia debugowania</summary>
-        <div class="row" style="margin-top:8px">
+        <details class="debug-tools">
+          <summary>Narzędzia debugowania</summary>
+          <div class="row">
           <button id="btnDebug" disabled title="Co 10 s zapisuje do folderu danych zrzut czatu, maskę tekstu i wpis dziennika (odczyty, obserwowane linie, poprawki wstecz, zdarzenia), co minutę pełną klatkę okna i serię 8 kolejnych klatek czatu. Około 300 MB na godzinę. Przydaje się, gdy coś czyta się źle: z próbek można poprawić rozpoznawanie.">Debug: zbieraj próbki</button>
           <label class="hint" title="Zapisuje każdą klatkę wycinka czatu, jaką dostaje potok (4 na sekundę), bez kompresji, w paczkach rec-*.bin po 60 klatek. Około 100 MB na minutę. Do testów łączenia wielu klatek tej samej linii."><input type="checkbox" id="debugRec"> każda klatka (100 MB/min)</label>
           <span id="debugState" class="pill">debug wyłączony</span>
-        </div>
-      </details>
+          </div>
+        </details>
+        <span id="liveState" class="pill">zatrzymany</span>
+      </div>
     </section>
     <div id="dashCurrent" class="stack"></div>
   </div>
@@ -200,22 +190,22 @@
   </section>
 </template>
 
-<script src="systemmsg.js?v=20261116h"></script>
-<script src="gamedata.js?v=20261116h"></script>
+<script src="systemmsg.js?v=20261116o"></script>
+<script src="gamedata.js?v=20261116o"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js"></script>
-<script src="js/core.js?v=20261116h"></script>
-<script src="js/messages.js?v=20261116h"></script>
-<script src="js/lines.js?v=20261116h"></script>
-<script src="js/image.js?v=20261116h"></script>
-<script src="js/storage.js?v=20261116h"></script>
-<script src="js/capture.js?v=20261116h"></script>
-<script src="js/ocr.js?v=20261116h"></script>
+<script src="js/core.js?v=20261116o"></script>
+<script src="js/messages.js?v=20261116o"></script>
+<script src="js/lines.js?v=20261116o"></script>
+<script src="js/image.js?v=20261116o"></script>
+<script src="js/storage.js?v=20261116o"></script>
+<script src="js/capture.js?v=20261116o"></script>
+<script src="js/ocr.js?v=20261116o"></script>
 <script src="js/tips.js?v=20261116j"></script>
 <script src="js/timeline.js?v=20261116c"></script>
-<script src="js/dashboard.js?v=20261116h"></script>
-<script src="js/files.js?v=20261116h"></script>
-<script src="js/debug.js?v=20261116h"></script>
-<script src="js/app.js?v=20261116h"></script>
+<script src="js/dashboard.js?v=20261116o"></script>
+<script src="js/files.js?v=20261116o"></script>
+<script src="js/debug.js?v=20261116o"></script>
+<script src="js/app.js?v=20261116o"></script>
 </body>
 </html>

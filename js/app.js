@@ -66,11 +66,7 @@ function updateGates() {
   if (g4) { $('gate4Title').textContent = g4.title; $('gate4Text').textContent = g4.text; }
 }
 for (const i of TABS) $('nav' + i).addEventListener('click', () => showTab(i));
-$('btnNext1').addEventListener('click', () => showTab(nextAfterSource()));
-$('btnBack2').addEventListener('click', () => showTab(1));
-$('btnNext2').addEventListener('click', () => showTab(3));
-$('btnBack3').addEventListener('click', () => showTab(sourceReady() ? 2 : 1));
-$('btnNext3').addEventListener('click', () => showTab(4));
+for (const id of ['btnNext1', 'btnNext2', 'btnNext3']) $(id).addEventListener('click', () => showTab(4));
 for (const b of document.querySelectorAll('button[data-goto]')) b.addEventListener('click', () => showTab(+b.dataset.goto));
 
 // ---------- stan przycisków ----------
@@ -88,7 +84,7 @@ function updateButtons() {
     : 'brak sesji, kliknij Start';
   updateGates();
 }
-cap.onChange(() => { if (!cap.state.source && ocr.state.running) ocr.stop(); updateButtons(); if (!$('tab2').hidden && sourceReady()) ocr.startLive($('ocrView')); });
+cap.onChange(() => { $('preview').classList.toggle('empty', !cap.state.source); if (!cap.state.source && ocr.state.running) ocr.stop(); updateButtons(); if (!$('tab2').hidden && sourceReady()) ocr.startLive($('ocrView')); });
 
 // ---------- źródło ----------
 cap.bind($('preview'));
@@ -96,13 +92,8 @@ $('btnShare').addEventListener('click', async () => {
   try {
     const restored = await cap.shareWindow();
     if (restored) { status('Obszar czatu przywrócony.', 'ok'); showTab(nextAfterSource()); }
-    else status('Zaznacz myszą tekst czatu systemowego na podglądzie, potem "Dalej".');
+    else status('Zaznacz myszą tekst czatu systemowego na podglądzie, potem "Przejdź do aktualnej sesji".');
   } catch (e) { status('Nie udało się przechwycić okna: ' + e.message, 'bad'); }
-});
-$('fileShot').addEventListener('change', async e => {
-  const f = e.target.files[0]; if (!f) return;
-  try { await cap.loadImage(f); status('Zaznacz obszar czatu. Ze zrzutu można tylko sprawdzić podgląd, nasłuch wymaga okna gry.'); }
-  catch (err) { status(err.message, 'bad'); }
 });
 $('btnRegionReset').addEventListener('click', () => cap.setRegion(null, false));
 { const q = new URLSearchParams(location.search).get('img');
@@ -159,24 +150,38 @@ $('btnClearAll').addEventListener('click', () => {
 
 // ---------- ustawienia ----------
 $('playerName').addEventListener('change', () => { msgs.opts.playerName = $('playerName').value.trim(); settings.set('playerName', msgs.opts.playerName); updateButtons(); });
-/** Pola cen shotów: wszystkie soul- i spiritshoty z bazy gry, domyślnie cena sklepowa, nadpisanie w ustawieniach. */
+/** Tabela cen shotów: wiersze Soulshot / Spiritshot / Blessed Spiritshot, kolumny klas; domyślnie cena sklepowa, nadpisanie w ustawieniach. */
 function buildShotPrices() {
-  const box = $('shotPrices'), gd = window.L2_GAMEDATA;
-  box.innerHTML = '';
-  if (!gd) { box.textContent = 'brak bazy gry'; return; }
+  const table = $('shotPrices'), gd = window.L2_GAMEDATA;
+  table.innerHTML = '';
+  if (!gd) { table.innerHTML = '<tr><td>brak bazy gry</td></tr>'; return; }
   const saved = settings.get('shotPrices', {});
-  const shots = Object.entries(gd.items).filter(([, v]) => /^(Blessed )?(Soulshot|Spiritshot)\b/.test(v[0])).sort((a, b) => a[1][0].localeCompare(b[1][0]));
-  for (const [id, v] of shots) {
-    const lab = document.createElement('label');
-    const inp = document.createElement('input'); inp.type = 'number'; inp.min = '0'; inp.step = '1';
-    inp.value = saved[id] !== undefined && saved[id] !== '' ? saved[id] : (v[3] || 0);
-    inp.title = `cena sklepowa: ${v[3] || 0}`;
-    inp.addEventListener('change', () => {
-      const cur = settings.get('shotPrices', {});
-      if (inp.value === '' || +inp.value === (v[3] || 0)) delete cur[id]; else cur[id] = +inp.value;
-      settings.set('shotPrices', cur); dash.scheduleRender(current, true); dash.scheduleRender(history, true);
-    });
-    lab.append(v[0], inp); box.append(lab);
+  const KINDS = ['Soulshot', 'Spiritshot', 'Blessed Spiritshot'], GRADES = ['', 'D', 'C', 'B', 'A', 'S'];
+  const byCell = new Map();   // "rodzaj|klasa" -> [id, wpis]
+  for (const [id, v] of Object.entries(gd.items)) {
+    const m = /^(Blessed Spiritshot|Spiritshot|Soulshot)\b/.exec(v[0]);
+    if (m) byCell.set(`${m[1]}|${v[2] || ''}`, [id, v]);
+  }
+  const head = document.createElement('tr'); head.innerHTML = '<th></th>' + GRADES.map(g => `<th class="num">${g || 'No Grade'}</th>`).join('');
+  table.append(head);
+  for (const kind of KINDS) {
+    const tr = document.createElement('tr'); const th = document.createElement('th'); th.textContent = kind; tr.append(th);
+    for (const g of GRADES) {
+      const td = document.createElement('td'); tr.append(td);
+      const cell = byCell.get(`${kind}|${g}`);
+      if (!cell) { td.textContent = '–'; continue; }
+      const [id, v] = cell;
+      const inp = document.createElement('input'); inp.type = 'number'; inp.min = '0'; inp.step = '1';
+      inp.value = saved[id] !== undefined && saved[id] !== '' ? saved[id] : (v[3] || 0);
+      inp.title = `${v[0]}, cena sklepowa: ${v[3] || 0}`;
+      inp.addEventListener('change', () => {
+        const cur = settings.get('shotPrices', {});
+        if (inp.value === '' || +inp.value === (v[3] || 0)) delete cur[id]; else cur[id] = +inp.value;
+        settings.set('shotPrices', cur); dash.scheduleRender(current, true); dash.scheduleRender(history, true);
+      });
+      td.append(inp);
+    }
+    table.append(tr);
   }
 }
 $('shotsPerUse').addEventListener('change', () => { settings.set('shotsPerUse', +$('shotsPerUse').value || 1); dash.scheduleRender(current, true); dash.scheduleRender(history, true); });
