@@ -29,11 +29,26 @@ def num(v, default=0):
 
 
 # ---- przedmioty: id -> [nazwa, typ, klasa] ----
+# Poprawki nazw z wiki: 2388 to Zubei's Leather Gaiters (wiki ma "Shirt", ikona i cena spodni), inaczej nazwa dubluje 2384.
+NAME_FIX = {'2388': "Zubei's Leather Gaiters"}
+
 items = {}
 for r in rows('items.csv'):
+    # przedmioty testowe twórców klienta: 13 broni z opisem "A temporary item for Kamex" (id 1295-1307) dubluje nazwy
+    # prawdziwych broni (Long Sword, Apprentice's Rod, ...) z innymi cenami, bez dropu i handlu; wypadają z bazy
+    if 'temporary item' in r['description'].lower():
+        continue
     grade = r['crystal_type'].upper() if r['crystal_type'] not in ('none', 'crystal_free', '') else ''
     # klient pokazuje "No Grade", w CSV jeden wpis ma "None Grade" (Blessed Spiritshot)
-    items[r['item_id']] = [r['name'].replace('None Grade', 'No Grade'), r['item_type'], grade, num(r['default_price'])]
+    name = NAME_FIX.get(r['item_id'], r['name']).replace('None Grade', 'No Grade')
+    items[r['item_id']] = [name, r['item_type'], grade, num(r['default_price'])]
+
+dup = {}
+for i, v in items.items():
+    dup.setdefault(v[0].lower(), []).append(i)
+dup = {k: v for k, v in dup.items() if len(v) > 1}
+if dup:
+    raise SystemExit(f'zduplikowane nazwy przedmiotów: {dup}')
 
 # ---- potwory: id -> [nazwa, poziom, hp, exp, sp, agresywny, typ] ----
 monsters = {}
