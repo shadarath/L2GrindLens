@@ -164,7 +164,7 @@ function render(panel) {
       if ((f.item || '').toLowerCase() === 'adena') adena += qty; else items += qty;
       addLoot('', f, qty);
       addProfit(ev.ts, qty * priceOf(f), true);
-      lootEvents.push({ ts: ev.ts, item: f.item || '?', qty, value: qty * priceOf(f) });
+      lootEvents.push({ ts: ev.ts, item: f.item || '?', itemId: f.itemId, qty, value: qty * priceOf(f) });
     }
     if (ev.type === 'item_party' && f.who) {
       const qty = f.qty || 1; addLoot(nick.get(f.who) || f.who, f, qty);
@@ -196,7 +196,8 @@ function render(panel) {
     };
     const values = lootEvents.map(l => l.value).filter(v => v > 0).sort((a, b) => a - b);
     const median = values.length ? values[values.length >> 1] : 0, thr = median * MARK_MULT;
-    const markers = lootEvents.filter(l => l.value > 0 && l.value >= thr).map(l => ({ ts: l.ts, label: `${new Date(l.ts).toLocaleTimeString('pl-PL')}: ${l.qty > 1 ? l.qty + ' × ' : ''}${l.item} (${fmt.n(l.value)} Adena)` }));
+    const gd = window.L2_GAMEDATA;
+    const markers = lootEvents.filter(l => l.value > 0 && l.value >= thr).map(l => ({ ts: l.ts, icon: l.itemId && gd && gd.items[l.itemId] ? gd.items[l.itemId][4] : null, label: `${new Date(l.ts).toLocaleTimeString('pl-PL')}: ${l.qty > 1 ? l.qty + ' × ' : ''}${l.item} (${fmt.n(l.value)} Adena)` }));
     panel.tl.setData({ start, end: start + span0, xp: bucket(samples.exp), profit: bucket(samples.profit), markers });
     range = panel.tl.advance();
     panel.tl.draw();
@@ -233,8 +234,10 @@ function render(panel) {
     for (const [item, l] of [...m.entries()].sort((a, b) => b[1].qty - a[1].qty)) {
       const tr = document.createElement('tr');
       tr.innerHTML = `<td></td><td class="num">${fmt.n(l.qty)}</td><td class="num">${l.n}</td><td class="num">${fmt.n(l.value)}</td>`;
+      const icon = l.itemId && window.L2_GAMEDATA && window.L2_GAMEDATA.items[l.itemId] && window.L2_GAMEDATA.items[l.itemId][4];
+      if (icon) { const im = new Image(); im.className = 'icon'; im.src = `img/items/${icon}.png`; im.alt = ''; im.onerror = () => im.remove(); tr.firstChild.append(im); }
       if (l.itemId) { const a = document.createElement('a'); a.href = wikiUrl(l.itemId, item); a.target = '_blank'; a.rel = 'noopener'; a.textContent = item; tr.firstChild.append(a); }
-      else tr.firstChild.textContent = item;
+      else tr.firstChild.append(item);
       tb.append(tr);
     }
   }

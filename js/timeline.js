@@ -5,6 +5,8 @@
 (() => {
 const { cssVar } = L2GL;
 const H = 56, SNAP = 4, GRIP = 7, MIN_SPAN = 60000;   // wysokość, zasięg przylegania do końca (px), zasięg uchwytu (px), minimalna szerokość ramki
+const ICON = 14;   // miniaturka przedmiotu przy znaczniku (px)
+const icons = new Map();   // nazwa ikony -> Image (wspólna dla pasków)
 
 /**
  * Tworzy pasek na `canvas`. `onChange(final)` wołane przy każdej zmianie ramki przez użytkownika (final = puszczenie).
@@ -37,7 +39,7 @@ function create(canvas, { onChange }) {
     if (canvas.width !== Math.round(w * dpr) || canvas.height !== Math.round(H * dpr)) { canvas.width = Math.round(w * dpr); canvas.height = Math.round(H * dpr); }
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.clearRect(0, 0, w, H);
-    const n = tl.xp.length, top = 10, bottom = H - 2, plotH = bottom - top;
+    const n = tl.xp.length, top = ICON + 2, bottom = H - 2, plotH = bottom - top;
     const series = (arr, color, alpha) => {
       if (!n) return;
       let mx = 0, mn = 0; for (const v of arr) { if (v > mx) mx = v; if (v < mn) mn = v; }
@@ -51,9 +53,17 @@ function create(canvas, { onChange }) {
     };
     series(tl.xp, cssVar('--xp'), 0.18);      // XP fioletowe jak na wykresie XP, zysk zielony jak na wykresie zysku, znaczniki bursztynowe
     series(tl.profit, cssVar('--ok'), 0.18);
-    // znaczniki: trójkąt u góry
-    ctx.fillStyle = cssVar('--warn');
-    for (const m of tl.markers) { const x = toX(m.ts); ctx.beginPath(); ctx.moveTo(x - 4, 1); ctx.lineTo(x + 4, 1); ctx.lineTo(x, 8); ctx.closePath(); ctx.fill(); }
+    // znaczniki: miniaturka przedmiotu u góry (gdy jest ikona i już się wczytała), inaczej trójkąt
+    for (const m of tl.markers) {
+      const x = toX(m.ts);
+      let img = null;
+      if (m.icon) {
+        img = icons.get(m.icon);
+        if (!img) { img = new Image(); img.src = `img/items/${m.icon}.png`; img.onload = () => tl.draw(); icons.set(m.icon, img); }
+      }
+      if (img && img.complete && img.naturalWidth) ctx.drawImage(img, Math.round(x - ICON / 2), 0, ICON, ICON);
+      else { ctx.fillStyle = cssVar('--warn'); ctx.beginPath(); ctx.moveTo(x - 4, 1); ctx.lineTo(x + 4, 1); ctx.lineTo(x, 8); ctx.closePath(); ctx.fill(); }
+    }
     // ramka: przyciemnienie poza zakresem, krawędzie i uchwyty
     const x1 = toX(tl.from), x2 = toX(tl.to);
     ctx.fillStyle = 'rgba(0,0,0,0.5)'; ctx.fillRect(0, 0, x1, H); ctx.fillRect(x2, 0, w - x2, H);
@@ -85,7 +95,7 @@ function create(canvas, { onChange }) {
     const x = px(e);
     if (!tl.drag) {
       const kind = hit(x); canvas.style.cursor = kind === 'move' ? 'grab' : kind === 'new' ? 'crosshair' : 'ew-resize';
-      const m = tl.markers.find(m => Math.abs(toX(m.ts) - x) <= 5); canvas.title = m ? m.label : '';
+      const m = tl.markers.find(m => Math.abs(toX(m.ts) - x) <= ICON / 2 + 1); canvas.title = m ? m.label : '';
       return;
     }
     const d = tl.drag, dt = toT(x) - d.t0, span = tl.end - tl.start;

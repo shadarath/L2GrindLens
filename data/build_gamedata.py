@@ -41,7 +41,8 @@ for r in rows('items.csv'):
     grade = r['crystal_type'].upper() if r['crystal_type'] not in ('none', 'crystal_free', '') else ''
     # klient pokazuje "No Grade", w CSV jeden wpis ma "None Grade" (Blessed Spiritshot)
     name = NAME_FIX.get(r['item_id'], r['name']).replace('None Grade', 'No Grade')
-    items[r['item_id']] = [name, r['item_type'], grade, num(r['default_price'])]
+    icon = r['icon'].strip().rsplit('.', 1)[-1]   # "icon.weapon_x_i00" i "Lineage2C1.etc_x_i00" -> plik img/items/<icon>.png (data/fetch_icons.py)
+    items[r['item_id']] = [name, r['item_type'], grade, num(r['default_price']), icon]
 
 dup = {}
 for i, v in items.items():
@@ -82,7 +83,7 @@ data = {'items': items, 'monsters': monsters, 'drops': drops, 'spoils': spoils, 
 out = os.path.join(root, 'gamedata.js')
 with open(out, 'w', encoding='utf-8', newline='\n') as f:
     f.write('// Okrojona baza gry dla aplikacji. Wygenerowane przez data/build_gamedata.py z gamedb/*.csv, nie edytować ręcznie.\n')
-    f.write('// items: id -> [nazwa, typ, klasa, cena w Adenie]; monsters: id -> [nazwa, poziom, hp, exp, sp, agresywny, typ];\n')
+    f.write('// items: id -> [nazwa, typ, klasa, cena w Adenie, ikona (img/items/<ikona>.png)]; monsters: id -> [nazwa, poziom, hp, exp, sp, agresywny, typ];\n')
     f.write('// drops/spoils: monster_id -> [[item_id, szansa %, ilość min, ilość max], ...]; skills: id -> nazwa.\n')
     f.write('window.L2_GAMEDATA = ' + json.dumps(data, ensure_ascii=False, separators=(',', ':')) + ';\n')
 

@@ -149,3 +149,4 @@ table.shots input[type=number] { width: 5em; }
 #preview.empty { width: 240px; height: 135px; }
 .row.next { margin-top: 4px; }
 .period.short { opacity: .45; }
+table.loot img.icon { width: 20px; height: 20px; vertical-align: middle; margin-right: 6px; border-radius: 3px; }
