@@ -2,7 +2,11 @@
 // "Aktualna sesja" (żywa, dopisywane zdarzenia) i "Historia sesji" (tylko odczyt zapisanych sesji).
 (() => {
 const { $, fmt, cssVar, settings } = L2GL;
-const WINDOWS = [[120000, '2 min'], [900000, '15 min'], [3600000, '1 h']];   // okna średniej kroczącej do wyboru przy wykresie
+const WINDOWS = [[60000, '1 min'], [120000, '2 min'], [300000, '5 min'], [900000, '15 min'], [3600000, '1 h']];   // okna średniej kroczącej do wyboru przy wykresie
+const PERIODS = [['łącznie', Infinity], ['ostatnia godzina', 3600000], ['ostatnie 10 min', 600000]];
+const TL_BUCKETS = 300;   // punkty paska linii czasu
+const TL_WINDOW = 60000;  // okno średniej kroczącej na pasku (jak wykresy: suma z ostatniej minuty na minutę)
+const MARK_MULT = 3;      // znacznik łupu: wartość co najmniej tyle razy mediana wartości łupów w sesji
 const DEFAULT_WINDOW = 120000;
 
 /** Tworzy instancję dashboardu w kontenerze `root`, który zawiera sklonowany szablon #dashTpl. */
@@ -34,6 +38,15 @@ function create(root) {
       sec.prepend(sel);
     }
   }
+  // pasek linii czasu z ramką zakresu: przeciąganie odświeża widok od razu (z ograniczeniem), puszczenie pełnym renderem
+  const tlc = root.querySelector('[data-id=tl]');
+  if (tlc && L2GL.timeline) {
+    panel.tl = L2GL.timeline.create(tlc, { onChange: final => {
+      if (final) { clearTimeout(panel.tlTimer); panel.tlTimer = null; scheduleRender(panel, true); }
+      else if (!panel.tlTimer) panel.tlTimer = setTimeout(() => { panel.tlTimer = null; render(panel); }, 80);
+    } });
+    root.querySelector('[data-id=tlReset]').addEventListener('click', () => panel.tl.reset());
+  }
   return panel;
 }
 
@@ -42,6 +55,7 @@ async function setView(panel, sessionId, live) {
   panel.view.live = !!live;
   panel.view.events = sessionId ? await L2GL.db.eventsOf(sessionId) : [];
   panel.unknownN = -1;
+  if (panel.tl) { panel.tl.mode = 'all'; panel.tl.drag = null; }   // nowa sesja w widoku: ramka na całość
   redrawLog(panel);
   scheduleRender(panel, true);
 }
@@ -113,12 +127,14 @@ function render(panel) {
   // zysk: mój (łupy minus shoty) i całej drużyny (mój plus łupy pozostałych; ich kosztów shotów nie widać w czacie)
   const addProfit = (ts, v, mine) => { if (!v) return; if (mine) { profit += v; samples.profit.push({ ts, v }); } samples.profitTeam.push({ ts, v }); };
   let lastTarget = null, lastTargetTs = 0, killsTotal = 0;
+  const hitTs = [], critTs = [], killTs = [];   // znaczniki czasu do statystyk okresów
   const shotsPerUse = Math.max(1, parseInt($('shotsPerUse').value, 10) || 1);
   // łupy: właściciel ('' = ja, potem członkowie drużyny w kolejności pojawienia się) -> przedmiot -> {qty, n, value, itemId}
   const whoCounts = new Map();
   for (const ev of evs) if (ev.type === 'item_party' && ev.fields && ev.fields.who) whoCounts.set(ev.fields.who, (whoCounts.get(ev.fields.who) || 0) + 1);
   const nick = canonNames(whoCounts);
   const lootBy = new Map([['', new Map()]]);
+  const lootEvents = [];   // własne łupy do znaczników na pasku: {ts, item, qty, value}
   const addLoot = (owner, f, qty) => {
     if (!lootBy.has(owner)) lootBy.set(owner, new Map());
     const m = lootBy.get(owner), key = f.item || '?';
@@ -129,16 +145,16 @@ function render(panel) {
   for (const ev of evs) {
     const f = ev.fields || {};
     if (ev.type === 'dmg_dealt' && f.dmg) {
-      dmg += f.dmg; hits++; samples.dmg.push({ ts: ev.ts, v: f.dmg });
+      dmg += f.dmg; hits++; samples.dmg.push({ ts: ev.ts, v: f.dmg }); hitTs.push(ev.ts);
       if (f.target) { byTarget.set(f.target, (byTarget.get(f.target) || 0) + f.dmg); lastTarget = f.target; lastTargetTs = ev.ts; }
     }
-    if (ev.type === 'crit') crit++;
+    if (ev.type === 'crit') { crit++; critTs.push(ev.ts); }
     if (ev.type === 'dmg_received' && f.dmg) { dmgIn += f.dmg; samples.dmgIn.push({ ts: ev.ts, v: f.dmg }); if (f.src) bySource.set(f.src, (bySource.get(f.src) || 0) + f.dmg); }
     if (ev.type === 'exp') {
       if (f.exp) {
         exp += f.exp; samples.exp.push({ ts: ev.ts, v: f.exp });
         // Gra nie ogłasza śmierci potwora, ale każdy zabity daje jeden komunikat o XP: zaliczamy go ostatnio bitemu celowi.
-        if (lastTarget && ev.ts - lastTargetTs < 15000) { kills.set(lastTarget, (kills.get(lastTarget) || 0) + 1); killsTotal++; lastTarget = null; }
+        if (lastTarget && ev.ts - lastTargetTs < 15000) { kills.set(lastTarget, (kills.get(lastTarget) || 0) + 1); killsTotal++; killTs.push(ev.ts); lastTarget = null; }
       }
       if (f.sp) { sp += f.sp; samples.sp.push({ ts: ev.ts, v: f.sp }); }
     }
@@ -147,6 +163,7 @@ function render(panel) {
       if ((f.item || '').toLowerCase() === 'adena') adena += qty; else items += qty;
       addLoot('', f, qty);
       addProfit(ev.ts, qty * priceOf(f), true);
+      lootEvents.push({ ts: ev.ts, item: f.item || '?', qty, value: qty * priceOf(f) });
     }
     if (ev.type === 'item_party' && f.who) {
       const qty = f.qty || 1; addLoot(nick.get(f.who) || f.who, f, qty);
@@ -158,12 +175,46 @@ function render(panel) {
       addProfit(ev.ts, -shotsPerUse * priceOf(f), true);
     }
   }
-  q('tDur').textContent = view.session ? fmt.dur(end - start) : '–';
-  q('tDmg').textContent = fmt.n(dmg); q('tDpm').textContent = fmt.n(dmg / durMin); q('tHits').textContent = fmt.n(hits);
-  q('tCrit').textContent = hits ? Math.round(100 * crit / hits) + '%' : '0%';
-  q('tDmgIn').textContent = fmt.n(dmgIn); q('tExp').textContent = fmt.n(exp); q('tExpH').textContent = fmt.n(exp / durMin * 60);
-  q('tSp').textContent = fmt.n(sp); q('tAdena').textContent = fmt.n(adena); q('tItems').textContent = fmt.n(items); q('tEvents').textContent = fmt.n(evs.length);
-  q('tKills').textContent = fmt.n(killsTotal); q('tProfit').textContent = fmt.n(profit);
+  if (panel === L2GL.dashboard.current && $('sessionDur')) $('sessionDur').textContent = view.session ? fmt.dur(end - start) : '–';   // czas sesji w górnym pasku
+
+  // pasek linii czasu: kubełki XP i zysku na minutę z całej sesji, znaczniki drogich łupów, ramka zakresu
+  const span0 = Math.max(end - start, 60000);
+  let range = { from: start, to: end };
+  if (panel.tl) {
+    // średnia krocząca z minuty w TL_BUCKETS punktach, tak jak wykresy niżej (suma z okna przed punktem na minutę)
+    const bucket = (arr) => {
+      const s = arr.slice().sort((a, b) => a.ts - b.ts), out = new Array(TL_BUCKETS);
+      let lo = 0, hi = 0, sum = 0;
+      for (let i = 0; i < TL_BUCKETS; i++) {
+        const t = start + (i + 1) / TL_BUCKETS * span0;
+        while (hi < s.length && s[hi].ts <= t) { sum += s[hi].v; hi++; }
+        while (lo < hi && s[lo].ts <= t - TL_WINDOW) { sum -= s[lo].v; lo++; }
+        out[i] = sum / (TL_WINDOW / 60000);
+      }
+      return out;
+    };
+    const values = lootEvents.map(l => l.value).filter(v => v > 0).sort((a, b) => a - b);
+    const median = values.length ? values[values.length >> 1] : 0, thr = median * MARK_MULT;
+    const markers = lootEvents.filter(l => l.value > 0 && l.value >= thr).map(l => ({ ts: l.ts, label: `${new Date(l.ts).toLocaleTimeString('pl-PL')}: ${l.qty > 1 ? l.qty + ' × ' : ''}${l.item} (${fmt.n(l.value)} Adena)` }));
+    panel.tl.setData({ start, end: start + span0, xp: bucket(samples.exp), profit: bucket(samples.profit), markers });
+    range = panel.tl.advance();
+    panel.tl.draw();
+    const all = panel.tl.isAll();
+    q('tlReset').hidden = all; q('pSel').hidden = all;
+    q('tlInfo').textContent = all ? 'Zakres: cała sesja' : `Zakres: ${fmt.dur(range.from - start)} – ${fmt.dur(range.to - start)} (${fmt.dur(range.to - range.from)})`;
+  }
+
+  // panele okresów: zaznaczenie (gdy ramka nie obejmuje całości), cała sesja, ostatnia godzina, ostatnie 10 minut (od `end`);
+  // średnie z faktycznie objętego czasu; w każdym dwie kolumny: średnie (XP/h, zysk/h, % krytyków) i ilości (XP, zysk, zabite potwory)
+  const periodCells = (from, to) => {
+    const hours = Math.max(to - from, 60000) / 3600000;
+    const sum = arr => arr.reduce((s, x) => s + (x.ts >= from && x.ts <= to ? x.v : 0), 0), cnt = arr => arr.reduce((s, t) => s + (t >= from && t <= to ? 1 : 0), 0);
+    const e = sum(samples.exp), p = sum(samples.profit), h = cnt(hitTs), c = cnt(critTs);
+    return [[fmt.n(e / hours), 'XP / h'], [fmt.n(p / hours), 'zysk / h'], [(h ? Math.round(100 * c / h) : 0) + '%', 'krytyków'], [fmt.n(e), 'XP'], [fmt.n(p), 'zysk (Adena)'], [fmt.n(cnt(killTs)), 'zabitych potworów']];
+  };
+  const fillPeriod = (id, cells) => { const box = q(id); if (!box) return; box.innerHTML = ''; for (const [v, label] of cells) { const d = document.createElement('div'); d.className = 'stat'; d.innerHTML = '<b></b><span></span>'; d.children[0].textContent = v; d.children[1].textContent = label; box.append(d); } };
+  PERIODS.forEach(([, win], i) => fillPeriod('p' + i, periodCells(win === Infinity ? start : Math.max(start, end - win), end)));
+  if (panel.tl && !panel.tl.isAll()) fillPeriod('p3', periodCells(range.from, range.to));
 
   const tb = q('loot').querySelector('tbody'); tb.innerHTML = '';
   for (const [owner, m] of lootBy) {
@@ -193,11 +244,12 @@ function render(panel) {
   if (typeof Chart === 'undefined') return;
   // Oś czasu co 10 s (dla długich sesji rzadziej); wartość w punkcie t = suma z okna przed t podzielona przez
   // długość okna w minutach, czyli średnia na minutę z ostatnich 2 minut, 15 minut albo godziny (wybór przy wykresie).
-  const span = Math.max(end - start, 60000);
+  // zakres osi czasu z ramki paska (domyślnie cała sesja); podpisy liczone od początku sesji
+  const cFrom = range.from, span = Math.max(range.to - cFrom, 60000);
   const step = Math.max(10000, Math.ceil(span / 600000) * 1000);
   const points = [];
-  for (let t = start; t < start + span; t += step) points.push(t);
-  points.push(start + span);
+  for (let t = cFrom; t < cFrom + span; t += step) points.push(t);
+  points.push(cFrom + span);
   const labels = points.map(t => fmt.dur(t - start));
   const windowOf = id => panel.windows[id] || DEFAULT_WINDOW;
   const rolling = (key, win) => {

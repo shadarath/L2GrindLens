@@ -114,3 +114,20 @@ table.loot a:hover { color: var(--accent); }
 .k.item_party { color: var(--ok); font-weight: 400; }
 h2 button.mini { font-size: 12px; padding: 2px 8px; margin-left: 6px; text-transform: none; letter-spacing: 0; vertical-align: middle; }
 .ev .rev { color: var(--warn); font-weight: 600; }
+.periods { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.periods:has(.period.sel:not([hidden])) { grid-template-columns: repeat(4, 1fr); }
+@media (max-width: 1180px) { .periods, .periods:has(.period.sel:not([hidden])) { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 560px) { .periods, .periods:has(.period.sel:not([hidden])) { grid-template-columns: 1fr; } }
+.period h2 { margin-bottom: 8px; }
+.pairs { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-rows: repeat(3, auto); grid-auto-flow: column; gap: 6px 16px; }
+.stat { display: flex; align-items: baseline; gap: 8px; }
+.stat b { font-size: 18px; font-variant-numeric: tabular-nums; white-space: nowrap; min-width: 4.5em; text-align: right; }
+.stat span { color: var(--muted); font-size: 12px; line-height: 1.15; min-width: 0; }
+.dur { font-size: 22px; font-variant-numeric: tabular-nums; margin-left: 6px; }
+.timeline { margin: 10px 0 6px; }
+.tl-head { display: flex; align-items: center; gap: 8px; font-size: 12px; margin-bottom: 4px; min-height: 22px; }
+.tl-head .hint { flex: 1; }
+.timeline canvas { display: block; width: 100%; height: 56px; background: var(--panel); border: 1px solid var(--line); border-radius: 4px; touch-action: none; user-select: none; }
+.period.sel { border-color: var(--accent); }
+details.debug-tools { margin-top: 8px; }
+details.debug-tools summary { font-size: 12px; }
