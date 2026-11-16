@@ -202,6 +202,7 @@ function loadSettings() {
   showFolder();
   updateButtons();
   showTab(1);
+  L2GL.tips.init();
   window.addEventListener('resize', () => { dash.scheduleRender(current); dash.scheduleRender(history); });
   window.l2gl = { cleanLines: L2GL.lines.clean, classify: msgs.classify, matchTemplate: msgs.match, db: L2GL.db, current, history, state: ocr.state, showTab }; // do testów z konsoli
 })();

@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Grind Lens</title>
-<link rel="stylesheet" href="css/app.css?v=20261116g">
+<link rel="stylesheet" href="css/app.css?v=20261116h">
 </head>
 <body>
 <header>
@@ -15,8 +15,19 @@
   <span class="cfg">
     <button id="nav1" data-tab="1">Źródło obrazu</button>
     <button id="nav2" data-tab="2">Podgląd OCR</button>
+    <button id="btnTips" title="Porady: ustawienia czatu w grze i zaznaczanie obszaru">Porady</button>
   </span>
 </header>
+
+<!-- Porady na start: przy pierwszym uruchomieniu trzeba przejść wszystkie strony -->
+<div id="tipsOverlay" class="overlay" hidden>
+  <div class="modal" role="dialog" aria-labelledby="tipsTitle">
+    <div class="modal-head"><h2 id="tipsTitle">Ważna porada</h2><button id="tipsClose" class="mini" title="Zamknij">✕</button></div>
+    <p id="tipsText"></p>
+    <div id="tipsImages" class="tips-images"></div>
+    <div class="row modal-foot"><button id="tipsPrev">Poprzednia porada</button><span style="flex:1"></span><button id="tipsNext" class="primary">Następna porada</button></div>
+  </div>
+</div>
 
 <nav class="steps" aria-label="Zakładki">
   <button id="nav3" data-tab="3">Ustawienia</button>
@@ -189,21 +200,22 @@
   </section>
 </template>
 
-<script src="systemmsg.js?v=20261116g"></script>
-<script src="gamedata.js?v=20261116g"></script>
+<script src="systemmsg.js?v=20261116h"></script>
+<script src="gamedata.js?v=20261116h"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js"></script>
-<script src="js/core.js?v=20261116g"></script>
-<script src="js/messages.js?v=20261116g"></script>
-<script src="js/lines.js?v=20261116g"></script>
-<script src="js/image.js?v=20261116g"></script>
-<script src="js/storage.js?v=20261116g"></script>
-<script src="js/capture.js?v=20261116g"></script>
-<script src="js/ocr.js?v=20261116g"></script>
+<script src="js/core.js?v=20261116h"></script>
+<script src="js/messages.js?v=20261116h"></script>
+<script src="js/lines.js?v=20261116h"></script>
+<script src="js/image.js?v=20261116h"></script>
+<script src="js/storage.js?v=20261116h"></script>
+<script src="js/capture.js?v=20261116h"></script>
+<script src="js/ocr.js?v=20261116h"></script>
+<script src="js/tips.js?v=20261116j"></script>
 <script src="js/timeline.js?v=20261116c"></script>
-<script src="js/dashboard.js?v=20261116g"></script>
-<script src="js/files.js?v=20261116g"></script>
-<script src="js/debug.js?v=20261116g"></script>
-<script src="js/app.js?v=20261116g"></script>
+<script src="js/dashboard.js?v=20261116h"></script>
+<script src="js/files.js?v=20261116h"></script>
+<script src="js/debug.js?v=20261116h"></script>
+<script src="js/app.js?v=20261116h"></script>
 </body>
 </html>
