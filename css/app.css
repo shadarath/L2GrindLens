@@ -150,3 +150,9 @@ table.shots input[type=number] { width: 5em; }
 .row.next { margin-top: 4px; }
 .period.short { opacity: .45; }
 table.loot img.icon { width: 20px; height: 20px; vertical-align: middle; margin-right: 6px; border-radius: 3px; }
+table.loot .grade { display: inline-block; padding: 0 5px; border-radius: 4px; font-size: 10px; font-weight: 700; line-height: 15px; vertical-align: middle; background: #555; color: #fff; }
+table.loot .grade.g-NG { background: #6b6b6b; } table.loot .grade.g-D { background: #3a7bd5; } table.loot .grade.g-C { background: #3a9a5e; }
+table.loot .grade.g-B { background: #c98500; } table.loot .grade.g-A { background: #c43e3e; } table.loot .grade.g-S { background: #8a4bd6; }
+table.loot .dots { display: inline; line-height: 1; }
+table.loot .dot { display: inline-block; width: 6px; height: 6px; margin: 0 2px; background: var(--line); transform: rotate(45deg); vertical-align: middle; cursor: default; }
+table.loot .dot.me { background: var(--accent); }

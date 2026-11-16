@@ -231,13 +231,34 @@ function render(panel) {
       tr.children[0].textContent = owner ? owner : 'Ty'; tr.children[1].textContent = fmt.n(total);
       tb.append(tr);
     }
-    for (const [item, l] of [...m.entries()].sort((a, b) => b[1].qty - a[1].qty)) {
+    // najpierw przedmioty z bazy (wg ilości), na końcu te spoza bazy (bez identyfikatora i ceny)
+    for (const [item, l] of [...m.entries()].sort((a, b) => (!!b[1].itemId - !!a[1].itemId) || b[1].qty - a[1].qty)) {
       const tr = document.createElement('tr');
       tr.innerHTML = `<td></td><td class="num">${fmt.n(l.qty)}</td><td class="num">${l.n}</td><td class="num">${fmt.n(l.value)}</td>`;
       const icon = l.itemId && window.L2_GAMEDATA && window.L2_GAMEDATA.items[l.itemId] && window.L2_GAMEDATA.items[l.itemId][4];
       if (icon) { const im = new Image(); im.className = 'icon'; im.src = `img/items/${icon}.png`; im.alt = ''; im.onerror = () => im.remove(); tr.firstChild.append(im); }
       if (l.itemId) { const a = document.createElement('a'); a.href = wikiUrl(l.itemId, item); a.target = '_blank'; a.rel = 'noopener'; a.textContent = item; tr.firstChild.append(a); }
       else tr.firstChild.append(item);
+      // miejsce w kategorii: plakietka klasy i rząd diamencików (po jednym na przedmiot w kategorii, od najlepszego), własny podświetlony;
+      // receptura albo kluczowy składnik pokazuje kategorię swojego produktu
+      const gd = window.L2_GAMEDATA, target = l.itemId && gd && gd.made && gd.made[l.itemId] || l.itemId;
+      const rk = target && gd && gd.items[target] && gd.items[target][5], members = rk && gd.cats && gd.cats[rk[2]];
+      if (members) {
+        const grade = gd.items[target][2] || 'NG', weapon = members[0].length === 3;
+        const via = target !== l.itemId ? `${/^Recipe/.test(item) ? 'receptura na' : 'składnik na'}: ${gd.items[target][0]}; ` : '';
+        const tag = document.createElement('span'); tag.className = `grade g-${grade}`; tag.textContent = grade;
+        tag.title = `${via}${rk[0]}. miejsce wśród ${rk[1]} w kategorii: ${rk[2]} (${weapon ? 'według P.Atk' : 'według ceny sklepowej; wiki nie podaje obrony'})`;
+        const dots = document.createElement('span'); dots.className = 'dots';
+        // diamenciki od najtańszego do najdroższego (przy tej samej cenie od słabszego)
+        const price = m => (gd.items[m[0]] && gd.items[m[0]][3]) || 0;
+        for (const m of [...members].sort((a, b) => price(a) - price(b) || (a[1] || 0) - (b[1] || 0))) {
+          const d = document.createElement('i'); d.className = 'dot' + (m[0] === target ? ' me' : '');
+          const it = gd.items[m[0]];
+          d.title = it ? `${it[0]}: ${weapon ? `P.Atk ${m[1]}, M.Atk ${m[2]}, cena ${fmt.n(it[3])}` : `cena ${fmt.n(m[1])}`}` : '';
+          dots.append(d);
+        }
+        tr.firstChild.append(' ', tag, ' ', dots);
+      }
       tb.append(tr);
     }
   }
