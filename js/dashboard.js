@@ -5,7 +5,8 @@ const { $, fmt, cssVar, settings } = L2GL;
 const WINDOWS = [[60000, '1 min'], [120000, '2 min'], [300000, '5 min'], [900000, '15 min'], [3600000, '1 h']];   // okna średniej kroczącej do wyboru przy wykresie
 const PERIODS = [['łącznie', Infinity], ['ostatnia godzina', 3600000], ['ostatnie 10 min', 600000]];
 const TL_BUCKETS = 300;   // punkty paska linii czasu
-const TL_WINDOW = 60000;  // okno średniej kroczącej na pasku (jak wykresy: suma z ostatniej minuty na minutę)
+const TL_WINDOW = 60000;  // okno średniej kroczącej na pasku (jak wykresy: suma z ostatniej minuty przeliczona na godzinę)
+const HOUR = 3600000;
 const MARK_MULT = 3;      // znacznik łupu: wartość co najmniej tyle razy mediana wartości łupów w sesji
 const DEFAULT_WINDOW = 120000;
 
@@ -177,11 +178,11 @@ function render(panel) {
   }
   if (panel === L2GL.dashboard.current && $('sessionDur')) $('sessionDur').textContent = view.session ? fmt.dur(end - start) : '–';   // czas sesji w górnym pasku
 
-  // pasek linii czasu: kubełki XP i zysku na minutę z całej sesji, znaczniki drogich łupów, ramka zakresu
+  // pasek linii czasu: XP i zysk na godzinę z całej sesji, znaczniki drogich łupów, ramka zakresu
   const span0 = Math.max(end - start, 60000);
   let range = { from: start, to: end };
   if (panel.tl) {
-    // średnia krocząca z minuty w TL_BUCKETS punktach, tak jak wykresy niżej (suma z okna przed punktem na minutę)
+    // średnia krocząca z minuty w TL_BUCKETS punktach, tak jak wykresy niżej (suma z okna przed punktem na godzinę)
     const bucket = (arr) => {
       const s = arr.slice().sort((a, b) => a.ts - b.ts), out = new Array(TL_BUCKETS);
       let lo = 0, hi = 0, sum = 0;
@@ -189,7 +190,7 @@ function render(panel) {
         const t = start + (i + 1) / TL_BUCKETS * span0;
         while (hi < s.length && s[hi].ts <= t) { sum += s[hi].v; hi++; }
         while (lo < hi && s[lo].ts <= t - TL_WINDOW) { sum -= s[lo].v; lo++; }
-        out[i] = sum / (TL_WINDOW / 60000);
+        out[i] = sum / (TL_WINDOW / HOUR);
       }
       return out;
     };
@@ -243,7 +244,7 @@ function render(panel) {
 
   if (typeof Chart === 'undefined') return;
   // Oś czasu co 10 s (dla długich sesji rzadziej); wartość w punkcie t = suma z okna przed t podzielona przez
-  // długość okna w minutach, czyli średnia na minutę z ostatnich 2 minut, 15 minut albo godziny (wybór przy wykresie).
+  // długość okna w godzinach, czyli tempo na godzinę z ostatniej minuty, 2, 5, 15 minut albo godziny (wybór przy wykresie).
   // zakres osi czasu z ramki paska (domyślnie cała sesja); podpisy liczone od początku sesji
   const cFrom = range.from, span = Math.max(range.to - cFrom, 60000);
   const step = Math.max(10000, Math.ceil(span / 600000) * 1000);
@@ -258,7 +259,7 @@ function render(panel) {
     return points.map(t => {
       while (hi < arr.length && arr[hi].ts <= t) { sum += arr[hi].v; hi++; }
       while (lo < hi && arr[lo].ts <= t - win) { sum -= arr[lo].v; lo++; }
-      return Math.round(sum / (win / 60000));
+      return Math.round(sum / (win / HOUR));
     });
   };
   const ink = cssVar('--axis'), grid = cssVar('--grid'), s1 = cssVar('--s1'), s2 = cssVar('--s2'), s3 = cssVar('--s3'), s4 = cssVar('--s4'), ok = cssVar('--ok');

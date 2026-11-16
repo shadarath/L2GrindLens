@@ -30,6 +30,11 @@ const MSG_TYPES = {
   55: ['pickup_fail', { qty: 's1', item: '=Adena' }], 56: ['pickup_fail', { item: 's1' }], 57: ['pickup_fail', { qty: 's2', item: 's1' }],
   96: ['level_up', {}], 2344: ['death', { src: 'c1' }],
   936: ['shot', { item: 's1' }],   // "Use $s1." - zużycie soulshotów/spiritshotów, w łupach jako ujemna ilość
+  9001: ['msg', {}],
+};
+// Komunikaty spoza bazy klienta (identyfikatory od 9001), dopisywane do szablonów przy budowie.
+const EXTRA_MSG = {
+  9001: 'You have played for $s1 hour(s). Please take a break.',
 };
 
 // ---------- koszty pomyłek OCR ----------
@@ -153,7 +158,7 @@ const acceptCost = literal => literal < 6 ? 0.5 : literal < 10 ? 1 : literal < 2
 
 function build(dbm) {
   templates.length = 0; candCache.clear();
-  for (const [idStr, raw] of Object.entries(dbm)) {
+  for (const [idStr, raw] of Object.entries({ ...EXTRA_MSG, ...dbm })) {
     if (/<br>|<font|\$s\d\$|^\$[sc]\d\.?$/.test(raw)) continue;
     const text = normText(raw);
     const parts = text.split(/(\$[sc]\d)/), seen = new Set(), units = [];

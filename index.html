@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Grind Lens</title>
-<link rel="stylesheet" href="css/app.css?v=20261116o">
+<link rel="stylesheet" href="css/app.css?v=20261116q">
 </head>
 <body>
 <header>
@@ -151,13 +151,13 @@
     <section class="period"><h2>Ostatnie 10 minut <span class="help" tabindex="0" data-tip="Liczone od teraz w trakcie nasłuchu, od ostatniego zdarzenia w historii. Średnie na godzinę z 10 minut, więc wahają się bardziej niż dla całej sesji.">?</span></h2><div class="pairs" data-id="p2"></div></section>
   </div>
   <div class="timeline">
-    <div class="tl-head"><span class="help" tabindex="0" data-tip="Linia czasu całej sesji: XP (niebieska) i zysk (zielona) na minutę, trójkąty przy drogich łupach. Ramka wybiera zakres dla wykresów i panelu Zaznaczenie.">?</span><span class="hint" data-id="tlInfo"></span><button class="mini" data-id="tlReset" hidden>cały zakres</button></div>
+    <div class="tl-head"><span class="help" tabindex="0" data-tip="Linia czasu całej sesji: XP (niebieska) i zysk (zielona) na godzinę, trójkąty przy drogich łupach. Ramka wybiera zakres dla wykresów i panelu Zaznaczenie.">?</span><span class="hint" data-id="tlInfo"></span><button class="mini" data-id="tlReset" hidden>cały zakres</button></div>
     <canvas data-id="tl" height="56"></canvas>
   </div>
   <div class="charts">
-    <section data-rolling><h2>XP i SP na minutę <span class="help" tabindex="0" data-tip="Średnia z ostatniej minuty, 2, 5 lub 15 minut albo godziny (wybór obok). Dłuższe okno wygładza wykres, ale później pokazuje zmiany. XP po lewej, SP po prawej.">?</span></h2><div class="chart"><canvas data-id="chExpSp"></canvas></div></section>
-    <section data-rolling><h2>Obrażenia na minutę <span class="help" tabindex="0" data-tip="Średnia z ostatniej minuty, 2, 5 lub 15 minut albo godziny (wybór obok). Dłuższe okno wygładza wykres, ale później pokazuje zmiany.">?</span></h2><div class="chart"><canvas data-id="chDmg"></canvas></div></section>
-    <section data-rolling><h2>Zysk na minutę (Adena) <span class="help" tabindex="0" data-tip="Mój zysk: zebrane przedmioty po cenach sklepowych minus zużyte shoty po cenach z ustawień; schodzi poniżej zera, gdy shoty kosztują więcej, niż wypada. Cała drużyna: mój zysk plus łupy pozostałych członków drużyny (ich kosztów shotów nie widać w czacie).">?</span></h2><div class="chart"><canvas data-id="chProfit"></canvas></div></section>
+    <section data-rolling><h2>XP i SP na godzinę <span class="help" tabindex="0" data-tip="Średnia z ostatniej minuty, 2, 5 lub 15 minut albo godziny (wybór obok). Dłuższe okno wygładza wykres, ale później pokazuje zmiany. XP po lewej, SP po prawej.">?</span></h2><div class="chart"><canvas data-id="chExpSp"></canvas></div></section>
+    <section data-rolling><h2>Obrażenia na godzinę <span class="help" tabindex="0" data-tip="Średnia z ostatniej minuty, 2, 5 lub 15 minut albo godziny (wybór obok). Dłuższe okno wygładza wykres, ale później pokazuje zmiany.">?</span></h2><div class="chart"><canvas data-id="chDmg"></canvas></div></section>
+    <section data-rolling><h2>Zysk na godzinę (Adena) <span class="help" tabindex="0" data-tip="Mój zysk: zebrane przedmioty po cenach sklepowych minus zużyte shoty po cenach z ustawień; schodzi poniżej zera, gdy shoty kosztują więcej, niż wypada. Cała drużyna: mój zysk plus łupy pozostałych członków drużyny (ich kosztów shotów nie widać w czacie).">?</span></h2><div class="chart"><canvas data-id="chProfit"></canvas></div></section>
     <section><h2>Obrażenia wg potwora <span class="help" tabindex="0" data-tip="Od środka w prawo obrażenia zadane, w lewo otrzymane. Liczba po x to zabite potwory danego typu, liczone po komunikatach o XP; zabicie w drużynie bez Twojego uderzenia nie zostanie policzone.">?</span></h2><div class="chart"><canvas data-id="chMonsters"></canvas></div></section>
   </div>
   <div class="cols">
@@ -190,22 +190,22 @@
   </section>
 </template>
 
-<script src="systemmsg.js?v=20261116o"></script>
-<script src="gamedata.js?v=20261116o"></script>
+<script src="systemmsg.js?v=20261116q"></script>
+<script src="gamedata.js?v=20261116q"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js"></script>
-<script src="js/core.js?v=20261116o"></script>
-<script src="js/messages.js?v=20261116o"></script>
-<script src="js/lines.js?v=20261116o"></script>
-<script src="js/image.js?v=20261116o"></script>
-<script src="js/storage.js?v=20261116o"></script>
-<script src="js/capture.js?v=20261116o"></script>
-<script src="js/ocr.js?v=20261116o"></script>
+<script src="js/core.js?v=20261116q"></script>
+<script src="js/messages.js?v=20261116q"></script>
+<script src="js/lines.js?v=20261116q"></script>
+<script src="js/image.js?v=20261116q"></script>
+<script src="js/storage.js?v=20261116q"></script>
+<script src="js/capture.js?v=20261116q"></script>
+<script src="js/ocr.js?v=20261116q"></script>
 <script src="js/tips.js?v=20261116j"></script>
 <script src="js/timeline.js?v=20261116c"></script>
-<script src="js/dashboard.js?v=20261116o"></script>
-<script src="js/files.js?v=20261116o"></script>
-<script src="js/debug.js?v=20261116o"></script>
-<script src="js/app.js?v=20261116o"></script>
+<script src="js/dashboard.js?v=20261116q"></script>
+<script src="js/files.js?v=20261116q"></script>
+<script src="js/debug.js?v=20261116q"></script>
+<script src="js/app.js?v=20261116q"></script>
 </body>
 </html>

@@ -18,7 +18,7 @@ function create(canvas, { onChange }) {
   const toX = t => (t - tl.start) / Math.max(tl.end - tl.start, 1) * width();
   const toT = x => tl.start + x / width() * (tl.end - tl.start);
 
-  /** Dane z przeliczenia dashboardu: zakres sesji, kubełki (wartości na minutę) i znaczniki {ts, label}. */
+  /** Dane z przeliczenia dashboardu: zakres sesji, punkty (wartości na godzinę) i znaczniki {ts, label}. */
   tl.setData = ({ start, end, xp, profit, markers }) => { tl.start = start; tl.end = Math.max(end, start + 1); tl.xp = xp; tl.profit = profit; tl.markers = markers; };
   /** Dosuwa ramkę do nowego końca sesji według trybu; zwraca zakres. Nie rusza ramki w trakcie przeciągania. */
   tl.advance = () => {
