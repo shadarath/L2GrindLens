@@ -49,7 +49,7 @@ function create(canvas, { onChange }) {
       ctx.beginPath(); for (let i = 0; i < n; i++) ctx[i ? 'lineTo' : 'moveTo']((i + 0.5) / n * w, y(arr[i]));
       ctx.strokeStyle = color; ctx.lineWidth = 1; ctx.stroke();
     };
-    series(tl.xp, cssVar('--s1'), 0.18);      // XP niebieska, zysk zielona, znaczniki bursztynowe: trzy różne barwy
+    series(tl.xp, cssVar('--xp'), 0.18);      // XP fioletowe jak na wykresie XP, zysk zielony jak na wykresie zysku, znaczniki bursztynowe
     series(tl.profit, cssVar('--ok'), 0.18);
     // znaczniki: trójkąt u góry
     ctx.fillStyle = cssVar('--warn');

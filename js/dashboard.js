@@ -214,7 +214,11 @@ function render(panel) {
     return [[fmt.n(e / hours), 'XP / h'], [fmt.n(p / hours), 'zysk / h'], [(h ? Math.round(100 * c / h) : 0) + '%', 'krytyków'], [fmt.n(e), 'XP'], [fmt.n(p), 'zysk (Adena)'], [fmt.n(cnt(killTs)), 'zabitych potworów']];
   };
   const fillPeriod = (id, cells) => { const box = q(id); if (!box) return; box.innerHTML = ''; for (const [v, label] of cells) { const d = document.createElement('div'); d.className = 'stat'; d.innerHTML = '<b></b><span></span>'; d.children[0].textContent = v; d.children[1].textContent = label; box.append(d); } };
-  PERIODS.forEach(([, win], i) => fillPeriod('p' + i, periodCells(win === Infinity ? start : Math.max(start, end - win), end)));
+  PERIODS.forEach(([, win], i) => {
+    fillPeriod('p' + i, periodCells(win === Infinity ? start : Math.max(start, end - win), end));
+    // okres dłuższy niż sesja: wartości pokrywają się z całą sesją, panel wyszarzony
+    const box = q('p' + i), sec = box && box.closest('.period'); if (sec) sec.classList.toggle('short', win !== Infinity && end - start < win);
+  });
   if (panel.tl && !panel.tl.isAll()) fillPeriod('p3', periodCells(range.from, range.to));
 
   const tb = q('loot').querySelector('tbody'); tb.innerHTML = '';
@@ -262,7 +266,7 @@ function render(panel) {
       return Math.round(sum / (win / HOUR));
     });
   };
-  const ink = cssVar('--axis'), grid = cssVar('--grid'), s1 = cssVar('--s1'), s2 = cssVar('--s2'), s3 = cssVar('--s3'), s4 = cssVar('--s4'), ok = cssVar('--ok');
+  const ink = cssVar('--axis'), grid = cssVar('--grid'), s1 = cssVar('--s1'), s2 = cssVar('--s2'), s3 = cssVar('--s3'), s4 = cssVar('--s4'), ok = cssVar('--ok'), xp = cssVar('--xp');   // XP zawsze fioletowe (wykres i pasek)
   const axis = extra => ({ ticks: { color: ink }, grid: { color: grid }, ...extra });
   const base = { responsive: true, maintainAspectRatio: false, animation: false, interaction: { mode: 'index', intersect: false },
     scales: { x: { ticks: { color: ink, maxTicksLimit: 12 }, grid: { color: grid } }, y: axis({ beginAtZero: true }) },
@@ -271,7 +275,7 @@ function render(panel) {
   // XP i SP na jednym wykresie: skala XP po lewej, SP po prawej
   const dual = { ...base, scales: { x: base.scales.x, y: axis({ beginAtZero: true, position: 'left', title: { display: true, text: 'XP', color: ink } }), y1: axis({ beginAtZero: true, position: 'right', title: { display: true, text: 'SP', color: ink }, grid: { drawOnChartArea: false } }) } };
   const wXp = windowOf('chExpSp');
-  upsert(panel, 'chExpSp', 'line', labels, [{ label: 'XP', data: rolling('exp', wXp), yAxisID: 'y', ...line(s3) }, { label: 'SP', data: rolling('sp', wXp), yAxisID: 'y1', ...line(s4) }], dual);
+  upsert(panel, 'chExpSp', 'line', labels, [{ label: 'XP', data: rolling('exp', wXp), yAxisID: 'y', ...line(xp) }, { label: 'SP', data: rolling('sp', wXp), yAxisID: 'y1', ...line(s4) }], dual);
   const wDmg = windowOf('chDmg');
   upsert(panel, 'chDmg', 'line', labels, [{ label: 'zadane', data: rolling('dmg', wDmg), ...line(s1) }, { label: 'otrzymane', data: rolling('dmgIn', wDmg), ...line(s2) }], base);
   // zysk może być ujemny (koszt shotów), więc oś bez przymusu zera, ale z zerem w zasięgu
