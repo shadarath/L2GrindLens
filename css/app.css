@@ -57,12 +57,15 @@ input[type=range] { width: 120px; }
 #preview { width: 100%; max-width: 100%; display: block; background: #000; border-radius: 4px; cursor: crosshair; touch-action: none; }
 #ocrView { max-width: 100%; display: block; background: #fff; border: 1px solid var(--line); }
 .hint { color: var(--muted); font-size: 12.5px; }
-.log { font-family: var(--mono); font-size: 12.5px; max-height: 40vh; overflow: auto; border-top: 1px solid var(--line); }
+.log { font-family: var(--mono); font-size: 12.5px; height: 40vh; overflow: auto; border-top: 1px solid var(--line); }
+.cols > section.log-panel { display: flex; flex-direction: column; }
+.cols > section.log-panel .log { flex: 1 1 auto; min-height: 0; }
+@media (max-width: 900px) { .log { height: auto; max-height: 40vh; } }
 .ev { display: grid; grid-template-columns: 82px 120px minmax(0, 1fr); gap: 8px; padding: 3px 0; border-bottom: 1px solid var(--line); font-variant-numeric: tabular-nums; }
 .ev .t { color: var(--muted); }
 .ev .k { font-weight: 600; }
 .k.dmg_dealt, .k.crit { color: var(--accent); } .k.dmg_received { color: var(--bad); } .k.exp { color: var(--warn); } .k.item { color: var(--ok); }
-.k.other, .k.msg, .k.dmg_other, .k.cooldown, .k.cast_fail, .k.range, .k.resource, .k.skill { color: var(--muted); font-weight: 400; }
+.k.other, .k.msg, .k.dmg_other, .k.cooldown, .k.cast_fail, .k.sweep_fail, .k.use_item, .k.range, .k.resource, .k.skill { color: var(--muted); font-weight: 400; }
 .k.level_up { color: var(--ok); } .k.death { color: var(--bad); }
 .k .t { font-weight: 400; }
 .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 8px; }
@@ -85,8 +88,8 @@ table.loot td.num, table.loot th.num { text-align: right; }
 .gate p { color: var(--muted); max-width: 48em; margin: 8px auto 14px; }
 /* znak zapytania z podpowiedzią po najechaniu lub po przejściu klawiaturą */
 .help { position: relative; display: inline-grid; place-items: center; width: 16px; height: 16px; margin-left: 4px; border-radius: 50%; border: 1px solid var(--line); color: var(--muted); font-size: 11px; font-weight: 600; text-transform: none; letter-spacing: 0; cursor: help; vertical-align: middle; }
-.help::after { content: attr(data-tip); position: absolute; left: 0; top: calc(100% + 6px); z-index: 10; width: max-content; max-width: min(320px, 80vw); padding: 8px 10px; border-radius: 6px; border: 1px solid var(--line); background: var(--panel); color: var(--fg); font: 12.5px/1.4 var(--sans); font-weight: 400; text-transform: none; letter-spacing: 0; text-align: left; white-space: normal; box-shadow: 0 4px 16px rgba(0, 0, 0, .18); opacity: 0; pointer-events: none; transition: opacity .12s; }
-.help:hover::after, .help:focus-visible::after { opacity: 1; }
+.tip { position: fixed; left: 0; top: 0; z-index: 1000; display: none; width: max-content; max-width: min(320px, calc(100vw - 16px)); padding: 8px 10px; border-radius: 6px; border: 1px solid var(--line); background: var(--panel); color: var(--fg); font: 12.5px/1.4 var(--sans); white-space: normal; box-shadow: 0 4px 16px rgba(0, 0, 0, .18); pointer-events: none; }
+.tip.on { display: block; }
 /* dziennik: pola jasno, dokładny cytat z loga przygaszony */
 .ev .txt { color: var(--muted); }
 .k.shot { color: var(--muted); font-weight: 400; }

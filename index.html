@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Grind Lens</title>
-<link rel="stylesheet" href="css/app.css?v=20261117i">
+<link rel="stylesheet" href="css/app.css?v=20261117k">
 </head>
 <body>
 <header>
@@ -161,7 +161,7 @@
     <section><h2>Obrażenia wg potwora <span class="help" tabindex="0" data-tip="Od środka w prawo obrażenia zadane, w lewo otrzymane. Liczba po x to zabite potwory danego typu, liczone po komunikatach o XP; zabicie w drużynie bez Twojego uderzenia nie zostanie policzone.">?</span></h2><div class="chart"><canvas data-id="chMonsters"></canvas></div></section>
   </div>
   <div class="cols">
-    <section>
+    <section class="log-panel">
       <h2>Dziennik zdarzeń</h2>
       <div class="row" style="margin-bottom:8px">
         <label>pokaż <select data-id="logFilter" style="width:auto"><option value="">wszystko</option><option value="dmg_dealt">obrażenia zadane</option><option value="dmg_received">obrażenia otrzymane</option><option value="exp">XP</option><option value="item">przedmioty</option><option value="item_party">łupy drużyny</option><option value="other">nierozpoznane</option></select></label>
@@ -174,7 +174,7 @@
     </section>
   </div>
   <section>
-    <h2>Nierozpoznane <span data-id="unknownCount" class="pill">0</span> <span class="help" tabindex="0" data-tip="Linie czatu, których nie udało się pewnie rozpoznać, z powodem. Nie wchodzą do statystyk (poza przedmiotami spoza bazy, które liczą się pod odczytaną nazwą). Linia zostaje pod obserwacją, dopóki jest na ekranie: gdy tło pod nią się zmieni, jest czytana ponownie, a lepszy odczyt poprawia zdarzenie wstecz (w dzienniku znacznik ↻). Przycisk pobiera je wszystkie z miniaturami jako jeden plik JSON; plik wystarczy przesłać do analizy.">?</span> <button data-id="btnUnknown" class="mini">Pobierz do analizy</button></h2>
+    <h2>Nierozpoznane <span data-id="unknownCount" class="pill">0</span> <span class="help" tabindex="0" data-tip="Linie czatu, których nie udało się pewnie rozpoznać, z powodem. Nie wchodzą do statystyk. Przedmioty spoza bazy (np. questowe) nie są tu pokazywane: liczą się w łupach pod odczytaną nazwą. Linia zostaje pod obserwacją, dopóki jest na ekranie: gdy tło pod nią się zmieni, jest czytana ponownie, a lepszy odczyt poprawia zdarzenie wstecz (w dzienniku znacznik ↻). Przycisk pobiera je wszystkie z miniaturami jako jeden plik JSON; plik wystarczy przesłać do analizy.">?</span> <button data-id="btnUnknown" class="mini">Pobierz do analizy</button></h2>
     <div class="wrap"><table class="loot unknown" data-id="unknown"><thead><tr><th>czas</th><th>linia</th><th>powód</th><th>odczyt</th></tr></thead><tbody></tbody></table></div>
   </section>
   <section>
@@ -190,22 +190,22 @@
   </section>
 </template>
 
-<script src="systemmsg.js?v=20261117i"></script>
-<script src="gamedata.js?v=20261117i"></script>
+<script src="systemmsg.js?v=20261117k"></script>
+<script src="gamedata.js?v=20261117k"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js"></script>
-<script src="js/core.js?v=20261117i"></script>
-<script src="js/messages.js?v=20261117i"></script>
-<script src="js/lines.js?v=20261117i"></script>
-<script src="js/image.js?v=20261117i"></script>
-<script src="js/storage.js?v=20261117i"></script>
-<script src="js/capture.js?v=20261117i"></script>
-<script src="js/ocr.js?v=20261117i"></script>
+<script src="js/core.js?v=20261117k"></script>
+<script src="js/messages.js?v=20261117k"></script>
+<script src="js/lines.js?v=20261117k"></script>
+<script src="js/image.js?v=20261117k"></script>
+<script src="js/storage.js?v=20261117k"></script>
+<script src="js/capture.js?v=20261117k"></script>
+<script src="js/ocr.js?v=20261117k"></script>
 <script src="js/tips.js?v=20261116j"></script>
-<script src="js/timeline.js?v=20261117i"></script>
-<script src="js/dashboard.js?v=20261117i"></script>
-<script src="js/files.js?v=20261117i"></script>
-<script src="js/debug.js?v=20261117i"></script>
-<script src="js/app.js?v=20261117i"></script>
+<script src="js/timeline.js?v=20261117k"></script>
+<script src="js/dashboard.js?v=20261117k"></script>
+<script src="js/files.js?v=20261117k"></script>
+<script src="js/debug.js?v=20261117k"></script>
+<script src="js/app.js?v=20261117k"></script>
 </body>
 </html>

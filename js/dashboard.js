@@ -342,7 +342,7 @@ function upsert(panel, id, type, labels, datasets, options) {
 
 /** Panel nierozpoznanych: zdarzenia bez typu albo z zastrzeżeniem (powód w polach), od najnowszych, z miniaturą linii. */
 function renderUnknown(panel) {
-  const list = panel.view.events.filter(e => e.type === 'other' || (e.fields && e.fields.reason));
+  const list = panel.view.events.filter(L2GL.isUnknown);
   panel.q('unknownCount').textContent = list.length;
   if (panel.unknownN === list.length) return;
   panel.unknownN = list.length;

@@ -19,6 +19,9 @@ const MSG_TYPES = {
   277: ['item', { item: 's1' }], 369: ['item', { item: 's2' }], 1666: ['item', { item: 's2' }], 3073: ['item', { qty: 's2', item: 's1' }],
   299: ['item_party', { who: 'c1', qty: 's3', item: 's2' }], 300: ['item_party', { who: 'c1', item: 's2' }],
   1379: ['item_party', { who: 'c1', qty: 's2', item: '=Adena' }], 1661: ['item_party', { who: 'c1', qty: 's3', item: 's2' }],
+  // łup ze spoila ("... by using sweeper."): pole spoil; gdy $c1 to gracz, zdarzenie staje się jego własnym łupem (item)
+  608: ['item_party', { who: 'c1', qty: 's3', item: 's2', spoil: '=1' }], 609: ['item_party', { who: 'c1', item: 's2', spoil: '=1' }],
+  343: ['sweep_fail', {}], 683: ['sweep_fail', {}],
   44: ['crit', {}], 2266: ['crit', { src: 'c1' }], 1017: ['crit_pet', {}], 1028: ['crit_pet', {}], 1280: ['crit', {}],
   43: ['miss', {}], 2264: ['miss', { who: 'c1', src: 'c2' }], 2265: ['miss', { src: 'c1' }], 2268: ['miss', { src: 'c1' }], 158: ['miss', {}],
   2267: ['resist', { who: 'c1', src: 'c2' }], 2269: ['resist', { who: 'c1', src: 'c2' }], 2271: ['resist', { who: 'c1', src: 'c2' }],
@@ -347,6 +350,9 @@ function fromMatch(m) {
         else if (name === 'item' && canon(v, 'skills')) {
           // "You have earned Weapon Mastery.": ten sam szablon co zdobycie przedmiotu, ale nazwa jest umiejętnością
           const sk = canon(v, 'skills'); fields.skill = sk.name; fields.skillId = sk.id; type = 'msg';
+        } else if (name === 'skill' && canon(v, 'items')) {
+          // "You use Scroll of Escape.": ten sam szablon co użycie umiejętności, ale nazwa jest przedmiotem
+          const it = canon(v, 'items'); fields.item = it.name; fields.itemId = it.id; type = 'use_item';
         } else {
           if (!validName(v)) return null;
           fields[name] = v;
@@ -358,6 +364,7 @@ function fromMatch(m) {
     if (me) {
       if (type === 'dmg_dealt' && fields.src && fields.src !== me) type = 'dmg_other';
       if (type === 'dmg_received' && fields.target && fields.target !== me) type = 'dmg_other';
+      if (type === 'item_party' && fields.spoil && fields.who === me) { type = 'item'; delete fields.who; }
     }
   } else {
     for (const [k, v] of Object.entries(m.groups)) if (v) fields[k] = v;

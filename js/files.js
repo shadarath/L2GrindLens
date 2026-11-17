@@ -106,7 +106,7 @@ async function exportCsv(view) { const w = await writeFile(`events-${sessionTag(
  * można go wysłać bez zrzutów ekranu.
  */
 async function exportUnknown(view) {
-  const list = view.events.filter(e => e.type === 'other' || (e.fields && e.fields.reason));
+  const list = view.events.filter(L2GL.isUnknown);
   const labels = L2GL.ocr.REASON_LABEL, skip = ['reason', 'wouldBe', 'ocr', 'color'];
   const data = {
     app: 'Grind Lens', kind: 'unknown-lines', exported: new Date().toISOString(), session: view.session,
