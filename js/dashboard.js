@@ -124,7 +124,7 @@ function render(panel) {
   const durMin = Math.max((end - start) / 60000, 1 / 60);
   let dmg = 0, hits = 0, crit = 0, dmgIn = 0, exp = 0, sp = 0, adena = 0, items = 0, profit = 0;
   const byTarget = new Map(), bySource = new Map(), kills = new Map();
-  const samples = { dmg: [], dmgIn: [], exp: [], sp: [], profit: [], profitTeam: [] }; // punkty {ts, v} do średnich kroczących
+  const samples = { dmg: [], dmgIn: [], exp: [], sp: [], profit: [], profitTeam: [], adena: [] }; // punkty {ts, v} do średnich kroczących
   // zysk: mój (łupy minus shoty) i całej drużyny (mój plus łupy pozostałych; ich kosztów shotów nie widać w czacie)
   const addProfit = (ts, v, mine) => { if (!v) return; if (mine) { profit += v; samples.profit.push({ ts, v }); } samples.profitTeam.push({ ts, v }); };
   let lastTarget = null, lastTargetTs = 0, killsTotal = 0;
@@ -161,7 +161,7 @@ function render(panel) {
     }
     if (ev.type === 'item') {
       const qty = f.qty || 1;
-      if ((f.item || '').toLowerCase() === 'adena') adena += qty; else items += qty;
+      if ((f.item || '').toLowerCase() === 'adena') { adena += qty; samples.adena.push({ ts: ev.ts, v: qty }); } else items += qty;
       addLoot('', f, qty);
       addProfit(ev.ts, qty * priceOf(f), true);
       lootEvents.push({ ts: ev.ts, item: f.item || '?', itemId: f.itemId, qty, value: qty * priceOf(f) });
@@ -305,7 +305,7 @@ function render(panel) {
   // zysk może być ujemny (koszt shotów), więc oś bez przymusu zera, ale z zerem w zasięgu
   const profitOpts = { ...base, scales: { x: base.scales.x, y: axis({ beginAtZero: false, suggestedMin: 0, suggestedMax: 0 }) } };
   const wProfit = windowOf('chProfit');
-  upsert(panel, 'chProfit', 'line', labels, [{ label: 'mój zysk', data: rolling('profit', wProfit), ...line(ok) }, { label: 'cała drużyna', data: rolling('profitTeam', wProfit), ...line(s2) }], profitOpts);
+  upsert(panel, 'chProfit', 'line', labels, [{ label: 'mój zysk', data: rolling('profit', wProfit), ...line(ok) }, { label: 'sama Adena', data: rolling('adena', wProfit), ...line(s4) }, { label: 'cała drużyna', data: rolling('profitTeam', wProfit), ...line(s2) }], profitOpts);
   // Obrażenia wg potwora na jednym wykresie: od środka w prawo zadane, w lewo otrzymane (wartości ujemne, podpisy bez znaku).
   const names = [...new Set([...byTarget.keys(), ...bySource.keys()])]
     .sort((a, b) => ((byTarget.get(b) || 0) + (bySource.get(b) || 0)) - ((byTarget.get(a) || 0) + (bySource.get(a) || 0))).slice(0, 8);
