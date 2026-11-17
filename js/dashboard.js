@@ -7,7 +7,8 @@ const PERIODS = [['łącznie', Infinity], ['ostatnia godzina', 3600000], ['ostat
 const TL_BUCKETS = 300;   // punkty paska linii czasu
 const TL_WINDOW = 60000;  // okno średniej kroczącej na pasku (jak wykresy: suma z ostatniej minuty przeliczona na godzinę)
 const HOUR = 3600000;
-const MARK_MULT = 3;      // znacznik łupu: wartość co najmniej tyle razy mediana wartości łupów w sesji
+const MARK_MULT = 3;      // znacznik Adeny: kwota co najmniej tyle razy mediana kwot Adeny w sesji
+const MARK_MAX = 60;      // najwyżej tyle znaczników na pasku (przy nadmiarze zostają najcenniejsze)
 const DEFAULT_WINDOW = 120000;
 
 /** Tworzy instancję dashboardu w kontenerze `root`, który zawiera sklonowany szablon #dashTpl. */
@@ -194,10 +195,15 @@ function render(panel) {
       }
       return out;
     };
-    const values = lootEvents.map(l => l.value).filter(v => v > 0).sort((a, b) => a - b);
+    // znaczniki: każdy przedmiot o wartości sprzedaży (bez questowych) i wyjątkowo duża Adena (kilkukrotność mediany
+    // jej kwot); przy nadmiarze zostaje MARK_MAX najcenniejszych
+    const isAdena = l => l.item.toLowerCase() === 'adena';
+    const values = lootEvents.filter(isAdena).map(l => l.value).filter(v => v > 0).sort((a, b) => a - b);
     const median = values.length ? values[values.length >> 1] : 0, thr = median * MARK_MULT;
     const gd = window.L2_GAMEDATA;
-    const markers = lootEvents.filter(l => l.value > 0 && l.value >= thr).map(l => ({ ts: l.ts, icon: l.itemId && gd && gd.items[l.itemId] ? gd.items[l.itemId][4] : null, label: `${new Date(l.ts).toLocaleTimeString('pl-PL')}: ${l.qty > 1 ? l.qty + ' × ' : ''}${l.item} (${fmt.n(l.value)} Adena)` }));
+    let marked = lootEvents.filter(l => l.value > 0 && (!isAdena(l) || (values.length > 2 && l.value >= thr)));
+    if (marked.length > MARK_MAX) marked = marked.slice().sort((a, b) => b.value - a.value).slice(0, MARK_MAX);
+    const markers = marked.map(l => ({ ts: l.ts, icon: l.itemId && gd && gd.items[l.itemId] ? gd.items[l.itemId][4] : null, label: `${new Date(l.ts).toLocaleTimeString('pl-PL')}: ${l.qty > 1 ? l.qty + ' × ' : ''}${l.item} (${fmt.n(l.value)} Adena)` }));
     panel.tl.setData({ start, end: start + span0, xp: bucket(samples.exp), profit: bucket(samples.profit), markers });
     range = panel.tl.advance();
     panel.tl.draw();

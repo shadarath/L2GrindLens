@@ -2,7 +2,7 @@
 
 Stan (2026-11-16): wdrożone w `js/timeline.js` (pasek, ramka, tryby), `js/dashboard.js` (kubełki, znaczniki,
 zakres wykresów, panel "Zaznaczenie"), szablonie `#dashTpl` i `css/app.css`. Decyzje: prawa krawędź przy końcu =
-podążanie; łupy i dziennik nie filtrują po ramce; znacznik = łup o wartości co najmniej trzykrotności mediany
+podążanie; łupy i dziennik nie filtrują po ramce; znacznik = (od 2026-11-17) każdy przedmiot o wartości sprzedaży oraz Adena o kwocie co najmniej trzykrotności mediany jej kwot, najwyżej 60 najcenniejszych; wcześniej: łup o wartości co najmniej trzykrotności mediany
 wartości łupów (`MARK_MULT`). Test w przeglądarce na syntetycznej sesji 90 min: przeciągnięcie prawego uchwytu
 daje tryb fixed i panel "Zaznaczenie", przesunięcie ramki do prawej krawędzi daje tryb tail, nowe zdarzenie
 przesuwa ramkę tail z zachowaniem szerokości, "cały zakres" wraca do all, wykresy pokazują tylko zakres ramki.
