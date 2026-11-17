@@ -43,8 +43,12 @@ for r in rows('items.csv'):
     # klient pokazuje "No Grade", w CSV jeden wpis ma "None Grade" (Blessed Spiritshot)
     name = NAME_FIX.get(r['item_id'], r['name']).replace('None Grade', 'No Grade')
     icon = r['icon'].strip().rsplit('.', 1)[-1]   # "icon.weapon_x_i00" i "Lineage2C1.etc_x_i00" -> plik img/items/<icon>.png (data/fetch_icons.py)
-    items[r['item_id']] = [name, r['item_type'], grade, num(r['default_price']), icon]
-    raw_items[r['item_id']] = r
+    # przedmiot niesprzedawalny (questowy, startowy, eventowy; is_trade=0): cena 0, bo nie da się go spieniężyć,
+    # i poza rankingiem kategorii, bo nie jest realnym wyborem wyposażenia
+    sellable = r['is_trade'] != '0'
+    items[r['item_id']] = [name, r['item_type'], grade, num(r['default_price']) if sellable else 0, icon]
+    if sellable:
+        raw_items[r['item_id']] = r
 
 # ---- miejsce przedmiotu w swojej kategorii: [miejsce, liczba w kategorii, nazwa kategorii] jako 6. pole ----
 # Kategoria to rodzaj plus klasa (łuki D, szaty góra NG, pierścienie C). Bronie porządkuje obrażenia fizyczne
